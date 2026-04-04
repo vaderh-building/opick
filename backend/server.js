@@ -100,8 +100,30 @@ app.use("/api/markets", createMarketsRouter({ provider, factoryAddress, factoryA
 app.use("/api/comments", commentsRouter);
 app.use("/api/users", usersRouter);
 
-app.get("/api/health", (req, res) => {
-  res.json({ status: "ok", factoryAddress, rpcUrl: config.rpcUrl });
+app.get("/api/health", async (req, res) => {
+  try {
+    const network = await provider.getNetwork();
+    const code = await provider.getCode(factoryAddress);
+    const factory = new ethers.Contract(factoryAddress, factoryAbi, provider);
+    const total = await factory.totalMarkets();
+    res.json({
+      status: "ok",
+      chainId: Number(network.chainId),
+      rpcUrl: config.rpcUrl,
+      factoryAddress,
+      hasCode: code !== "0x",
+      totalMarkets: Number(total),
+    });
+  } catch (err) {
+    console.error("Health check failed:", err.message);
+    res.json({
+      status: "error",
+      error: err.message,
+      rpcUrl: config.rpcUrl,
+      factoryAddress,
+      chainId: null,
+    });
+  }
 });
 
 // ---------- HTTP + WebSocket server ----------
