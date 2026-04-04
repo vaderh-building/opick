@@ -42,12 +42,27 @@ function timeAgo(dateStr) {
   return `${days}d ago`;
 }
 
-const PRECISION = 1e18;
-function parsePrice(val) {
-  return (Number(val) / PRECISION) * 100;
+// Defensive parsers — handle both raw BigInt strings and already-parsed values
+function smartParsePrice(val) {
+  if (!val && val !== 0) return 50;
+  const n = Number(val);
+  if (isNaN(n)) return 50;
+  // Raw BigInt string like "500000000000000000" → 50
+  if (n > 1e10) return (n / 1e18) * 100;
+  // Already a fraction like 0.5 → 50
+  if (n <= 1) return n * 100;
+  // Already a percentage like 50 → 50
+  return n;
 }
-function parseUSDC(val) {
-  return Number(val) / 1e6;
+
+function smartParseUSDC(val) {
+  if (!val && val !== 0) return 0;
+  const n = Number(val);
+  if (isNaN(n)) return 0;
+  // Raw 6-decimal string like "1000000000" → 1000
+  if (n > 1e7) return n / 1e6;
+  // Already parsed
+  return n;
 }
 
 export default function MarketPage({ account, provider, signer, onConnect }) {
@@ -56,7 +71,7 @@ export default function MarketPage({ account, provider, signer, onConnect }) {
   const { usdc, getMarket } = useContracts(signer || provider);
   const prices = usePriceWebSocket();
 
-  // Parse market data from API string values
+  // Parse market data from API
   const market = rawMarket ? {
     ...rawMarket,
     topic: rawMarket.topic || 'Untitled',
@@ -64,8 +79,8 @@ export default function MarketPage({ account, provider, signer, onConnect }) {
     sideBName: rawMarket.sideBName || 'Side B',
     category: rawMarket.category || '',
     creator: rawMarket.creator || '',
-    totalVolume: parseUSDC(rawMarket.totalVolume) || 0,
-    creatorEarnings: parseUSDC(rawMarket.creatorEarnings) || 0,
+    totalVolume: smartParseUSDC(rawMarket.totalVolume),
+    creatorEarnings: smartParseUSDC(rawMarket.creatorEarnings),
   } : null;
 
   // UI state
@@ -88,10 +103,10 @@ export default function MarketPage({ account, provider, signer, onConnect }) {
   const [position, setPosition] = useState(null);
   const [sellLoading, setSellLoading] = useState(false);
 
-  // Get live prices or fall back to market data (raw strings -> percentage 0-100)
+  // Get live prices or fall back to market data → percentage 0-100
   const livePrice = prices[marketAddress];
-  const priceA = livePrice?.priceA ? parsePrice(livePrice.priceA) : (market?.priceA ? parsePrice(market.priceA) : 50);
-  const priceB = livePrice?.priceB ? parsePrice(livePrice.priceB) : (market?.priceB ? parsePrice(market.priceB) : 50);
+  const priceA = smartParsePrice(livePrice?.priceA ?? market?.priceA);
+  const priceB = smartParsePrice(livePrice?.priceB ?? market?.priceB);
   const currentPrice = selectedSide === 'A' ? priceA : priceB;
 
   // Chart data — flat line at current price (real history when available)
