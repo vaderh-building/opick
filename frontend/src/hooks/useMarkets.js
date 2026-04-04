@@ -10,7 +10,9 @@ export function useMarkets() {
     try {
       const res = await fetch(`${API_URL}/markets`);
       const data = await res.json();
-      setMarkets(data);
+      if (Array.isArray(data)) {
+        setMarkets(data);
+      }
     } catch (err) {
       console.error('Failed to fetch markets:', err);
     } finally {
@@ -34,7 +36,12 @@ export function useMarket(address) {
     try {
       const res = await fetch(`${API_URL}/markets/${address}`);
       const data = await res.json();
-      setMarket(data);
+      // Only set if it has real market data (not an error object)
+      if (data && data.topic) {
+        setMarket(data);
+      } else if (data && data.error) {
+        console.error('Market API error:', data.error, data.details);
+      }
     } catch (err) {
       console.error('Failed to fetch market:', err);
     } finally {

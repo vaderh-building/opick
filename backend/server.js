@@ -15,14 +15,12 @@ import usersRouter from "./routes/users.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// ---------- Config from env vars, with fallbacks ----------
+// ---------- Config ----------
 function loadConfig() {
-  // Priority: env vars > deployed-addresses JSON > frontend config.js
   let factoryAddress = process.env.FACTORY_ADDRESS || "";
   let usdcAddress = process.env.USDC_ADDRESS || "";
   let rpcUrl = process.env.RPC_URL || "";
 
-  // Try deployed-addresses file
   if (!factoryAddress || !usdcAddress) {
     try {
       const addrLocal = path.join(__dirname, "deployed-addresses-base-sepolia.json");
@@ -32,12 +30,10 @@ function loadConfig() {
         const addrs = JSON.parse(fs.readFileSync(addrPath, "utf-8"));
         factoryAddress = factoryAddress || addrs.OPickFactory || "";
         usdcAddress = usdcAddress || addrs.MockUSDC || "";
-        if (!rpcUrl) rpcUrl = "https://sepolia.base.org";
       }
     } catch {}
   }
 
-  // Try frontend config.js
   if (!factoryAddress || !usdcAddress) {
     try {
       const configPath = path.join(__dirname, "..", "frontend", "src", "config.js");
@@ -54,21 +50,32 @@ function loadConfig() {
     } catch {}
   }
 
-  rpcUrl = rpcUrl || "http://127.0.0.1:8545";
-
+  rpcUrl = rpcUrl || "https://sepolia.base.org";
   return { factoryAddress, usdcAddress, rpcUrl };
 }
 
 const config = loadConfig();
-console.log("Config:", {
-  rpcUrl: config.rpcUrl,
-  factoryAddress: config.factoryAddress,
-  usdcAddress: config.usdcAddress,
-});
+console.log("Config:", config);
 
-// ---------- Ethers provider & ABIs ----------
-const provider = new ethers.JsonRpcProvider(config.rpcUrl);
+// ---------- Fallback RPC provider ----------
+const RPC_URLS = [
+  config.rpcUrl,
+  "https://base-sepolia-rpc.publicnode.com",
+  "https://base-sepolia.blockpi.network/v1/rpc/public",
+  "https://sepolia.base.org",
+];
+// Deduplicate
+const uniqueRpcs = [...new Set(RPC_URLS)];
 
+const providers = uniqueRpcs.map((url) => new ethers.JsonRpcProvider(url));
+// Use FallbackProvider: tries each in order, falls back on failure
+const provider = new ethers.FallbackProvider(
+  providers.map((p, i) => ({ provider: p, priority: i + 1, stallTimeout: 3000, weight: 1 })),
+  1 // quorum of 1 — only need one to respond
+);
+console.log("RPC providers:", uniqueRpcs.length, "configured");
+
+// ---------- ABIs ----------
 function loadAbi(name) {
   const locations = [
     path.join(__dirname, "abi", `${name}.json`),
@@ -76,28 +83,23 @@ function loadAbi(name) {
     path.join(__dirname, "..", "artifacts", "contracts", `${name}.sol`, `${name}.json`),
   ];
   for (const loc of locations) {
-    const exists = fs.existsSync(loc);
-    console.log(`  ABI ${name}: ${loc} → ${exists ? "FOUND" : "missing"}`);
-    if (exists) {
+    if (fs.existsSync(loc)) {
       const content = JSON.parse(fs.readFileSync(loc, "utf-8"));
       const abi = content.abi || content;
-      console.log(`  ABI ${name}: loaded ${abi.length} entries`);
+      console.log(`ABI ${name}: loaded ${abi.length} entries from ${loc}`);
       return abi;
     }
   }
-  throw new Error(`ABI not found for ${name}. Searched: ${locations.join(", ")}`);
+  throw new Error(`ABI not found for ${name}`);
 }
 
 const factoryAbi = loadAbi("OPickFactory");
 const marketAbi = loadAbi("OPickMarket");
-
 const factoryAddress = config.factoryAddress;
 
-// ---------- Express app ----------
+// ---------- Express ----------
 const app = express();
-
-const corsOrigin = process.env.FRONTEND_URL || "*";
-app.use(cors({ origin: corsOrigin }));
+app.use(cors({ origin: process.env.FRONTEND_URL || "*" }));
 app.use(express.json());
 
 app.use("/api/markets", createMarketsRouter({ provider, factoryAddress, factoryAbi, marketAbi }));
@@ -105,7 +107,7 @@ app.use("/api/comments", commentsRouter);
 app.use("/api/users", usersRouter);
 
 app.get("/api/health", async (req, res) => {
-  const result = { rpcUrl: config.rpcUrl, factoryAddress, __dirname, cwd: process.cwd() };
+  const result = { rpcUrls: uniqueRpcs, factoryAddress };
   try {
     const network = await provider.getNetwork();
     result.chainId = Number(network.chainId);
@@ -115,16 +117,6 @@ app.get("/api/health", async (req, res) => {
     result.rpcError = err.message;
   }
   try {
-    const code = await provider.getCode(factoryAddress);
-    result.codeLength = code.length;
-    result.hasCode = code !== "0x";
-  } catch (err) {
-    result.codeError = err.message;
-  }
-  result.abiLoaded = Array.isArray(factoryAbi);
-  result.abiLength = factoryAbi?.length || 0;
-  result.abiFunctions = factoryAbi?.filter(e => e.type === "function").map(e => e.name) || [];
-  try {
     const factory = new ethers.Contract(factoryAddress, factoryAbi, provider);
     const total = await factory.totalMarkets();
     result.totalMarkets = Number(total);
@@ -132,13 +124,12 @@ app.get("/api/health", async (req, res) => {
   } catch (err) {
     result.contractCallOk = false;
     result.contractError = err.message;
-    result.contractErrorCode = err.code;
   }
   result.status = result.contractCallOk ? "ok" : "error";
   res.json(result);
 });
 
-// ---------- HTTP + WebSocket server ----------
+// ---------- WebSocket ----------
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 
@@ -160,36 +151,44 @@ async function broadcastPrices() {
   if (wss.clients.size === 0 || knownMarketAddresses.length === 0) return;
   try {
     const data = {};
-    await Promise.all(
-      knownMarketAddresses.map(async (addr) => {
+    // Batch price fetches to avoid rate limits
+    for (let i = 0; i < knownMarketAddresses.length; i += 4) {
+      const batch = knownMarketAddresses.slice(i, i + 4);
+      await Promise.all(batch.map(async (addr) => {
         try {
-          const contract = new ethers.Contract(addr, marketAbi, provider);
-          const [priceA, priceB] = await Promise.all([contract.priceA(), contract.priceB()]);
-          data[addr] = { priceA: priceA.toString(), priceB: priceB.toString() };
+          const c = new ethers.Contract(addr, marketAbi, provider);
+          const [pA, pB] = await Promise.all([c.priceA(), c.priceB()]);
+          data[addr] = { priceA: pA.toString(), priceB: pB.toString() };
         } catch {}
-      })
-    );
+      }));
+    }
     const message = JSON.stringify({ type: "prices", data });
     for (const client of wss.clients) {
       if (client.readyState === 1) client.send(message);
     }
-  } catch (error) {
-    console.error("Error broadcasting prices:", error.message);
-  }
+  } catch {}
 }
 
 refreshMarketAddresses();
-setInterval(refreshMarketAddresses, 30_000);
-setInterval(broadcastPrices, 3_000);
+setInterval(refreshMarketAddresses, 60_000);
+setInterval(broadcastPrices, 5_000);
 
 wss.on("connection", (ws) => {
-  console.log("WebSocket client connected");
-  ws.on("close", () => console.log("WebSocket client disconnected"));
+  console.log("WS client connected");
+  ws.on("close", () => console.log("WS client disconnected"));
 });
 
-// ---------- Start ----------
+// ---------- Startup preload ----------
 const PORT = process.env.PORT || 3001;
-server.listen(PORT, () => {
-  console.log(`OPick backend running on http://localhost:${PORT}`);
-  console.log(`WebSocket server on ws://localhost:${PORT}`);
+server.listen(PORT, async () => {
+  console.log(`OPick backend on http://localhost:${PORT}`);
+  // Preload markets cache so first request is instant
+  try {
+    console.log("Preloading markets cache...");
+    const res = await fetch(`http://localhost:${PORT}/api/markets`);
+    const data = await res.json();
+    console.log(`Preloaded ${data.length} markets`);
+  } catch (e) {
+    console.log("Preload failed (will load on first request):", e.message);
+  }
 });
