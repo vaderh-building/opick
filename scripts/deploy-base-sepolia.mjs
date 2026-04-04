@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 
 const { ethers } = hre;
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
 async function main() {
   const [deployer] = await ethers.getSigners();
@@ -27,10 +28,13 @@ async function main() {
   let bal = await ethers.provider.getBalance(deployer.address);
   console.log("  Balance remaining:", ethers.formatEther(bal), "ETH\n");
 
-  // --- Step 2: Deploy OPickFactory ---
+  await sleep(5000); // Wait for nonce to settle
+
+  // --- Step 2: Deploy OPickFactory (treasury = deployer) ---
   console.log("Deploying OPickFactory...");
+  console.log("  Treasury:", deployer.address);
   const Factory = await ethers.getContractFactory("OPickFactory");
-  const factory = await Factory.deploy(usdcAddr);
+  const factory = await Factory.deploy(usdcAddr, deployer.address);
   await factory.waitForDeployment();
   const factoryAddr = await factory.getAddress();
   const factoryReceipt = await factory.deploymentTransaction().wait();
@@ -41,12 +45,15 @@ async function main() {
   bal = await ethers.provider.getBalance(deployer.address);
   console.log("  Balance remaining:", ethers.formatEther(bal), "ETH\n");
 
+  await sleep(5000);
+
   // --- Step 3: Mint USDC to deployer for market creation fees ---
   console.log("Minting USDC to deployer...");
   const mintTx = await usdc.mint(deployer.address, 1000n * 10n ** 6n); // 1000 USDC
   const mintReceipt = await mintTx.wait();
   console.log("  Minted 1000 USDC. Gas used:", mintReceipt.gasUsed.toString());
 
+  await sleep(5000);
   // Approve factory for creation fees
   const approveTx = await usdc.approve(factoryAddr, 1000n * 10n ** 6n);
   const approveReceipt = await approveTx.wait();

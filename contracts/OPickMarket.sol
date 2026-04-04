@@ -8,6 +8,7 @@ contract OPickMarket is ReentrancyGuard {
     using SafeERC20 for IERC20;
     IERC20 public immutable usdc;
     address public immutable creator;
+    address public immutable treasury;
     string public topic;
     string public sideAName;
     string public sideBName;
@@ -19,8 +20,8 @@ contract OPickMarket is ReentrancyGuard {
     mapping(address => uint256) public sharesB;
     uint256 public totalSharesA;
     uint256 public totalSharesB;
-    uint256 public constant SPREAD_BPS = 50;
-    uint256 public constant CREATOR_BPS = 3000;
+    uint256 public constant SPREAD_BPS = 100;    // 1%
+    uint256 public constant CREATOR_BPS = 3000;  // 30% of spread → creator
     uint256 public constant PRECISION = 1e18;
     uint256 public totalVolume;
     uint256 public creatorEarnings;
@@ -29,8 +30,9 @@ contract OPickMarket is ReentrancyGuard {
     event Buy(address indexed user, bool indexed isSideA, uint256 usdcIn, uint256 sharesOut, uint256 priceAfter);
     event Sell(address indexed user, bool indexed isSideA, uint256 sharesIn, uint256 usdcOut, uint256 priceAfter);
 
-    constructor(address _usdc, address _creator, string memory _topic, string memory _sideA, string memory _sideB, string memory _category, uint256 _initRes) {
-        usdc = IERC20(_usdc); creator = _creator; topic = _topic; sideAName = _sideA; sideBName = _sideB; category = _category;
+    constructor(address _usdc, address _creator, address _treasury, string memory _topic, string memory _sideA, string memory _sideB, string memory _category, uint256 _initRes) {
+        usdc = IERC20(_usdc); creator = _creator; treasury = _treasury;
+        topic = _topic; sideAName = _sideA; sideBName = _sideB; category = _category;
         reserveA = _initRes; reserveB = _initRes; k = _initRes * _initRes; createdAt = block.timestamp;
     }
 
@@ -57,9 +59,12 @@ contract OPickMarket is ReentrancyGuard {
         require(shares > 0 && sharesA[msg.sender] >= shares);
         uint256 na = reserveA + shares; uint256 nr = k / na; uint256 gross = reserveB - nr;
         reserveA = na; reserveB = nr; sharesA[msg.sender] -= shares; totalSharesA -= shares;
-        uint256 fee = gross * SPREAD_BPS / 10000; uint256 cf = fee * CREATOR_BPS / 10000;
+        uint256 fee = gross * SPREAD_BPS / 10000;
+        uint256 cf = fee * CREATOR_BPS / 10000;       // 30% → creator
+        uint256 pf = fee - cf;                          // 70% → treasury
         usdcOut = gross - fee; totalVolume += gross; creatorEarnings += cf;
         if (cf > 0) usdc.safeTransfer(creator, cf);
+        if (pf > 0) usdc.safeTransfer(treasury, pf);
         usdc.safeTransfer(msg.sender, usdcOut);
         emit Sell(msg.sender, true, shares, usdcOut, priceA());
     }
@@ -68,9 +73,12 @@ contract OPickMarket is ReentrancyGuard {
         require(shares > 0 && sharesB[msg.sender] >= shares);
         uint256 nr = reserveB + shares; uint256 na = k / nr; uint256 gross = reserveA - na;
         reserveA = na; reserveB = nr; sharesB[msg.sender] -= shares; totalSharesB -= shares;
-        uint256 fee = gross * SPREAD_BPS / 10000; uint256 cf = fee * CREATOR_BPS / 10000;
+        uint256 fee = gross * SPREAD_BPS / 10000;
+        uint256 cf = fee * CREATOR_BPS / 10000;       // 30% → creator
+        uint256 pf = fee - cf;                          // 70% → treasury
         usdcOut = gross - fee; totalVolume += gross; creatorEarnings += cf;
         if (cf > 0) usdc.safeTransfer(creator, cf);
+        if (pf > 0) usdc.safeTransfer(treasury, pf);
         usdc.safeTransfer(msg.sender, usdcOut);
         emit Sell(msg.sender, false, shares, usdcOut, priceA());
     }

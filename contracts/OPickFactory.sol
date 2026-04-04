@@ -8,6 +8,7 @@ import "./OPickMarket.sol";
 contract OPickFactory is Ownable {
     using SafeERC20 for IERC20;
     IERC20 public immutable usdc;
+    address public treasury;
     uint256 public creationFee = 5e6;
     uint256 public constant INITIAL_RESERVE = 1000e6;
     address[] public markets;
@@ -16,11 +17,14 @@ contract OPickFactory is Ownable {
 
     event MarketCreated(address indexed market, address indexed creator, string topic, string sideA, string sideB, string category, uint256 index);
 
-    constructor(address _usdc) Ownable(msg.sender) { usdc = IERC20(_usdc); }
+    constructor(address _usdc, address _treasury) Ownable(msg.sender) {
+        usdc = IERC20(_usdc);
+        treasury = _treasury;
+    }
 
     function createMarket(string calldata _topic, string calldata _sideA, string calldata _sideB, string calldata _category) external returns (address addr) {
         if (creationFee > 0) usdc.safeTransferFrom(msg.sender, address(this), creationFee);
-        OPickMarket m = new OPickMarket(address(usdc), msg.sender, _topic, _sideA, _sideB, _category, INITIAL_RESERVE);
+        OPickMarket m = new OPickMarket(address(usdc), msg.sender, treasury, _topic, _sideA, _sideB, _category, INITIAL_RESERVE);
         addr = address(m); markets.push(addr); isMarket[addr] = true; creatorMarkets[msg.sender].push(addr);
         emit MarketCreated(addr, msg.sender, _topic, _sideA, _sideB, _category, markets.length - 1);
     }
@@ -32,5 +36,6 @@ contract OPickFactory is Ownable {
     }
     function getCreatorMarkets(address c) external view returns (address[] memory) { return creatorMarkets[c]; }
     function setCreationFee(uint256 f) external onlyOwner { creationFee = f; }
+    function setTreasury(address _treasury) external onlyOwner { treasury = _treasury; }
     function withdrawFees(address to) external onlyOwner { uint256 b = usdc.balanceOf(address(this)); if (b > 0) usdc.safeTransfer(to, b); }
 }
