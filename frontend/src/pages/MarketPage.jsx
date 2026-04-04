@@ -266,13 +266,12 @@ export default function MarketPage({ account, provider, signer, onConnect }) {
 
   return (
     <div className={s.page}>
-      <Link to="/" className={s.backLink}>
-        &larr; All markets
-      </Link>
-
       <div className={s.layout}>
         {/* LEFT COLUMN */}
         <div className={s.left}>
+          <Link to="/markets" className={s.backLink}>
+            &larr; All markets
+          </Link>
           <h1 className={s.title}>{market.topic}</h1>
 
           <div className={s.meta}>

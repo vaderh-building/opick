@@ -28,9 +28,11 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  font-family: var(--font-sans);
   font-size: 13px;
-  color: var(--muted);
-  margin-bottom: 20px;
+  color: var(--dim);
+  margin-bottom: 16px;
+  text-decoration: none;
   transition: color 0.15s;
 }
 
