@@ -7,6 +7,7 @@ import HomePage from './pages/HomePage.jsx';
 import MarketPage from './pages/MarketPage.jsx';
 import PortfolioPage from './pages/PortfolioPage.jsx';
 import CreatePage from './pages/CreatePage.jsx';
+import AccountPage from './pages/AccountPage.jsx';
 import DocsPage from './pages/DocsPage.jsx';
 import './index.css';
 
@@ -14,7 +15,7 @@ function App() {
   const wallet = useWallet();
   const { account, provider, signer, connect, connectLocal, disconnect, authenticated, walletReady, displayName } = wallet;
 
-  const pageProps = { account, provider, signer, onConnect: connect, authenticated, walletReady };
+  const pageProps = { account, provider, signer, onConnect: connect, authenticated, walletReady, displayName };
 
   return (
     <BrowserRouter>
@@ -33,6 +34,7 @@ function App() {
           <Route path="/market/:address" element={<MarketPage {...pageProps} />} />
           <Route path="/portfolio" element={<PortfolioPage {...pageProps} />} />
           <Route path="/create" element={<CreatePage {...pageProps} />} />
+          <Route path="/account" element={<AccountPage {...pageProps} />} />
           <Route path="/docs" element={<DocsPage />} />
         </Routes>
       </main>

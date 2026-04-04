@@ -103,6 +103,10 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
   const [position, setPosition] = useState(null);
   const [sellLoading, setSellLoading] = useState(false);
 
+  // Faucet
+  const [faucetLoading, setFaucetLoading] = useState(false);
+  const [faucetDone, setFaucetDone] = useState(false);
+
   // Get live prices or fall back to market data → percentage 0-100
   const livePrice = prices[marketAddress];
   const priceA = smartParsePrice(livePrice?.priceA ?? market?.priceA);
@@ -190,6 +194,26 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
       console.error('Failed to post comment:', e);
     } finally {
       setCommentLoading(false);
+    }
+  };
+
+  const handleFaucet = async () => {
+    if (!signer || !usdc || faucetLoading) return;
+    setFaucetLoading(true);
+    setFaucetDone(false);
+    try {
+      const tx = await usdc.faucet();
+      await tx.wait();
+      setFaucetDone(true);
+      setTxError('');
+      if (account) {
+        const bal = await usdc.balanceOf(account);
+        setUsdcBalance(bal);
+      }
+    } catch (e) {
+      setTxError('Faucet failed: ' + (e?.reason || e?.message || ''));
+    } finally {
+      setFaucetLoading(false);
     }
   };
 
@@ -562,7 +586,18 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
               </div>
             </div>
 
-            {txError && <div className={s.errorMsg}>{txError}</div>}
+            {faucetDone && <div className={s.successMsg}>10,000 USDC claimed!</div>}
+
+            {txError && (
+              <div className={s.errorMsg}>
+                {txError}
+                {txError.includes('nsufficient') && walletReady && (
+                  <button className={s.faucetLink} onClick={handleFaucet} disabled={faucetLoading}>
+                    {faucetLoading ? 'Claiming...' : '→ Get 10,000 free USDC'}
+                  </button>
+                )}
+              </div>
+            )}
 
             {!authenticated ? (
               <button className={s.pickBtnGreen} onClick={onConnect}>
