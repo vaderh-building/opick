@@ -59,11 +59,13 @@ export default function MarketPage({ account, provider, signer, onConnect }) {
   // Parse market data from API string values
   const market = rawMarket ? {
     ...rawMarket,
-    topic: rawMarket.topic,
-    sideAName: rawMarket.sideAName,
-    sideBName: rawMarket.sideBName,
-    totalVolume: parseUSDC(rawMarket.totalVolume),
-    creatorEarnings: parseUSDC(rawMarket.creatorEarnings),
+    topic: rawMarket.topic || 'Untitled',
+    sideAName: rawMarket.sideAName || 'Side A',
+    sideBName: rawMarket.sideBName || 'Side B',
+    category: rawMarket.category || '',
+    creator: rawMarket.creator || '',
+    totalVolume: parseUSDC(rawMarket.totalVolume) || 0,
+    creatorEarnings: parseUSDC(rawMarket.creatorEarnings) || 0,
   } : null;
 
   // UI state
@@ -278,7 +280,7 @@ export default function MarketPage({ account, provider, signer, onConnect }) {
               <span className={s.categoryPill}>{market.category}</span>
             )}
             <span className={s.metaItem}>
-              Volume: <span>${market.totalVolume.toLocaleString(undefined, {maximumFractionDigits: 0})}</span>
+              Volume: <span>${(market.totalVolume || 0) === 0 ? '0' : market.totalVolume.toLocaleString(undefined, {maximumFractionDigits: 0})}</span>
             </span>
             {market.creator && (
               <span className={s.metaItem}>

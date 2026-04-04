@@ -14,12 +14,14 @@ export default function LandingPage() {
 
   const parsed = markets.map((m) => {
     const ws = wsPrices[m.address];
+    const pA = parsePrice(ws?.priceA ?? m.priceA);
+    const pB = parsePrice(ws?.priceB ?? m.priceB);
     return {
       ...m,
-      priceA: parsePrice(ws?.priceA ?? m.priceA),
-      priceB: parsePrice(ws?.priceB ?? m.priceB),
-      totalVolume: parseUSDC(m.totalVolume),
-      creatorEarnings: parseUSDC(m.creatorEarnings),
+      priceA: isNaN(pA) ? 0.5 : pA,
+      priceB: isNaN(pB) ? 0.5 : pB,
+      totalVolume: parseUSDC(m.totalVolume) || 0,
+      creatorEarnings: parseUSDC(m.creatorEarnings) || 0,
     };
   });
 

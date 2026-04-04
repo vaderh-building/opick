@@ -2,20 +2,35 @@ import { Link } from 'react-router-dom';
 import styles from './MarketCard.module.css';
 
 function formatVolume(value) {
-  if (value === 0) return '$0';
-  if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}M`;
-  if (value >= 1_000) return `$${(value / 1_000).toFixed(1)}K`;
-  return `$${Math.round(value)}`;
+  const v = Number(value) || 0;
+  if (v === 0) return '$0';
+  if (v >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}M`;
+  if (v >= 1_000) return `$${(v / 1_000).toFixed(1)}K`;
+  return `$${Math.round(v)}`;
 }
 
 function formatPercent(price) {
-  return `${(price * 100).toFixed(1)}%`;
+  const p = Number(price) || 0;
+  return `${(p * 100).toFixed(1)}%`;
 }
 
 export default function MarketCard({ market }) {
-  const { address, topic, sideAName, sideBName, category, priceA, priceB, totalVolume } = market;
+  if (!market) return null;
+
+  const {
+    address = '',
+    topic = 'Untitled',
+    sideAName = 'Side A',
+    sideBName = 'Side B',
+    category = '',
+    priceA: rawA = 0.5,
+    priceB: rawB = 0.5,
+    totalVolume = 0,
+  } = market;
+
+  const priceA = Number(rawA) || 0.5;
+  const priceB = Number(rawB) || 0.5;
   const pctA = priceA * 100;
-  const lineColor = pctA >= 50 ? 'var(--green)' : 'var(--red)';
 
   return (
     <Link to={`/market/${address}`} className={styles.card}>
@@ -29,13 +44,8 @@ export default function MarketCard({ market }) {
       <div className={styles.chartArea}>
         <svg className={styles.chartSvg} viewBox="0 0 280 70" preserveAspectRatio="none">
           <line x1="0" y1="35" x2="280" y2="35" stroke="var(--border-dim)" strokeWidth="0.5" strokeDasharray="3 3" />
-          <path
-            d={`M0,${55 - pctA * 0.5} C40,${50 - pctA * 0.4} 70,${30 + (50 - pctA) * 0.3} 100,${40 - pctA * 0.2} C130,${45 - pctA * 0.3} 160,${25 + (50 - pctA) * 0.2} 200,${38 - pctA * 0.15} C240,${42 - pctA * 0.25} 260,${35 - (pctA - 50) * 0.4} 280,${35 - (pctA - 50) * 0.5}`}
-            fill="none"
-            stroke={lineColor}
-            strokeWidth="1.5"
-            strokeLinecap="round"
-          />
+          <line x1="0" y1={35 - (pctA - 50) * 0.5} x2="280" y2={35 - (pctA - 50) * 0.5}
+            stroke={pctA >= 50 ? 'var(--green)' : 'var(--red)'} strokeWidth="1.5" />
         </svg>
         <span className={styles.chartLabel}>50%</span>
       </div>

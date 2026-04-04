@@ -43,12 +43,12 @@ export default function HomePage() {
       const priceB = parsePrice(ws?.priceB ?? m.priceB);
       return {
         ...m,
-        priceA,
-        priceB,
-        totalVolume: parseUSDC(m.totalVolume),
-        creatorEarnings: parseUSDC(m.creatorEarnings),
-        reserveA: parseUSDC(m.reserveA),
-        reserveB: parseUSDC(m.reserveB),
+        priceA: isNaN(priceA) ? 0.5 : priceA,
+        priceB: isNaN(priceB) ? 0.5 : priceB,
+        totalVolume: parseUSDC(m.totalVolume) || 0,
+        creatorEarnings: parseUSDC(m.creatorEarnings) || 0,
+        reserveA: parseUSDC(m.reserveA) || 0,
+        reserveB: parseUSDC(m.reserveB) || 0,
       };
     });
   }, [markets, wsPrices]);
