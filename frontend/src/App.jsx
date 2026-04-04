@@ -11,7 +11,10 @@ import DocsPage from './pages/DocsPage.jsx';
 import './index.css';
 
 function App() {
-  const { account, provider, signer, connect, connectLocal, disconnect, authenticated } = useWallet();
+  const wallet = useWallet();
+  const { account, provider, signer, connect, connectLocal, disconnect, authenticated, walletReady } = wallet;
+
+  const pageProps = { account, provider, signer, onConnect: connect, authenticated, walletReady };
 
   return (
     <BrowserRouter>
@@ -26,15 +29,9 @@ function App() {
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/markets" element={<HomePage />} />
-          <Route path="/market/:address" element={
-            <MarketPage account={account} provider={provider} signer={signer} onConnect={connect} />
-          } />
-          <Route path="/portfolio" element={
-            <PortfolioPage account={account} provider={provider} signer={signer} onConnect={connect} />
-          } />
-          <Route path="/create" element={
-            <CreatePage account={account} provider={provider} signer={signer} onConnect={connect} />
-          } />
+          <Route path="/market/:address" element={<MarketPage {...pageProps} />} />
+          <Route path="/portfolio" element={<PortfolioPage {...pageProps} />} />
+          <Route path="/create" element={<CreatePage {...pageProps} />} />
           <Route path="/docs" element={<DocsPage />} />
         </Routes>
       </main>

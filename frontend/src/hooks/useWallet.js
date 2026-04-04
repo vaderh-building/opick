@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { usePrivy, useWallets } from '@privy-io/react-auth';
 import { BrowserProvider, JsonRpcProvider, Wallet } from 'ethers';
 import { RPC_URL } from '../config.js';
@@ -6,17 +6,6 @@ import { RPC_URL } from '../config.js';
 const HARDHAT_PRIVATE_KEY = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80';
 const IS_DEV = import.meta.env.VITE_DEV_MODE === 'true' ||
   (typeof window !== 'undefined' && window.location.hostname === 'localhost');
-
-// Extract wallet address from Privy user object
-function getPrivyAddress(user) {
-  if (!user) return null;
-  // Try direct wallet
-  if (user.wallet?.address) return user.wallet.address;
-  // Try linked accounts
-  const walletAccount = user.linkedAccounts?.find(a => a.type === 'wallet');
-  if (walletAccount?.address) return walletAccount.address;
-  return null;
-}
 
 export function useWallet() {
   const { ready, authenticated, user, login: privyLogin, logout: privyLogout } = usePrivy();
@@ -42,37 +31,41 @@ export function useWallet() {
   }, [localMode, rpcProvider]);
 
   // Privy wallet state
-  const [privyProvider, setPrivyProvider] = useState(null);
   const [privySigner, setPrivySigner] = useState(null);
   const [privyAccount, setPrivyAccount] = useState(null);
+  const [walletReady, setWalletReady] = useState(false);
+  const setupAttempted = useRef(false);
 
-  // Detect auth state and set account immediately
+  // Core effect: when authenticated + wallets available, get signer
   useEffect(() => {
-    if (localMode) return;
-
-    if (!ready || !authenticated) {
-      setPrivyProvider(null);
-      setPrivySigner(null);
-      setPrivyAccount(null);
+    if (localMode || !ready || !authenticated) {
+      if (!localMode && !authenticated) {
+        setPrivySigner(null);
+        setPrivyAccount(null);
+        setWalletReady(false);
+      }
       return;
     }
 
-    // Set address immediately from user object (before wallet SDK is ready)
-    const addr = getPrivyAddress(user);
-    if (addr) {
+    // Extract address from any available source
+    let addr = null;
+    if (user?.wallet?.address) addr = user.wallet.address;
+    if (!addr && user?.linkedAccounts) {
+      const wa = user.linkedAccounts.find(a => a.type === 'wallet');
+      if (wa?.address) addr = wa.address;
+    }
+    if (!addr && wallets.length > 0) addr = wallets[0].address;
+
+    if (addr && !privyAccount) {
       setPrivyAccount(addr);
     }
 
-    // If wallets array is populated, get ethers provider/signer
+    // Setup signer from first available wallet
     if (!wallets.length) return;
-
     const wallet = wallets[0];
-    let cancelled = false;
+    if (wallet.address && !privyAccount) setPrivyAccount(wallet.address);
 
-    // Set address from wallet object too
-    if (wallet.address && !addr) {
-      setPrivyAccount(wallet.address);
-    }
+    let cancelled = false;
 
     (async () => {
       try {
@@ -82,13 +75,14 @@ export function useWallet() {
         const s = await bp.getSigner();
         const signerAddr = await s.getAddress();
         if (cancelled) return;
-        setPrivyProvider(bp);
         setPrivySigner(s);
         setPrivyAccount(signerAddr);
+        setWalletReady(true);
       } catch (e) {
-        console.error('Failed to get Privy wallet provider:', e);
+        console.error('Wallet setup failed:', e.message);
         if (!cancelled) {
-          setPrivyAccount(wallet.address || addr || null);
+          setPrivyAccount(wallet.address || addr);
+          setWalletReady(false);
         }
       }
     })();
@@ -98,11 +92,12 @@ export function useWallet() {
 
   // Unified interface
   const account = localMode ? localAccount : privyAccount;
-  const provider = localMode ? rpcProvider : (privyProvider || rpcProvider);
   const signer = localMode ? localSigner : privySigner;
+  const provider = rpcProvider; // Always use RPC for reads
+  const isReady = localMode ? !!localSigner : walletReady;
 
   const connect = useCallback(() => {
-    if (authenticated) return; // Already logged in
+    if (authenticated) return;
     privyLogin();
   }, [authenticated, privyLogin]);
 
@@ -125,9 +120,9 @@ export function useWallet() {
       localStorage.removeItem('opick_account');
       localStorage.removeItem('opick_connect_method');
     } else if (authenticated) {
-      setPrivyProvider(null);
       setPrivySigner(null);
       setPrivyAccount(null);
+      setWalletReady(false);
       await privyLogout();
     }
   }, [localMode, authenticated, privyLogout]);
@@ -139,7 +134,8 @@ export function useWallet() {
     connect,
     connectLocal: IS_DEV ? connectLocal : null,
     disconnect,
-    ready,
+    ready: ready,
     authenticated: localMode || authenticated,
+    walletReady: isReady,
   };
 }

@@ -65,7 +65,7 @@ function smartParseUSDC(val) {
   return n;
 }
 
-export default function MarketPage({ account, provider, signer, onConnect }) {
+export default function MarketPage({ account, provider, signer, onConnect, authenticated, walletReady }) {
   const { address: marketAddress } = useParams();
   const { market: rawMarket, loading, refetch } = useMarket(marketAddress);
   const { usdc, getMarket } = useContracts(signer || provider);
@@ -195,11 +195,25 @@ export default function MarketPage({ account, provider, signer, onConnect }) {
 
   // Buy shares
   const handleBuy = async () => {
-    if (!amount || !signer || !usdc || !getMarket) return;
+    if (!amount || !signer || !usdc || !getMarket) {
+      if (!signer) setTxError('Wallet not ready. Please wait a moment.');
+      return;
+    }
     setTxError('');
     setTxLoading(true);
     try {
       const amountBigInt = parseUnits(amount, 6);
+
+      // Check USDC balance
+      if (account) {
+        const balance = await usdc.balanceOf(account);
+        if (balance < amountBigInt) {
+          setTxError(`Insufficient USDC balance. You have $${(Number(balance) / 1e6).toFixed(2)}. Use the faucet to get testnet USDC.`);
+          setTxLoading(false);
+          return;
+        }
+      }
+
       const marketContract = getMarket(marketAddress);
 
       // Approve USDC
@@ -207,17 +221,22 @@ export default function MarketPage({ account, provider, signer, onConnect }) {
       await approveTx.wait();
 
       // Buy shares
-      const buyFn = selectedSide === 'A'
-        ? marketContract.buyA(amountBigInt)
-        : marketContract.buyB(amountBigInt);
-      const buyTx = await buyFn;
+      const buyTx = selectedSide === 'A'
+        ? await marketContract.buyA(amountBigInt)
+        : await marketContract.buyB(amountBigInt);
       await buyTx.wait();
 
       setAmount('');
+      setTxError('');
       refetch();
     } catch (e) {
       console.error('Transaction failed:', e);
-      setTxError(e?.reason || e?.message || 'Transaction failed');
+      const msg = e?.reason || e?.message || 'Transaction failed';
+      if (msg.includes('insufficient')) {
+        setTxError('Insufficient USDC. Use the faucet to get testnet tokens.');
+      } else {
+        setTxError(msg.length > 100 ? msg.slice(0, 100) + '...' : msg);
+      }
     } finally {
       setTxLoading(false);
     }
@@ -545,7 +564,15 @@ export default function MarketPage({ account, provider, signer, onConnect }) {
 
             {txError && <div className={s.errorMsg}>{txError}</div>}
 
-            {account ? (
+            {!authenticated ? (
+              <button className={s.pickBtnGreen} onClick={onConnect}>
+                Sign in to trade
+              </button>
+            ) : !walletReady ? (
+              <button className={s.pickBtnGreen} disabled>
+                Setting up wallet...
+              </button>
+            ) : (
               <button
                 className={selectedSide === 'A' ? s.pickBtnGreen : s.pickBtnRed}
                 onClick={handleBuy}
@@ -554,10 +581,6 @@ export default function MarketPage({ account, provider, signer, onConnect }) {
                 {txLoading
                   ? 'Processing...'
                   : `Pick ${selectedSide === 'A' ? sideAName : sideBName}`}
-              </button>
-            ) : (
-              <button className={s.pickBtnGreen} onClick={onConnect}>
-                Connect Wallet
               </button>
             )}
 

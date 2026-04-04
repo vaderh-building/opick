@@ -16,7 +16,7 @@ const TEMPLATES = [
 
 const CATEGORIES = ['Sports', 'Music', 'Tech', 'Culture', 'Finance', 'Lifestyle'];
 
-export default function CreatePage({ account, provider, signer, onConnect }) {
+export default function CreatePage({ account, provider, signer, onConnect, authenticated, walletReady }) {
   const navigate = useNavigate();
   const { usdc, factory } = useContracts(signer || provider);
 
@@ -106,14 +106,14 @@ export default function CreatePage({ account, provider, signer, onConnect }) {
     }
   };
 
-  if (!account) {
+  if (!authenticated) {
     return (
       <div className={styles.page}>
         <div className={styles.authGate}>
           <h2 className={styles.authTitle}>Sign in to create a market</h2>
           <p className={styles.authSub}>Connect your wallet to start a debate and earn from every trade.</p>
           <button className={styles.authBtn} onClick={() => { if (onConnect) onConnect(); }}>
-            Connect Wallet
+            Sign In
           </button>
         </div>
       </div>

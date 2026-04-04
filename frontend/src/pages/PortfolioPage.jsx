@@ -4,7 +4,7 @@ import { useContracts } from '../hooks/useContracts';
 import { useMarkets } from '../hooks/useMarkets';
 import styles from './PortfolioPage.module.css';
 
-export default function PortfolioPage({ account, provider, signer, onConnect }) {
+export default function PortfolioPage({ account, provider, signer, onConnect, authenticated, walletReady }) {
   const { getMarket } = useContracts(signer || provider);
   const { markets, loading: marketsLoading } = useMarkets();
 
@@ -102,15 +102,26 @@ export default function PortfolioPage({ account, provider, signer, onConnect }) 
 
   const totalValue = positions.reduce((sum, p) => sum + p.valueA + p.valueB, 0);
 
-  if (!account) {
+  if (!authenticated) {
     return (
       <div className={styles.page}>
         <h1 className={styles.title}>Your Positions</h1>
         <div className={styles.notConnected}>
-          <p className={styles.notConnectedText}>Connect your wallet to view positions</p>
+          <p className={styles.notConnectedText}>Sign in to view your positions</p>
           <button className={styles.connectBtn} onClick={onConnect}>
-            Connect Wallet
+            Sign In
           </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (authenticated && !account) {
+    return (
+      <div className={styles.page}>
+        <h1 className={styles.title}>Your Positions</h1>
+        <div className={styles.loading}>
+          <p>Setting up wallet...</p>
         </div>
       </div>
     );
