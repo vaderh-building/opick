@@ -76,9 +76,13 @@ function loadAbi(name) {
     path.join(__dirname, "..", "artifacts", "contracts", `${name}.sol`, `${name}.json`),
   ];
   for (const loc of locations) {
-    if (fs.existsSync(loc)) {
+    const exists = fs.existsSync(loc);
+    console.log(`  ABI ${name}: ${loc} → ${exists ? "FOUND" : "missing"}`);
+    if (exists) {
       const content = JSON.parse(fs.readFileSync(loc, "utf-8"));
-      return content.abi || content;
+      const abi = content.abi || content;
+      console.log(`  ABI ${name}: loaded ${abi.length} entries`);
+      return abi;
     }
   }
   throw new Error(`ABI not found for ${name}. Searched: ${locations.join(", ")}`);
@@ -104,24 +108,27 @@ app.get("/api/health", async (req, res) => {
   try {
     const network = await provider.getNetwork();
     const code = await provider.getCode(factoryAddress);
-    const factory = new ethers.Contract(factoryAddress, factoryAbi, provider);
-    const total = await factory.totalMarkets();
     res.json({
       status: "ok",
       chainId: Number(network.chainId),
       rpcUrl: config.rpcUrl,
       factoryAddress,
+      codeLength: code.length,
       hasCode: code !== "0x",
-      totalMarkets: Number(total),
+      abiLoaded: Array.isArray(factoryAbi),
+      abiLength: factoryAbi?.length || 0,
+      firstFunction: factoryAbi?.find(e => e.type === "function")?.name || "unknown",
+      __dirname,
+      cwd: process.cwd(),
     });
   } catch (err) {
-    console.error("Health check failed:", err.message);
     res.json({
       status: "error",
       error: err.message,
       rpcUrl: config.rpcUrl,
       factoryAddress,
-      chainId: null,
+      __dirname,
+      cwd: process.cwd(),
     });
   }
 });
