@@ -105,32 +105,37 @@ app.use("/api/comments", commentsRouter);
 app.use("/api/users", usersRouter);
 
 app.get("/api/health", async (req, res) => {
+  const result = { rpcUrl: config.rpcUrl, factoryAddress, __dirname, cwd: process.cwd() };
   try {
     const network = await provider.getNetwork();
-    const code = await provider.getCode(factoryAddress);
-    res.json({
-      status: "ok",
-      chainId: Number(network.chainId),
-      rpcUrl: config.rpcUrl,
-      factoryAddress,
-      codeLength: code.length,
-      hasCode: code !== "0x",
-      abiLoaded: Array.isArray(factoryAbi),
-      abiLength: factoryAbi?.length || 0,
-      firstFunction: factoryAbi?.find(e => e.type === "function")?.name || "unknown",
-      __dirname,
-      cwd: process.cwd(),
-    });
+    result.chainId = Number(network.chainId);
+    result.rpcOk = true;
   } catch (err) {
-    res.json({
-      status: "error",
-      error: err.message,
-      rpcUrl: config.rpcUrl,
-      factoryAddress,
-      __dirname,
-      cwd: process.cwd(),
-    });
+    result.rpcOk = false;
+    result.rpcError = err.message;
   }
+  try {
+    const code = await provider.getCode(factoryAddress);
+    result.codeLength = code.length;
+    result.hasCode = code !== "0x";
+  } catch (err) {
+    result.codeError = err.message;
+  }
+  result.abiLoaded = Array.isArray(factoryAbi);
+  result.abiLength = factoryAbi?.length || 0;
+  result.abiFunctions = factoryAbi?.filter(e => e.type === "function").map(e => e.name) || [];
+  try {
+    const factory = new ethers.Contract(factoryAddress, factoryAbi, provider);
+    const total = await factory.totalMarkets();
+    result.totalMarkets = Number(total);
+    result.contractCallOk = true;
+  } catch (err) {
+    result.contractCallOk = false;
+    result.contractError = err.message;
+    result.contractErrorCode = err.code;
+  }
+  result.status = result.contractCallOk ? "ok" : "error";
+  res.json(result);
 });
 
 // ---------- HTTP + WebSocket server ----------
