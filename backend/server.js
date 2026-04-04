@@ -25,7 +25,9 @@ function loadConfig() {
   // Try deployed-addresses file
   if (!factoryAddress || !usdcAddress) {
     try {
-      const addrPath = path.join(__dirname, "..", "deployed-addresses-base-sepolia.json");
+      const addrLocal = path.join(__dirname, "deployed-addresses-base-sepolia.json");
+      const addrParent = path.join(__dirname, "..", "deployed-addresses-base-sepolia.json");
+      const addrPath = fs.existsSync(addrLocal) ? addrLocal : addrParent;
       if (fs.existsSync(addrPath)) {
         const addrs = JSON.parse(fs.readFileSync(addrPath, "utf-8"));
         factoryAddress = factoryAddress || addrs.OPickFactory || "";
@@ -67,12 +69,19 @@ console.log("Config:", {
 // ---------- Ethers provider & ABIs ----------
 const provider = new ethers.JsonRpcProvider(config.rpcUrl);
 
-// Try abi/ dir first (committed to git), fall back to artifacts/ (local dev)
 function loadAbi(name) {
-  const abiDir = path.join(__dirname, "..", "abi", `${name}.json`);
-  const artifactDir = path.join(__dirname, "..", "artifacts", "contracts", `${name}.sol`, `${name}.json`);
-  const filePath = fs.existsSync(abiDir) ? abiDir : artifactDir;
-  return JSON.parse(fs.readFileSync(filePath, "utf-8")).abi;
+  const locations = [
+    path.join(__dirname, "abi", `${name}.json`),
+    path.join(__dirname, "..", "abi", `${name}.json`),
+    path.join(__dirname, "..", "artifacts", "contracts", `${name}.sol`, `${name}.json`),
+  ];
+  for (const loc of locations) {
+    if (fs.existsSync(loc)) {
+      const content = JSON.parse(fs.readFileSync(loc, "utf-8"));
+      return content.abi || content;
+    }
+  }
+  throw new Error(`ABI not found for ${name}. Searched: ${locations.join(", ")}`);
 }
 
 const factoryAbi = loadAbi("OPickFactory");
