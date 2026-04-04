@@ -57,23 +57,14 @@ function loadConfig() {
 const config = loadConfig();
 console.log("Config:", config);
 
-// ---------- Fallback RPC provider ----------
-const RPC_URLS = [
-  config.rpcUrl,
-  "https://base-sepolia-rpc.publicnode.com",
-  "https://base-sepolia.blockpi.network/v1/rpc/public",
-  "https://sepolia.base.org",
-];
-// Deduplicate
-const uniqueRpcs = [...new Set(RPC_URLS)];
-
-const providers = uniqueRpcs.map((url) => new ethers.JsonRpcProvider(url));
-// Use FallbackProvider: tries each in order, falls back on failure
-const provider = new ethers.FallbackProvider(
-  providers.map((p, i) => ({ provider: p, priority: i + 1, stallTimeout: 3000, weight: 1 })),
-  1 // quorum of 1 — only need one to respond
+// ---------- RPC provider (single, static network) ----------
+const rpcUrl = config.rpcUrl || "https://sepolia.base.org";
+const provider = new ethers.JsonRpcProvider(
+  rpcUrl,
+  { chainId: 84532, name: "base-sepolia" },
+  { staticNetwork: true }
 );
-console.log("RPC providers:", uniqueRpcs.length, "configured");
+console.log("RPC provider:", rpcUrl, "(staticNetwork)");
 
 // ---------- ABIs ----------
 function loadAbi(name) {
@@ -107,7 +98,7 @@ app.use("/api/comments", commentsRouter);
 app.use("/api/users", usersRouter);
 
 app.get("/api/health", async (req, res) => {
-  const result = { rpcUrls: uniqueRpcs, factoryAddress };
+  const result = { rpcUrl, factoryAddress };
   try {
     const network = await provider.getNetwork();
     result.chainId = Number(network.chainId);
