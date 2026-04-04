@@ -1,11 +1,11 @@
 import Database from "better-sqlite3";
-import { fileURLToPath } from "url";
+import fs from "fs";
 import path from "path";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const dataDir = path.join(process.cwd(), "data");
+if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
 
-const dbPath = path.join(__dirname, "data", "opick.db");
+const dbPath = path.join(dataDir, "opick.db");
 const db = new Database(dbPath);
 
 // Enable WAL mode for better concurrent read performance
