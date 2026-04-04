@@ -11,7 +11,7 @@ export default function createMarketsRouter({
 
   let cachedMarkets = null;
   let cacheTimestamp = 0;
-  const CACHE_TTL = 5000;
+  const CACHE_TTL = 15000; // 15 seconds — gentler on RPC
 
   async function fetchMarketData(marketAddress) {
     const contract = new ethers.Contract(marketAddress, marketAbi, provider);
@@ -36,6 +36,23 @@ export default function createMarketsRouter({
       totalSharesA: totalSharesA.toString(), totalSharesB: totalSharesB.toString(),
       creator, createdAt: createdAt.toString(),
     };
+  }
+
+  // Fetch markets in batches to avoid RPC rate limits
+  async function fetchAllMarkets(addresses) {
+    const BATCH_SIZE = 4;
+    const results = [];
+    for (let i = 0; i < addresses.length; i += BATCH_SIZE) {
+      const batch = addresses.slice(i, i + BATCH_SIZE);
+      const batchResults = await Promise.all(
+        batch.map((addr) => fetchMarketData(addr).catch((err) => {
+          console.error(`Failed to fetch market ${addr}:`, err.message);
+          return null;
+        }))
+      );
+      results.push(...batchResults);
+    }
+    return results.filter(Boolean);
   }
 
   // GET /api/markets
@@ -65,17 +82,16 @@ export default function createMarketsRouter({
       }
 
       const marketAddresses = await factory.getMarkets(0, count);
-      console.log("Fetched", marketAddresses.length, "market addresses, loading data...");
+      console.log("Fetching data for", marketAddresses.length, "markets in batches...");
 
-      const markets = await Promise.all(
-        marketAddresses.map((addr) => fetchMarketData(addr))
-      );
+      const markets = await fetchAllMarkets(Array.from(marketAddresses));
+      console.log("Successfully loaded", markets.length, "markets");
 
       cachedMarkets = markets;
       cacheTimestamp = now;
       res.json(markets);
     } catch (err) {
-      console.error("Failed to fetch markets:", err.message, err.code, err);
+      console.error("Failed to fetch markets:", err.message, err.code);
       res.status(500).json({ error: "Failed to fetch markets", details: err.message });
     }
   });
@@ -86,7 +102,7 @@ export default function createMarketsRouter({
       const market = await fetchMarketData(req.params.address);
       res.json(market);
     } catch (err) {
-      console.error("Failed to fetch market:", req.params.address, err.message, err.code);
+      console.error("Failed to fetch market:", req.params.address, err.message);
       res.status(500).json({ error: "Failed to fetch market", details: err.message });
     }
   });
@@ -101,7 +117,7 @@ export default function createMarketsRouter({
       ]);
       res.json({ sharesA: sharesA.toString(), sharesB: sharesB.toString() });
     } catch (err) {
-      console.error("Failed to fetch positions:", err.message, err.code);
+      console.error("Failed to fetch positions:", err.message);
       res.status(500).json({ error: "Failed to fetch positions", details: err.message });
     }
   });
