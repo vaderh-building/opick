@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { usePrivy, useWallets } from '@privy-io/react-auth';
 import { BrowserProvider, JsonRpcProvider, Wallet } from 'ethers';
 import { RPC_URL } from '../config.js';
@@ -6,6 +6,9 @@ import { RPC_URL } from '../config.js';
 const HARDHAT_PRIVATE_KEY = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80';
 const IS_DEV = import.meta.env.VITE_DEV_MODE === 'true' ||
   (typeof window !== 'undefined' && window.location.hostname === 'localhost');
+const BASE_SEPOLIA_CHAIN_ID = 84532;
+
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
 export function useWallet() {
   const { ready, authenticated, user, login: privyLogin, logout: privyLogout } = usePrivy();
@@ -30,13 +33,11 @@ export function useWallet() {
     }
   }, [localMode, rpcProvider]);
 
-  // Privy wallet state
+  // Privy state
   const [privySigner, setPrivySigner] = useState(null);
   const [privyAccount, setPrivyAccount] = useState(null);
   const [walletReady, setWalletReady] = useState(false);
-  const setupAttempted = useRef(false);
 
-  // Core effect: when authenticated + wallets available, get signer
   useEffect(() => {
     if (localMode || !ready || !authenticated) {
       if (!localMode && !authenticated) {
@@ -47,53 +48,79 @@ export function useWallet() {
       return;
     }
 
-    // Extract address from any available source
-    let addr = null;
-    if (user?.wallet?.address) addr = user.wallet.address;
-    if (!addr && user?.linkedAccounts) {
+    // Get address from user object immediately for display
+    let userAddr = user?.wallet?.address || null;
+    if (!userAddr && user?.linkedAccounts) {
       const wa = user.linkedAccounts.find(a => a.type === 'wallet');
-      if (wa?.address) addr = wa.address;
+      if (wa?.address) userAddr = wa.address;
     }
-    if (!addr && wallets.length > 0) addr = wallets[0].address;
+    if (userAddr) setPrivyAccount(userAddr);
 
-    if (addr && !privyAccount) {
-      setPrivyAccount(addr);
-    }
+    console.log('Auth state:', authenticated, 'Wallets:', wallets?.length,
+      wallets?.map(w => `${w.walletClientType}:${w.address?.slice(0,8)}`));
 
-    // Setup signer from first available wallet
     if (!wallets.length) return;
-    const wallet = wallets[0];
-    if (wallet.address && !privyAccount) setPrivyAccount(wallet.address);
+
+    // Prefer embedded (privy) wallet, fall back to first
+    const wallet = wallets.find(w => w.walletClientType === 'privy') || wallets[0];
+    if (wallet.address) setPrivyAccount(wallet.address);
 
     let cancelled = false;
 
     (async () => {
       try {
+        // Switch to Base Sepolia
+        try {
+          console.log('Switching chain to', BASE_SEPOLIA_CHAIN_ID);
+          await wallet.switchChain(BASE_SEPOLIA_CHAIN_ID);
+        } catch (e) {
+          console.warn('Chain switch failed (may already be on correct chain):', e.message);
+        }
+
+        console.log('Getting ethereum provider...');
         const ethProvider = await wallet.getEthereumProvider();
         if (cancelled) return;
+
+        console.log('Creating BrowserProvider + signer...');
         const bp = new BrowserProvider(ethProvider);
         const s = await bp.getSigner();
-        const signerAddr = await s.getAddress();
+        const addr = await s.getAddress();
         if (cancelled) return;
+
+        console.log('Wallet ready:', addr);
         setPrivySigner(s);
-        setPrivyAccount(signerAddr);
+        setPrivyAccount(addr);
         setWalletReady(true);
       } catch (e) {
         console.error('Wallet setup failed:', e.message);
-        if (!cancelled) {
-          setPrivyAccount(wallet.address || addr);
-          setWalletReady(false);
-        }
+        if (!cancelled) setWalletReady(false);
       }
     })();
 
     return () => { cancelled = true; };
   }, [authenticated, ready, wallets, localMode, user]);
 
-  // Unified interface
+  // Retry: if authenticated but wallets empty, poll for up to 10s
+  useEffect(() => {
+    if (localMode || !authenticated || !ready || wallets.length > 0 || walletReady) return;
+
+    let cancelled = false;
+    (async () => {
+      console.log('Waiting for embedded wallet to provision...');
+      for (let i = 0; i < 5; i++) {
+        await sleep(2000);
+        if (cancelled || wallets.length > 0) return;
+        console.log(`  Retry ${i + 1}/5, wallets:`, wallets.length);
+      }
+      console.log('Embedded wallet not provisioned after 10s');
+    })();
+
+    return () => { cancelled = true; };
+  }, [authenticated, ready, wallets, localMode, walletReady]);
+
   const account = localMode ? localAccount : privyAccount;
   const signer = localMode ? localSigner : privySigner;
-  const provider = rpcProvider; // Always use RPC for reads
+  const provider = rpcProvider;
   const isReady = localMode ? !!localSigner : walletReady;
 
   const connect = useCallback(() => {
@@ -134,8 +161,9 @@ export function useWallet() {
     connect,
     connectLocal: IS_DEV ? connectLocal : null,
     disconnect,
-    ready: ready,
+    ready,
     authenticated: localMode || authenticated,
     walletReady: isReady,
+    user,
   };
 }

@@ -4,7 +4,7 @@ import styles from './Navbar.module.css';
 
 const NAV_LINKS = [
   { to: '/markets', label: 'Markets' },
-  { to: '/portfolio', label: 'Portfolio' },
+  { to: '/portfolio', label: 'Picks' },
   { to: '/create', label: 'Create' },
   { to: '/docs', label: 'Docs' },
 ];
@@ -62,7 +62,7 @@ export default function Navbar({ account, authenticated, onConnect, onConnectLoc
                 onClick={() => setDropdownOpen(!dropdownOpen)}
               >
                 <span className={styles.greenDot} />
-                {account ? truncateAddress(account) : 'Connected'}
+                {account ? truncateAddress(account) : 'Loading...'}
               </button>
               {dropdownOpen && (
                 <div className={styles.dropdown}>

@@ -566,11 +566,11 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
 
             {!authenticated ? (
               <button className={s.pickBtnGreen} onClick={onConnect}>
-                Sign in to trade
+                Sign in to pick a side
               </button>
             ) : !walletReady ? (
               <button className={s.pickBtnGreen} disabled>
-                Setting up wallet...
+                Loading your account...
               </button>
             ) : (
               <button
