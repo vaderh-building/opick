@@ -13,7 +13,12 @@ export default function PortfolioPage({ account, provider, signer, onConnect, au
   const [sellingId, setSellingId] = useState(null);
 
   const fetchPositions = useCallback(async () => {
-    if (!account || !markets.length || !getMarket) return;
+    // Need a valid eth address and a signer-backed contract
+    if (!account || !account.startsWith('0x') || !markets.length || !getMarket) {
+      setPositions([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
 
     try {
@@ -24,46 +29,45 @@ export default function PortfolioPage({ account, provider, signer, onConnect, au
           const contract = getMarket(m.address);
           if (!contract) continue;
 
-          const [sharesA, sharesB, reserveA, reserveB] = await Promise.all([
+          const [sharesA, sharesB] = await Promise.all([
             contract.sharesA(account),
             contract.sharesB(account),
-            contract.reserveA(),
-            contract.reserveB(),
           ]);
 
-          const sharesANum = Number(sharesA);
-          const sharesBNum = Number(sharesB);
+          // BigInt comparison — both must be > 0n to count
+          const hasA = sharesA > 0n;
+          const hasB = sharesB > 0n;
 
-          if (sharesANum > 0 || sharesBNum > 0) {
+          if (hasA || hasB) {
+            const [reserveA, reserveB] = await Promise.all([
+              contract.reserveA(),
+              contract.reserveB(),
+            ]);
             const totalReserves = Number(reserveA) + Number(reserveB);
             const priceA = totalReserves > 0 ? Number(reserveB) / totalReserves : 0.5;
             const priceB = totalReserves > 0 ? Number(reserveA) / totalReserves : 0.5;
-
-            // shares and reserves are in 6 decimal USDC units
-            const valueA = (sharesANum * priceA) / 1e6;
-            const valueB = (sharesBNum * priceB) / 1e6;
 
             results.push({
               address: m.address,
               topic: m.topic || 'Untitled Market',
               choiceA: m.sideAName || 'Side A',
               choiceB: m.sideBName || 'Side B',
-              sharesA: sharesANum,
-              sharesB: sharesBNum,
-              valueA,
-              valueB,
+              sharesA: hasA ? Number(sharesA) : 0,
+              sharesB: hasB ? Number(sharesB) : 0,
+              valueA: hasA ? (Number(sharesA) * priceA) / 1e6 : 0,
+              valueB: hasB ? (Number(sharesB) * priceB) / 1e6 : 0,
               priceA,
               priceB,
             });
           }
-        } catch (err) {
-          console.error(`Error fetching position for ${m.address}:`, err);
+        } catch {
+          // Skip markets that fail to read — don't add them
         }
       }
 
       setPositions(results);
-    } catch (err) {
-      console.error('Error fetching positions:', err);
+    } catch {
+      setPositions([]);
     } finally {
       setLoading(false);
     }
