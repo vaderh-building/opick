@@ -17,7 +17,7 @@ function truncateAddress(address) {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }
 
-export default function Navbar({ account, onConnect, onConnectLocal, onDisconnect }) {
+export default function Navbar({ account, authenticated, onConnect, onConnectLocal, onDisconnect }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -55,14 +55,14 @@ export default function Navbar({ account, onConnect, onConnectLocal, onDisconnec
             ))}
           </div>
 
-          {account ? (
+          {(authenticated || account) ? (
             <div className={styles.accountWrap} ref={dropdownRef}>
               <button
                 className={styles.accountBtn}
                 onClick={() => setDropdownOpen(!dropdownOpen)}
               >
                 <span className={styles.greenDot} />
-                {truncateAddress(account)}
+                {account ? truncateAddress(account) : 'Connected'}
               </button>
               {dropdownOpen && (
                 <div className={styles.dropdown}>
@@ -77,7 +77,7 @@ export default function Navbar({ account, onConnect, onConnectLocal, onDisconnec
             </div>
           ) : (
             <div className={styles.connectGroup}>
-              <button className={styles.connectBtn} onClick={() => { console.log('Connect clicked, calling login...', typeof onConnect); if (onConnect) onConnect(); }}>
+              <button className={styles.connectBtn} onClick={() => { if (onConnect) onConnect(); }}>
                 Connect
               </button>
               {isDevMode && onConnectLocal && (

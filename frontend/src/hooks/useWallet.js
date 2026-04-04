@@ -7,8 +7,19 @@ const HARDHAT_PRIVATE_KEY = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efca
 const IS_DEV = import.meta.env.VITE_DEV_MODE === 'true' ||
   (typeof window !== 'undefined' && window.location.hostname === 'localhost');
 
+// Extract wallet address from Privy user object
+function getPrivyAddress(user) {
+  if (!user) return null;
+  // Try direct wallet
+  if (user.wallet?.address) return user.wallet.address;
+  // Try linked accounts
+  const walletAccount = user.linkedAccounts?.find(a => a.type === 'wallet');
+  if (walletAccount?.address) return walletAccount.address;
+  return null;
+}
+
 export function useWallet() {
-  const { ready, authenticated, user, login, logout: privyLogout } = usePrivy();
+  const { ready, authenticated, user, login: privyLogin, logout: privyLogout } = usePrivy();
   const { wallets } = useWallets();
 
   // Local dev mode
@@ -20,10 +31,8 @@ export function useWallet() {
     localMode ? localStorage.getItem('opick_account') : null
   );
 
-  // Read-only provider
   const rpcProvider = useMemo(() => new JsonRpcProvider(RPC_URL), []);
 
-  // Local dev signer
   useEffect(() => {
     if (localMode && IS_DEV) {
       const w = new Wallet(HARDHAT_PRIVATE_KEY, rpcProvider);
@@ -37,28 +46,33 @@ export function useWallet() {
   const [privySigner, setPrivySigner] = useState(null);
   const [privyAccount, setPrivyAccount] = useState(null);
 
-  // When Privy authenticates and wallets become available, get ethers signer
+  // Detect auth state and set account immediately
   useEffect(() => {
-    if (localMode || !authenticated || !ready) {
-      if (!localMode) {
-        setPrivyProvider(null);
-        setPrivySigner(null);
-        setPrivyAccount(null);
-      }
+    if (localMode) return;
+
+    if (!ready || !authenticated) {
+      setPrivyProvider(null);
+      setPrivySigner(null);
+      setPrivyAccount(null);
       return;
     }
 
-    // Privy may provide the user's address before the wallet object is ready
-    // Use the user's wallet address immediately for display
-    if (user?.wallet?.address) {
-      setPrivyAccount(user.wallet.address);
+    // Set address immediately from user object (before wallet SDK is ready)
+    const addr = getPrivyAddress(user);
+    if (addr) {
+      setPrivyAccount(addr);
     }
 
-    // If wallets array is populated, get the ethers provider/signer
+    // If wallets array is populated, get ethers provider/signer
     if (!wallets.length) return;
 
     const wallet = wallets[0];
     let cancelled = false;
+
+    // Set address from wallet object too
+    if (wallet.address && !addr) {
+      setPrivyAccount(wallet.address);
+    }
 
     (async () => {
       try {
@@ -66,16 +80,15 @@ export function useWallet() {
         if (cancelled) return;
         const bp = new BrowserProvider(ethProvider);
         const s = await bp.getSigner();
-        const addr = await s.getAddress();
+        const signerAddr = await s.getAddress();
         if (cancelled) return;
         setPrivyProvider(bp);
         setPrivySigner(s);
-        setPrivyAccount(addr);
+        setPrivyAccount(signerAddr);
       } catch (e) {
         console.error('Failed to get Privy wallet provider:', e);
         if (!cancelled) {
-          // Still show the address even if signer fails
-          setPrivyAccount(wallet.address || user?.wallet?.address || null);
+          setPrivyAccount(wallet.address || addr || null);
         }
       }
     })();
@@ -89,8 +102,9 @@ export function useWallet() {
   const signer = localMode ? localSigner : privySigner;
 
   const connect = useCallback(() => {
-    login();
-  }, [login]);
+    if (authenticated) return; // Already logged in
+    privyLogin();
+  }, [authenticated, privyLogin]);
 
   const connectLocal = useCallback(async () => {
     if (!IS_DEV) return null;

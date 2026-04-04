@@ -11,12 +11,13 @@ import DocsPage from './pages/DocsPage.jsx';
 import './index.css';
 
 function App() {
-  const { account, provider, signer, connect, connectLocal, disconnect } = useWallet();
+  const { account, provider, signer, connect, connectLocal, disconnect, authenticated } = useWallet();
 
   return (
     <BrowserRouter>
       <Navbar
         account={account}
+        authenticated={authenticated}
         onConnect={connect}
         onConnectLocal={connectLocal}
         onDisconnect={disconnect}
