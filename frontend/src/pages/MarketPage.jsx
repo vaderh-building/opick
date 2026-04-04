@@ -569,8 +569,8 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
                 Sign in to pick a side
               </button>
             ) : !walletReady ? (
-              <button className={s.pickBtnGreen} disabled>
-                Loading your account...
+              <button className={s.pickBtnGreen} disabled title="Your wallet is being set up. This may take a moment.">
+                Wallet setup in progress...
               </button>
             ) : (
               <button

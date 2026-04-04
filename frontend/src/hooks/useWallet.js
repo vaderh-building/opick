@@ -10,11 +10,19 @@ const BASE_SEPOLIA_CHAIN_ID = 84532;
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
+function getUserDisplay(user) {
+  if (!user) return null;
+  if (user.email?.address) return user.email.address;
+  if (user.google?.email) return user.google.email;
+  if (user.twitter?.username) return `@${user.twitter.username}`;
+  return 'Logged in';
+}
+
 export function useWallet() {
-  const { ready, authenticated, user, login: privyLogin, logout: privyLogout } = usePrivy();
+  const { ready, authenticated, user, login: privyLogin, logout: privyLogout, createWallet } = usePrivy();
   const { wallets } = useWallets();
 
-  // Local dev mode
+  // Local dev
   const [localMode, setLocalMode] = useState(
     IS_DEV && localStorage.getItem('opick_connect_method') === 'local'
   );
@@ -38,6 +46,7 @@ export function useWallet() {
   const [privyAccount, setPrivyAccount] = useState(null);
   const [walletReady, setWalletReady] = useState(false);
 
+  // Setup wallet when authenticated + wallets available
   useEffect(() => {
     if (localMode || !ready || !authenticated) {
       if (!localMode && !authenticated) {
@@ -48,7 +57,7 @@ export function useWallet() {
       return;
     }
 
-    // Get address from user object immediately for display
+    // Immediate address from user object
     let userAddr = user?.wallet?.address || null;
     if (!userAddr && user?.linkedAccounts) {
       const wa = user.linkedAccounts.find(a => a.type === 'wallet');
@@ -56,12 +65,10 @@ export function useWallet() {
     }
     if (userAddr) setPrivyAccount(userAddr);
 
-    console.log('Auth state:', authenticated, 'Wallets:', wallets?.length,
-      wallets?.map(w => `${w.walletClientType}:${w.address?.slice(0,8)}`));
+    console.log('Wallets:', wallets?.length, wallets?.map(w => `${w.walletClientType}:${w.address?.slice(0, 8)}`));
 
     if (!wallets.length) return;
 
-    // Prefer embedded (privy) wallet, fall back to first
     const wallet = wallets.find(w => w.walletClientType === 'privy') || wallets[0];
     if (wallet.address) setPrivyAccount(wallet.address);
 
@@ -69,28 +76,19 @@ export function useWallet() {
 
     (async () => {
       try {
-        // Switch to Base Sepolia
-        try {
-          console.log('Switching chain to', BASE_SEPOLIA_CHAIN_ID);
-          await wallet.switchChain(BASE_SEPOLIA_CHAIN_ID);
-        } catch (e) {
-          console.warn('Chain switch failed (may already be on correct chain):', e.message);
-        }
+        try { await wallet.switchChain(BASE_SEPOLIA_CHAIN_ID); } catch {}
 
-        console.log('Getting ethereum provider...');
         const ethProvider = await wallet.getEthereumProvider();
         if (cancelled) return;
-
-        console.log('Creating BrowserProvider + signer...');
         const bp = new BrowserProvider(ethProvider);
         const s = await bp.getSigner();
         const addr = await s.getAddress();
         if (cancelled) return;
 
-        console.log('Wallet ready:', addr);
         setPrivySigner(s);
         setPrivyAccount(addr);
         setWalletReady(true);
+        console.log('Wallet ready:', addr);
       } catch (e) {
         console.error('Wallet setup failed:', e.message);
         if (!cancelled) setWalletReady(false);
@@ -100,28 +98,34 @@ export function useWallet() {
     return () => { cancelled = true; };
   }, [authenticated, ready, wallets, localMode, user]);
 
-  // Retry: if authenticated but wallets empty, poll for up to 10s
+  // If authenticated but no wallets after delay, try creating one
   useEffect(() => {
     if (localMode || !authenticated || !ready || wallets.length > 0 || walletReady) return;
 
     let cancelled = false;
     (async () => {
-      console.log('Waiting for embedded wallet to provision...');
-      for (let i = 0; i < 5; i++) {
-        await sleep(2000);
-        if (cancelled || wallets.length > 0) return;
-        console.log(`  Retry ${i + 1}/5, wallets:`, wallets.length);
+      await sleep(3000);
+      if (cancelled || wallets.length > 0) return;
+
+      if (createWallet) {
+        console.log('No wallets found, creating embedded wallet...');
+        try {
+          await createWallet();
+          console.log('Embedded wallet created');
+        } catch (e) {
+          console.warn('createWallet failed:', e.message);
+        }
       }
-      console.log('Embedded wallet not provisioned after 10s');
     })();
 
     return () => { cancelled = true; };
-  }, [authenticated, ready, wallets, localMode, walletReady]);
+  }, [authenticated, ready, wallets, localMode, walletReady, createWallet]);
 
   const account = localMode ? localAccount : privyAccount;
   const signer = localMode ? localSigner : privySigner;
   const provider = rpcProvider;
   const isReady = localMode ? !!localSigner : walletReady;
+  const displayName = !localMode && authenticated && !account ? getUserDisplay(user) : null;
 
   const connect = useCallback(() => {
     if (authenticated) return;
@@ -164,6 +168,7 @@ export function useWallet() {
     ready,
     authenticated: localMode || authenticated,
     walletReady: isReady,
+    displayName,
     user,
   };
 }

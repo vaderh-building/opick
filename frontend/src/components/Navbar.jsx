@@ -17,7 +17,7 @@ function truncateAddress(address) {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }
 
-export default function Navbar({ account, authenticated, onConnect, onConnectLocal, onDisconnect }) {
+export default function Navbar({ account, authenticated, displayName, onConnect, onConnectLocal, onDisconnect }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -62,7 +62,7 @@ export default function Navbar({ account, authenticated, onConnect, onConnectLoc
                 onClick={() => setDropdownOpen(!dropdownOpen)}
               >
                 <span className={styles.greenDot} />
-                {account ? truncateAddress(account) : 'Loading...'}
+                {account ? truncateAddress(account) : (displayName || 'Logged in')}
               </button>
               {dropdownOpen && (
                 <div className={styles.dropdown}>

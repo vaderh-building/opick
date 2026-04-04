@@ -12,7 +12,7 @@ import './index.css';
 
 function App() {
   const wallet = useWallet();
-  const { account, provider, signer, connect, connectLocal, disconnect, authenticated, walletReady } = wallet;
+  const { account, provider, signer, connect, connectLocal, disconnect, authenticated, walletReady, displayName } = wallet;
 
   const pageProps = { account, provider, signer, onConnect: connect, authenticated, walletReady };
 
@@ -21,6 +21,7 @@ function App() {
       <Navbar
         account={account}
         authenticated={authenticated}
+        displayName={displayName}
         onConnect={connect}
         onConnectLocal={connectLocal}
         onDisconnect={disconnect}
