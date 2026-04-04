@@ -13,37 +13,17 @@ import s from './MarketPage.module.css';
 const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001') + '/api';
 const TIME_RANGES = ['1H', '6H', '1D', '1W', '1M', 'ALL'];
 
-// Generate mock price history with a random walk
-function generateMockHistory(currentPrice, points = 50) {
-  const data = [];
-  let price = currentPrice != null ? currentPrice : 50;
+// Generate a flat line at the current price (no fake data)
+function generateFlatLine(currentPrice) {
+  const price = currentPrice != null ? currentPrice : 50;
   const now = Date.now();
-  const interval = (24 * 60 * 60 * 1000) / points; // spread across ~1 day
-
-  // Walk backwards to build history, starting from a nearby price
-  let p = price + (Math.random() - 0.5) * 20;
-  for (let i = 0; i < points; i++) {
-    p += (Math.random() - 0.5) * 3;
-    p = Math.max(2, Math.min(98, p));
-    // Drift towards current price near the end
-    if (i > points * 0.7) {
-      p += (price - p) * 0.1;
-    }
-    data.push({
-      time: new Date(now - (points - i) * interval).toLocaleTimeString([], {
-        hour: '2-digit', minute: '2-digit',
-      }),
-      priceA: Math.round(p * 10) / 10,
-    });
-  }
-  // Last point is the actual current price
-  data.push({
-    time: new Date(now).toLocaleTimeString([], {
+  const interval = (24 * 60 * 60 * 1000) / 10;
+  return Array.from({ length: 11 }, (_, i) => ({
+    time: new Date(now - (10 - i) * interval).toLocaleTimeString([], {
       hour: '2-digit', minute: '2-digit',
     }),
     priceA: Math.round(price * 10) / 10,
-  });
-  return data;
+  }));
 }
 
 function truncateAddress(addr) {
@@ -112,10 +92,9 @@ export default function MarketPage({ account, provider, signer, onConnect }) {
   const priceB = livePrice?.priceB ? parsePrice(livePrice.priceB) : (market?.priceB ? parsePrice(market.priceB) : 50);
   const currentPrice = selectedSide === 'A' ? priceA : priceB;
 
-  // Mock chart data
+  // Chart data — flat line at current price (real history when available)
   const chartData = useMemo(
-    () => generateMockHistory(priceA),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    () => generateFlatLine(priceA),
     [marketAddress, Math.round(priceA)]
   );
 

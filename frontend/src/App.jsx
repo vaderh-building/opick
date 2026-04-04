@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { useWallet } from './hooks/useWallet.js';
 import Navbar from './components/Navbar.jsx';
 import Footer from './components/Footer.jsx';
+import LandingPage from './pages/LandingPage.jsx';
 import HomePage from './pages/HomePage.jsx';
 import MarketPage from './pages/MarketPage.jsx';
 import PortfolioPage from './pages/PortfolioPage.jsx';
@@ -22,7 +23,7 @@ function App() {
       />
       <main style={{ paddingTop: 52, minHeight: 'calc(100vh - 52px)' }}>
         <Routes>
-          <Route path="/" element={<HomePage />} />
+          <Route path="/" element={<LandingPage />} />
           <Route path="/markets" element={<HomePage />} />
           <Route path="/market/:address" element={
             <MarketPage account={account} provider={provider} signer={signer} onConnect={connect} />
