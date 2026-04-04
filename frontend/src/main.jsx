@@ -4,6 +4,7 @@ import { PrivyProvider } from '@privy-io/react-auth';
 import App from './App.jsx';
 
 const privyAppId = import.meta.env.VITE_PRIVY_APP_ID || 'PLACEHOLDER';
+console.log('Privy App ID:', privyAppId === 'PLACEHOLDER' ? 'NOT SET (using placeholder)' : privyAppId.slice(0, 8) + '...');
 
 const baseSepolia = {
   id: 84532,

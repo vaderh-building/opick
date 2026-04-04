@@ -77,7 +77,7 @@ export default function Navbar({ account, onConnect, onConnectLocal, onDisconnec
             </div>
           ) : (
             <div className={styles.connectGroup}>
-              <button className={styles.connectBtn} onClick={onConnect}>
+              <button className={styles.connectBtn} onClick={() => { console.log('Connect clicked, calling login...', typeof onConnect); if (onConnect) onConnect(); }}>
                 Connect
               </button>
               {isDevMode && onConnectLocal && (
