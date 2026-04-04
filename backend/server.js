@@ -14,6 +14,7 @@ import usersRouter from "./routes/users.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // ---------- Config ----------
 function loadConfig() {
@@ -23,29 +24,13 @@ function loadConfig() {
 
   if (!factoryAddress || !usdcAddress) {
     try {
-      const addrLocal = path.join(__dirname, "deployed-addresses-base-sepolia.json");
-      const addrParent = path.join(__dirname, "..", "deployed-addresses-base-sepolia.json");
-      const addrPath = fs.existsSync(addrLocal) ? addrLocal : addrParent;
-      if (fs.existsSync(addrPath)) {
-        const addrs = JSON.parse(fs.readFileSync(addrPath, "utf-8"));
-        factoryAddress = factoryAddress || addrs.OPickFactory || "";
-        usdcAddress = usdcAddress || addrs.MockUSDC || "";
-      }
-    } catch {}
-  }
-
-  if (!factoryAddress || !usdcAddress) {
-    try {
-      const configPath = path.join(__dirname, "..", "frontend", "src", "config.js");
-      if (fs.existsSync(configPath)) {
-        const content = fs.readFileSync(configPath, "utf-8");
-        const regex = /export\s+const\s+(\w+)\s*=\s*["'`]([^"'`]*)["'`]/g;
-        let match;
-        while ((match = regex.exec(content)) !== null) {
-          if (match[1] === "FACTORY_ADDRESS" && !factoryAddress) factoryAddress = match[2];
-          if (match[1] === "USDC_ADDRESS" && !usdcAddress) usdcAddress = match[2];
-          if (match[1] === "RPC_URL" && !rpcUrl) rpcUrl = match[2];
-        }
+      const local = path.join(__dirname, "deployed-addresses-base-sepolia.json");
+      const parent = path.join(__dirname, "..", "deployed-addresses-base-sepolia.json");
+      const p = fs.existsSync(local) ? local : parent;
+      if (fs.existsSync(p)) {
+        const a = JSON.parse(fs.readFileSync(p, "utf-8"));
+        factoryAddress = factoryAddress || a.OPickFactory || "";
+        usdcAddress = usdcAddress || a.MockUSDC || "";
       }
     } catch {}
   }
@@ -57,129 +42,200 @@ function loadConfig() {
 const config = loadConfig();
 console.log("Config:", config);
 
-// ---------- RPC provider (single, static network) ----------
-const rpcUrl = config.rpcUrl || "https://sepolia.base.org";
+// ---------- Provider ----------
 const provider = new ethers.JsonRpcProvider(
-  rpcUrl,
+  config.rpcUrl,
   { chainId: 84532, name: "base-sepolia" },
   { staticNetwork: true }
 );
-console.log("RPC provider:", rpcUrl, "(staticNetwork)");
 
 // ---------- ABIs ----------
 function loadAbi(name) {
-  const locations = [
+  for (const loc of [
     path.join(__dirname, "abi", `${name}.json`),
     path.join(__dirname, "..", "abi", `${name}.json`),
     path.join(__dirname, "..", "artifacts", "contracts", `${name}.sol`, `${name}.json`),
-  ];
-  for (const loc of locations) {
+  ]) {
     if (fs.existsSync(loc)) {
-      const content = JSON.parse(fs.readFileSync(loc, "utf-8"));
-      const abi = content.abi || content;
-      console.log(`ABI ${name}: loaded ${abi.length} entries from ${loc}`);
-      return abi;
+      const c = JSON.parse(fs.readFileSync(loc, "utf-8"));
+      return c.abi || c;
     }
   }
-  throw new Error(`ABI not found for ${name}`);
+  throw new Error(`ABI not found: ${name}`);
 }
 
 const factoryAbi = loadAbi("OPickFactory");
 const marketAbi = loadAbi("OPickMarket");
 const factoryAddress = config.factoryAddress;
 
+// ==========================================================================
+// Market Cache — permanent, background-refreshed
+// ==========================================================================
+
+// Static data (never changes): topic, sideAName, sideBName, category, creator, createdAt
+// Dynamic data (changes on trades): priceA, priceB, totalVolume, creatorEarnings, reserves, shares
+const staticCache = new Map(); // address -> { topic, sideAName, sideBName, category, creator, createdAt }
+
+const cache = {
+  markets: null,
+  loading: true,
+  refresh: null, // set below
+};
+
+async function fetchStaticData(addr) {
+  if (staticCache.has(addr)) return staticCache.get(addr);
+  const c = new ethers.Contract(addr, marketAbi, provider);
+  const [topic, sideAName, sideBName, category, creator, createdAt] = await Promise.all([
+    c.topic(), c.sideAName(), c.sideBName(), c.category(), c.creator(), c.createdAt(),
+  ]);
+  const data = { topic, sideAName, sideBName, category, creator, createdAt: createdAt.toString() };
+  staticCache.set(addr, data);
+  return data;
+}
+
+async function fetchDynamicData(addr) {
+  const c = new ethers.Contract(addr, marketAbi, provider);
+  const [priceA, priceB, totalVolume, creatorEarnings, reserveA, reserveB, totalSharesA, totalSharesB] =
+    await Promise.all([
+      c.priceA(), c.priceB(), c.totalVolume(), c.creatorEarnings(),
+      c.reserveA(), c.reserveB(), c.totalSharesA(), c.totalSharesB(),
+    ]);
+  return {
+    priceA: priceA.toString(), priceB: priceB.toString(),
+    totalVolume: totalVolume.toString(), creatorEarnings: creatorEarnings.toString(),
+    reserveA: reserveA.toString(), reserveB: reserveB.toString(),
+    totalSharesA: totalSharesA.toString(), totalSharesB: totalSharesB.toString(),
+  };
+}
+
+async function fetchMarketWithRetry(addr, maxRetries = 5) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const [stat, dyn] = await Promise.all([fetchStaticData(addr), fetchDynamicData(addr)]);
+      return { address: addr, ...stat, ...dyn };
+    } catch (err) {
+      if (attempt < maxRetries) {
+        await sleep(2000);
+      } else {
+        console.error(`  FAILED ${addr} after ${maxRetries} attempts: ${err.message}`);
+        // Return static data with placeholder dynamic if we have it
+        if (staticCache.has(addr)) {
+          return {
+            address: addr, ...staticCache.get(addr),
+            priceA: "500000000000000000", priceB: "500000000000000000",
+            totalVolume: "0", creatorEarnings: "0",
+            reserveA: "1000000000", reserveB: "1000000000",
+            totalSharesA: "0", totalSharesB: "0",
+          };
+        }
+        return null;
+      }
+    }
+  }
+  return null;
+}
+
+async function loadAllMarkets() {
+  if (!factoryAddress) return [];
+  const factory = new ethers.Contract(factoryAddress, factoryAbi, provider);
+  const total = Number(await factory.totalMarkets());
+  if (total === 0) return [];
+
+  const addresses = Array.from(await factory.getMarkets(0, total));
+  console.log(`Loading ${addresses.length} markets...`);
+
+  const results = [];
+  // One at a time to be gentle on RPC
+  for (let i = 0; i < addresses.length; i++) {
+    const m = await fetchMarketWithRetry(addresses[i]);
+    if (m) results.push(m);
+    console.log(`  ${i + 1}/${addresses.length} ${m ? "ok" : "FAILED"}`);
+    if (i < addresses.length - 1) await sleep(500);
+  }
+  return results;
+}
+
+// Background refresh — updates dynamic data only
+async function backgroundRefresh() {
+  if (!cache.markets || cache.markets.length === 0) return;
+  console.log("Background refresh...");
+  try {
+    const updated = [];
+    for (const m of cache.markets) {
+      try {
+        const dyn = await fetchDynamicData(m.address);
+        updated.push({ ...m, ...dyn });
+      } catch {
+        updated.push(m); // Keep old data
+      }
+      await sleep(300);
+    }
+    cache.markets = updated;
+    console.log(`Background refresh done: ${updated.length} markets`);
+  } catch (e) {
+    console.error("Background refresh failed:", e.message);
+  }
+}
+
+cache.refresh = async () => {
+  const markets = await loadAllMarkets();
+  if (markets.length > 0) {
+    cache.markets = markets;
+  }
+};
+
 // ---------- Express ----------
 const app = express();
 app.use(cors({ origin: process.env.FRONTEND_URL || "*" }));
 app.use(express.json());
 
-app.use("/api/markets", createMarketsRouter({ provider, factoryAddress, factoryAbi, marketAbi }));
+app.use("/api/markets", createMarketsRouter({ provider, factoryAddress, factoryAbi, marketAbi, cache }));
 app.use("/api/comments", commentsRouter);
 app.use("/api/users", usersRouter);
 
-app.get("/api/health", async (req, res) => {
-  const result = { rpcUrl, factoryAddress };
-  try {
-    const network = await provider.getNetwork();
-    result.chainId = Number(network.chainId);
-    result.rpcOk = true;
-  } catch (err) {
-    result.rpcOk = false;
-    result.rpcError = err.message;
-  }
-  try {
-    const factory = new ethers.Contract(factoryAddress, factoryAbi, provider);
-    const total = await factory.totalMarkets();
-    result.totalMarkets = Number(total);
-    result.contractCallOk = true;
-  } catch (err) {
-    result.contractCallOk = false;
-    result.contractError = err.message;
-  }
-  result.status = result.contractCallOk ? "ok" : "error";
-  res.json(result);
+app.get("/api/health", (req, res) => {
+  res.json({
+    status: cache.markets ? "ok" : "loading",
+    markets: cache.markets?.length || 0,
+    loading: cache.loading,
+    rpcUrl: config.rpcUrl,
+    factoryAddress,
+  });
 });
 
 // ---------- WebSocket ----------
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 
-let knownMarketAddresses = [];
-
-async function refreshMarketAddresses() {
-  try {
-    if (!factoryAddress) return;
-    const factory = new ethers.Contract(factoryAddress, factoryAbi, provider);
-    const total = await factory.totalMarkets();
-    const count = Number(total);
-    if (count === 0) { knownMarketAddresses = []; return; }
-    const addresses = await factory.getMarkets(0, count);
-    knownMarketAddresses = Array.from(addresses);
-  } catch {}
-}
-
-async function broadcastPrices() {
-  if (wss.clients.size === 0 || knownMarketAddresses.length === 0) return;
-  try {
-    const data = {};
-    // Batch price fetches to avoid rate limits
-    for (let i = 0; i < knownMarketAddresses.length; i += 4) {
-      const batch = knownMarketAddresses.slice(i, i + 4);
-      await Promise.all(batch.map(async (addr) => {
-        try {
-          const c = new ethers.Contract(addr, marketAbi, provider);
-          const [pA, pB] = await Promise.all([c.priceA(), c.priceB()]);
-          data[addr] = { priceA: pA.toString(), priceB: pB.toString() };
-        } catch {}
-      }));
-    }
-    const message = JSON.stringify({ type: "prices", data });
-    for (const client of wss.clients) {
-      if (client.readyState === 1) client.send(message);
-    }
-  } catch {}
-}
-
-refreshMarketAddresses();
-setInterval(refreshMarketAddresses, 60_000);
-setInterval(broadcastPrices, 5_000);
-
 wss.on("connection", (ws) => {
-  console.log("WS client connected");
-  ws.on("close", () => console.log("WS client disconnected"));
+  // Send current cache immediately on connect
+  if (cache.markets) {
+    const data = {};
+    for (const m of cache.markets) {
+      data[m.address] = { priceA: m.priceA, priceB: m.priceB };
+    }
+    ws.send(JSON.stringify({ type: "prices", data }));
+  }
+  ws.on("close", () => {});
 });
 
-// ---------- Startup preload ----------
+// ---------- Start ----------
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, async () => {
   console.log(`OPick backend on http://localhost:${PORT}`);
-  // Preload markets cache so first request is instant
+
+  // Preload on startup — block until done
+  console.log("Preloading all markets...");
   try {
-    console.log("Preloading markets cache...");
-    const res = await fetch(`http://localhost:${PORT}/api/markets`);
-    const data = await res.json();
-    console.log(`Preloaded ${data.length} markets`);
+    const markets = await loadAllMarkets();
+    cache.markets = markets;
+    cache.loading = false;
+    console.log(`Ready: ${markets.length} markets cached`);
   } catch (e) {
-    console.log("Preload failed (will load on first request):", e.message);
+    cache.loading = false;
+    console.error("Preload failed:", e.message);
   }
+
+  // Background refresh every 5 minutes
+  setInterval(backgroundRefresh, 5 * 60 * 1000);
 });
