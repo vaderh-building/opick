@@ -1,0 +1,21 @@
+{
+  "name": "opick",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "compile": "npx hardhat compile",
+    "node": "npx hardhat node",
+    "deploy:local": "npx hardhat run scripts/deploy-local.mjs --network localhost",
+    "seed": "npx hardhat run scripts/seed-markets.mjs --network localhost",
+    "backend": "cd backend && node server.js",
+    "frontend": "cd frontend && npm run dev",
+    "start": "node scripts/start-all.mjs"
+  },
+  "dependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@openzeppelin/contracts": "^5.1.0",
+    "dotenv": "^17.4.0",
+    "hardhat": "^2.22.17"
+  }
+}

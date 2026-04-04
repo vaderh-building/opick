@@ -1,0 +1,135 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  padding: 24px 28px;
+  border-bottom: 0.5px solid var(--border);
+  border-right: 0.5px solid var(--border);
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.15s;
+}
+
+.card:hover {
+  background: var(--surface);
+}
+
+.topRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.category {
+  font-family: var(--font-sans);
+  font-size: 9px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+}
+
+.volume {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--dim);
+}
+
+.title {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 14px;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.chartArea {
+  position: relative;
+  height: 70px;
+  margin-bottom: 16px;
+}
+
+.chartSvg {
+  width: 100%;
+  height: 100%;
+}
+
+.chartLabel {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--border-dim);
+}
+
+.sides {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 10px;
+}
+
+.sideA,
+.sideB {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.sideB {
+  text-align: right;
+}
+
+.sideName {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.sideNameA { color: var(--green); }
+.sideNameB { color: var(--red); }
+
+.sidePrice {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.priceGreen { color: var(--green); }
+.priceRed { color: var(--red); }
+
+.vs {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 11px;
+  color: var(--border-dim);
+  align-self: center;
+  padding-bottom: 4px;
+}
+
+.convictionBar {
+  display: flex;
+  height: 3px;
+  border-radius: 1.5px;
+  overflow: hidden;
+  background: var(--red-bg);
+}
+
+.convictionA {
+  background: var(--green);
+  border-radius: 1.5px 0 0 1.5px;
+  transition: width 0.4s ease;
+}
+
+.convictionB {
+  transition: width 0.4s ease;
+}

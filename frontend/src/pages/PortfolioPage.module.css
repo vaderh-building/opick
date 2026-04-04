@@ -1,0 +1,198 @@
+.page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 40px 48px 80px;
+}
+
+.title {
+  font-family: var(--font-serif);
+  font-size: 32px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 28px;
+}
+
+.notConnected {
+  text-align: center;
+  padding: 80px 20px;
+}
+
+.notConnectedText {
+  font-size: 14px;
+  color: var(--muted);
+  margin: 0 0 20px;
+}
+
+.connectBtn {
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--text);
+  border: none;
+  border-radius: 2px;
+  padding: 10px 24px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.connectBtn:hover { opacity: 0.85; }
+
+.summary {
+  display: flex;
+  background: var(--surface2);
+  border-radius: 4px;
+  margin-bottom: 32px;
+  overflow: hidden;
+}
+
+.statCard {
+  flex: 1;
+  padding: 20px 24px;
+  border-right: 0.5px solid var(--border);
+}
+
+.statCard:last-child { border-right: none; }
+
+.statLabel {
+  font-family: var(--font-sans);
+  font-size: 9px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  margin: 0 0 6px;
+}
+
+.statValue {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--text);
+  margin: 0;
+}
+
+.statValueGreen { composes: statValue; color: var(--green); }
+.statValueRed { composes: statValue; color: var(--red); }
+
+.headerRow {
+  display: grid;
+  grid-template-columns: 1.5fr 0.8fr 0.6fr 0.8fr 0.8fr auto;
+  gap: 16px;
+  padding: 0 0 10px;
+  border-bottom: 0.5px solid var(--border);
+}
+
+.headerLabel {
+  font-family: var(--font-sans);
+  font-size: 9px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+}
+
+.positionsList {
+  display: flex;
+  flex-direction: column;
+}
+
+.positionCard {
+  padding: 16px 0;
+  display: grid;
+  grid-template-columns: 1.5fr 0.8fr 0.6fr 0.8fr 0.8fr auto;
+  align-items: center;
+  gap: 16px;
+  border-bottom: 0.5px solid var(--border);
+}
+
+.marketLink {
+  font-family: var(--font-serif);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  text-decoration: none;
+  transition: color 0.12s;
+}
+
+.marketLink:hover { color: var(--green); }
+
+.pill {
+  display: inline-block;
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.pillA { composes: pill; color: var(--green); background: var(--green-bg); }
+.pillB { composes: pill; color: var(--red); background: var(--red-bg); }
+
+.fieldLabel {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  margin: 0 0 2px;
+}
+
+.fieldValue {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  margin: 0;
+}
+
+.sellBtn {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--red);
+  background: none;
+  border: 1px solid var(--red);
+  border-radius: 2px;
+  padding: 6px 16px;
+  cursor: pointer;
+  transition: background 0.12s;
+  white-space: nowrap;
+}
+
+.sellBtn:hover { background: var(--red-bg); }
+.sellBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.loading {
+  text-align: center;
+  padding: 60px 20px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--border);
+  border-top-color: var(--text);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  margin-bottom: 10px;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.empty { text-align: center; padding: 60px 20px; }
+.emptyText { font-size: 14px; color: var(--dim); margin: 0 0 6px; }
+.emptySubtext { font-size: 13px; color: var(--muted); margin: 0; }
+
+@media (max-width: 768px) {
+  .page { padding: 32px 20px 60px; }
+  .summary { flex-direction: column; }
+  .statCard { border-right: none; border-bottom: 0.5px solid var(--border); }
+  .headerRow { display: none; }
+  .positionCard { grid-template-columns: 1fr 1fr; gap: 12px; }
+  .positionCard > *:first-child { grid-column: 1 / -1; }
+  .positionCard > *:last-child { grid-column: 1 / -1; }
+  .sellBtn { width: 100%; text-align: center; }
+}

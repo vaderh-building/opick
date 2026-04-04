@@ -1,0 +1,534 @@
+.page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 0 64px;
+}
+
+.layout {
+  display: flex;
+  gap: 0;
+  align-items: flex-start;
+}
+
+.left {
+  flex: 1;
+  min-width: 0;
+  padding: 0 48px;
+  border-right: 0.5px solid var(--border);
+}
+
+.right {
+  flex: 0 0 340px;
+  position: sticky;
+  top: 52px;
+  padding: 24px 28px;
+}
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 20px;
+  transition: color 0.15s;
+}
+
+.backLink:hover { color: var(--text); }
+
+.title {
+  font-family: var(--font-serif);
+  font-size: 32px;
+  font-weight: 600;
+  line-height: 1.15;
+  color: var(--text);
+  margin-bottom: 12px;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.categoryPill {
+  font-family: var(--font-sans);
+  font-size: 9px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+}
+
+.metaItem {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.metaItem span {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.priceBar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.priceBox {
+  flex: 1;
+  padding: 14px 16px;
+  border: 0.5px solid var(--border);
+  border-radius: 4px;
+}
+
+.priceLabel {
+  font-family: var(--font-sans);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+.priceValue {
+  font-family: var(--font-mono);
+  font-size: 24px;
+  font-weight: 500;
+}
+
+.priceValueGreen { composes: priceValue; color: var(--green); }
+.priceValueRed { composes: priceValue; color: var(--red); }
+
+.priceSide {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.chartSection {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 16px;
+  margin-bottom: 24px;
+}
+
+.chartHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.chartTitle {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--dim);
+}
+
+.timeButtons { display: flex; gap: 4px; }
+
+.timeBtn {
+  padding: 3px 8px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 400;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--muted);
+  transition: all 0.12s;
+}
+
+.timeBtn:hover {
+  border-color: var(--dim);
+  color: var(--dim);
+}
+
+.timeBtnActive {
+  composes: timeBtn;
+  background: var(--text);
+  color: #fff;
+  border-color: var(--text);
+}
+
+.chartArea { height: 240px; }
+
+.tabs {
+  display: flex;
+  border-bottom: 0.5px solid var(--border);
+  margin-bottom: 20px;
+}
+
+.tab {
+  padding: 10px 16px;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--muted);
+  background: none;
+  border: none;
+  border-bottom: 1.5px solid transparent;
+  transition: all 0.12s;
+  cursor: pointer;
+}
+
+.tab:hover { color: var(--dim); }
+
+.tabActive {
+  composes: tab;
+  color: var(--text);
+  font-weight: 500;
+  border-bottom-color: var(--text);
+}
+
+.tabContent { min-height: 200px; }
+.placeholder { text-align: center; padding: 48px; color: var(--muted); font-size: 13px; }
+
+.commentForm {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.commentInput {
+  flex: 1;
+  padding: 9px 12px;
+  font-size: 13px;
+  border: 0.5px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.12s;
+}
+
+.commentInput:focus { border-color: var(--dim); }
+
+.commentPostBtn {
+  padding: 9px 18px;
+  font-size: 11px;
+  font-weight: 600;
+  border: none;
+  border-radius: 4px;
+  background: var(--text);
+  color: #fff;
+  transition: opacity 0.12s;
+}
+
+.commentPostBtn:hover { opacity: 0.85; }
+.commentPostBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.commentList { display: flex; flex-direction: column; }
+
+.comment {
+  padding: 14px 0;
+  border-bottom: 0.5px solid var(--border);
+}
+
+.commentHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.commentUser {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.commentTime {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.commentText {
+  font-size: 13px;
+  color: var(--dim);
+  line-height: 1.5;
+}
+
+.commentFooter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.likeBtn {
+  font-size: 11px;
+  color: var(--muted);
+  background: none;
+  border: none;
+  padding: 2px 4px;
+  transition: color 0.12s;
+}
+
+.likeBtn:hover { color: var(--dim); }
+
+.noComments {
+  text-align: center;
+  padding: 32px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.connectPrompt { text-align: center; padding: 12px; }
+
+/* Trade panel */
+.tradeCard {
+  background: var(--surface);
+  border: 0.5px solid var(--border);
+  border-radius: 4px;
+  padding: 24px;
+}
+
+.tradeHeader {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 16px;
+}
+
+.sideToggle {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.sideBtn {
+  flex: 1;
+  padding: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 0.5px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--dim);
+  transition: all 0.12s;
+  text-align: center;
+}
+
+.sideBtn:hover { border-color: var(--dim); }
+
+.sideBtnA {
+  composes: sideBtn;
+  border: 2px solid var(--green);
+  background: var(--green-bg);
+  color: var(--green);
+}
+
+.sideBtnB {
+  composes: sideBtn;
+  border: 2px solid var(--red);
+  background: var(--red-bg);
+  color: var(--red);
+}
+
+.amountSection { margin-bottom: 16px; }
+
+.amountLabel {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 6px;
+}
+
+.amountInputWrap {
+  position: relative;
+  margin-bottom: 8px;
+}
+
+.amountPrefix {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: var(--font-mono);
+  font-size: 16px;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.amountInput {
+  width: 100%;
+  padding: 12px 12px 12px 28px;
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 500;
+  border: 0.5px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.12s;
+}
+
+.amountInput:focus { border-color: var(--dim); }
+
+.quickAmounts {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.quickBtn {
+  padding: 4px 10px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 400;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--dim);
+  transition: all 0.12s;
+}
+
+.quickBtn:hover {
+  border-color: var(--dim);
+  color: var(--text);
+}
+
+.infoSection {
+  margin-bottom: 16px;
+  padding: 12px;
+  background: var(--surface2);
+  border-radius: 4px;
+}
+
+.infoRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+  font-size: 12px;
+}
+
+.infoLabel { color: var(--dim); }
+.infoValue { font-family: var(--font-mono); font-weight: 500; color: var(--text); }
+.infoValueGreen { composes: infoValue; color: var(--green); }
+
+.errorMsg {
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: var(--red);
+  background: var(--red-bg);
+  border-radius: 4px;
+}
+
+.pickBtn {
+  width: 100%;
+  padding: 14px;
+  font-size: 13px;
+  font-weight: 700;
+  border: none;
+  border-radius: 4px;
+  color: #fff;
+  transition: opacity 0.12s;
+  margin-bottom: 10px;
+}
+
+.pickBtn:hover:not(:disabled) { opacity: 0.9; }
+.pickBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.pickBtnGreen { composes: pickBtn; background: var(--green); }
+.pickBtnRed { composes: pickBtn; background: var(--red); }
+
+.pickDisclaimer {
+  text-align: center;
+  font-size: 9px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.positionSection {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 0.5px solid var(--border);
+}
+
+.positionTitle {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.positionRow {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  font-size: 12px;
+}
+
+.positionLabel { color: var(--dim); }
+.positionValue { font-family: var(--font-mono); font-weight: 500; color: var(--text); }
+
+.sellBtn {
+  width: 100%;
+  margin-top: 10px;
+  padding: 9px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid var(--red);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--red);
+  transition: background 0.12s;
+}
+
+.sellBtn:hover:not(:disabled) { background: var(--red-bg); }
+.sellBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.notFound { text-align: center; padding: 80px 24px; }
+.notFoundTitle { font-family: var(--font-serif); font-size: 24px; color: var(--text); margin-bottom: 8px; }
+.notFoundText { color: var(--muted); font-size: 13px; }
+
+.connectBtn {
+  padding: 10px 20px;
+  font-size: 11px;
+  font-weight: 600;
+  border: none;
+  border-radius: 4px;
+  background: var(--text);
+  color: #fff;
+}
+
+@media (max-width: 900px) {
+  .layout { flex-direction: column; }
+  .left { flex: 1 1 100%; border-right: none; padding: 0 20px; }
+  .right { flex: 1 1 100%; position: static; width: 100%; padding: 20px; }
+  .title { font-size: 26px; }
+  .priceBar { flex-direction: column; gap: 8px; }
+  .page { padding: 16px 0 60px; }
+}
