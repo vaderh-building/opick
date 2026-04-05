@@ -110,8 +110,7 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
     return (
       <div className={styles.page}>
         <div className={styles.authGate}>
-          <h2 className={styles.authTitle}>Sign in to create a market</h2>
-          <p className={styles.authSub}>Connect your wallet to start a debate and earn from every trade.</p>
+          <p className={styles.authTitle}>Sign in to create a market</p>
           <button className={styles.authBtn} onClick={() => { if (onConnect) onConnect(); }}>
             Sign In
           </button>

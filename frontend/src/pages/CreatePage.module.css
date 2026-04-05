@@ -10,18 +10,11 @@
 }
 
 .authTitle {
-  font-family: var(--font-serif);
-  font-size: 24px;
-  font-weight: 500;
-  color: var(--text);
-  margin: 0 0 8px;
-}
-
-.authSub {
   font-family: var(--font-sans);
   font-size: 14px;
-  color: var(--dim);
-  margin: 0 0 24px;
+  font-weight: 400;
+  color: var(--muted);
+  margin: 0 0 20px;
 }
 
 .authBtn {
