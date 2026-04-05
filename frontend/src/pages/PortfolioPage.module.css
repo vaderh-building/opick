@@ -184,7 +184,7 @@
 @keyframes spin { to { transform: rotate(360deg); } }
 
 .empty { text-align: center; padding: 60px 20px; }
-.emptyText { font-size: 14px; color: var(--dim); margin: 0 0 6px; }
+.emptyText { font-family: var(--font-sans); font-size: 14px; font-weight: 400; color: var(--dim); margin: 0 0 6px; }
 .emptySubtext { font-size: 13px; color: var(--muted); margin: 0 0 16px; }
 
 .browseLink {
