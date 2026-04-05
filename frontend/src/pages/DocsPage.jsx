@@ -106,12 +106,6 @@ export default function DocsPage() {
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>FAQ</h2>
 
-        <h3 className={styles.question}>Is this like Polymarket?</h3>
-        <p className={styles.body}>
-          Polymarket resolves markets. Someone wins, someone loses. OPick is perpetual. You profit when others agree
-          with you, not when an event happens.
-        </p>
-
         <h3 className={styles.question}>Can I lose money?</h3>
         <p className={styles.body}>
           Yes. If the price moves against your position, you can lose part or all of your investment.
