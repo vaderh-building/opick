@@ -43,7 +43,7 @@ export default function DocsPage() {
         </p>
         <p className={styles.body}>
           There is a 1% spread on sells only. Zero fees on buys, deposits, and withdrawals.
-          Of the spread, 30% goes to the market creator and 70% goes to the protocol.
+          30% of the spread goes to the market creator.
         </p>
       </section>
 
