@@ -46,6 +46,23 @@
 
 .cta:hover { opacity: 0.9; }
 
+.tosLine {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  color: var(--muted);
+  margin: 16px 0 0;
+  line-height: 1.5;
+}
+
+.tosLine a {
+  color: var(--muted);
+  text-decoration: underline;
+}
+
+.tosLine a:hover {
+  color: var(--dim);
+}
+
 /* Featured */
 .featured {
   border-top: 0.5px solid var(--border);

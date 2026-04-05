@@ -41,6 +41,9 @@ export default function LandingPage() {
           Profit when others join your side.
         </p>
         <Link to="/markets" className={styles.cta}>Browse Markets</Link>
+        <p className={styles.tosLine}>
+          By using OPick, you agree to our <a href="/terms" target="_blank" rel="noopener noreferrer">Terms</a>, <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>, and <a href="/risk" target="_blank" rel="noopener noreferrer">Risk Disclosure</a>.
+        </p>
       </section>
 
       {/* Featured */}

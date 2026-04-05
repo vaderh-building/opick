@@ -501,6 +501,24 @@
   line-height: 1.4;
 }
 
+.tosLine {
+  text-align: center;
+  font-family: var(--font-sans);
+  font-size: 9px;
+  color: var(--muted);
+  line-height: 1.4;
+  margin-top: 6px;
+}
+
+.tosLine a {
+  color: var(--muted);
+  text-decoration: underline;
+}
+
+.tosLine a:hover {
+  color: var(--dim);
+}
+
 .positionSection {
   margin-top: 20px;
   padding-top: 16px;

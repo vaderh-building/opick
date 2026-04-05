@@ -600,6 +600,9 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
             <p className={s.pickDisclaimer}>
               Price moves as people pick sides. Sell anytime for profit.
             </p>
+            <p className={s.tosLine}>
+              By trading, you agree to our <a href="/terms" target="_blank" rel="noopener noreferrer">Terms</a>, <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>, and <a href="/risk" target="_blank" rel="noopener noreferrer">Risk Disclosure</a>.
+            </p>
 
             {/* Position */}
             {position && (
