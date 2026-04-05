@@ -76,8 +76,9 @@ export default function PortfolioPage({ account, provider, signer, onConnect, au
   useEffect(() => {
     if (account && markets.length) {
       fetchPositions();
-    } else if (!account) {
+    } else {
       setLoading(false);
+      setPositions([]);
     }
   }, [account, markets, fetchPositions]);
 
@@ -165,7 +166,8 @@ export default function PortfolioPage({ account, provider, signer, onConnect, au
       {!loading && !marketsLoading && positions.length === 0 && (
         <div className={styles.empty}>
           <p className={styles.emptyText}>No opinions yet</p>
-          <p className={styles.emptySubtext}>Browse markets and pick a side to get started.</p>
+          <p className={styles.emptySubtext}>Browse markets to pick your first side.</p>
+          <Link to="/markets" className={styles.browseLink}>Browse Markets</Link>
         </div>
       )}
 
