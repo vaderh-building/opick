@@ -9,10 +9,8 @@
   padding: 80px 20px;
 }
 
-.authTitle {
-  font-family: var(--font-sans);
+.authText {
   font-size: 14px;
-  font-weight: 400;
   color: var(--muted);
   margin: 0 0 20px;
 }
@@ -30,7 +28,7 @@
   transition: opacity 0.15s;
 }
 
-.authBtn:hover { opacity: 0.9; }
+.authBtn:hover { opacity: 0.85; }
 
 .title {
   font-family: var(--font-serif);
