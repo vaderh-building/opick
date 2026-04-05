@@ -229,7 +229,7 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
             <li className={styles.perk}>Your name as market creator</li>
             <li className={styles.perk}>A market anyone can trade</li>
           </ul>
-          <p className={styles.sidebarNote}>Active markets typically earn $50–500/mo for creators.</p>
+          <p className={styles.sidebarNote}>Active markets earn spread revenue from every trade.</p>
         </div>
       </div>
     </div>
