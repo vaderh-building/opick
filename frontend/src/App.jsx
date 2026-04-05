@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { useWallet } from './hooks/useWallet.js';
 import Navbar from './components/Navbar.jsx';
 import Footer from './components/Footer.jsx';
+import TosModal from './components/TosModal.jsx';
 import LandingPage from './pages/LandingPage.jsx';
 import HomePage from './pages/HomePage.jsx';
 import MarketPage from './pages/MarketPage.jsx';
@@ -18,11 +20,20 @@ import './index.css';
 function App() {
   const wallet = useWallet();
   const { account, provider, signer, connect, connectLocal, disconnect, authenticated, walletReady, displayName } = wallet;
+  const [tosAccepted, setTosAccepted] = useState(() => localStorage.getItem('opick_tos_accepted') === 'true');
+
+  const showTos = authenticated && !tosAccepted;
+
+  const handleTosAccept = () => {
+    localStorage.setItem('opick_tos_accepted', 'true');
+    setTosAccepted(true);
+  };
 
   const pageProps = { account, provider, signer, onConnect: connect, authenticated, walletReady, displayName };
 
   return (
     <BrowserRouter>
+      {showTos && <TosModal onAccept={handleTosAccept} />}
       <Navbar
         account={account}
         authenticated={authenticated}
