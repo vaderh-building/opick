@@ -517,7 +517,7 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
             {authenticated && walletReady && usdcBalance != null && usdcBalance === 0n && (
               <div className={s.fundPrompt}>
                 <p className={s.fundText}>Add USDC to your wallet to start picking sides.</p>
-                <button className={s.fundBtn} onClick={() => { if (account) fundWallet(account, { chain: base, asset: 'USDC' }).catch(() => {}); }}>
+                <button className={s.fundBtn} onClick={() => { if (account) fundWallet({ address: account, options: { chain: base, asset: 'USDC' } }).catch(() => {}); }}>
                   Add USDC
                 </button>
               </div>

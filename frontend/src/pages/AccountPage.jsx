@@ -24,9 +24,11 @@ export default function AccountPage({ account, provider, signer, onConnect, auth
   const handleFund = async () => {
     if (!account) return;
     try {
-      await fundWallet(account, { chain: base, asset: 'USDC' });
+      await fundWallet({ address: account, options: { chain: base, asset: 'USDC' } });
       setTimeout(refreshBalance, 3000);
-    } catch {}
+    } catch (e) {
+      console.error('Fund wallet error:', e);
+    }
   };
 
   if (!authenticated) {
