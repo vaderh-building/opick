@@ -24,18 +24,23 @@ function loadConfig() {
 
   if (!factoryAddress || !usdcAddress) {
     try {
-      const local = path.join(__dirname, "deployed-addresses-base-sepolia.json");
-      const parent = path.join(__dirname, "..", "deployed-addresses-base-sepolia.json");
-      const p = fs.existsSync(local) ? local : parent;
-      if (fs.existsSync(p)) {
+      // Try mainnet first, then sepolia
+      const files = [
+        path.join(__dirname, "deployed-addresses-base-mainnet.json"),
+        path.join(__dirname, "..", "deployed-addresses-base-mainnet.json"),
+        path.join(__dirname, "deployed-addresses-base-sepolia.json"),
+        path.join(__dirname, "..", "deployed-addresses-base-sepolia.json"),
+      ];
+      const p = files.find(f => fs.existsSync(f));
+      if (p) {
         const a = JSON.parse(fs.readFileSync(p, "utf-8"));
         factoryAddress = factoryAddress || a.OPickFactory || "";
-        usdcAddress = usdcAddress || a.MockUSDC || "";
+        usdcAddress = usdcAddress || a.USDC || a.MockUSDC || "";
       }
     } catch {}
   }
 
-  rpcUrl = rpcUrl || "https://sepolia.base.org";
+  rpcUrl = rpcUrl || "https://mainnet.base.org";
   return { factoryAddress, usdcAddress, rpcUrl };
 }
 
@@ -43,9 +48,12 @@ const config = loadConfig();
 console.log("Config:", config);
 
 // ---------- Provider ----------
+// Detect chain from config
+const chainId = config.rpcUrl.includes('sepolia') ? 84532 : 8453;
+const chainName = chainId === 8453 ? 'base' : 'base-sepolia';
 const provider = new ethers.JsonRpcProvider(
   config.rpcUrl,
-  { chainId: 84532, name: "base-sepolia" },
+  { chainId, name: chainName },
   { staticNetwork: true }
 );
 

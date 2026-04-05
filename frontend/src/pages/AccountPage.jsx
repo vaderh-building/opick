@@ -1,43 +1,22 @@
 import { useState, useEffect } from 'react';
 import { Contract, formatUnits } from 'ethers';
 import { USDC_ADDRESS } from '../config.js';
-import MockUSDCAbi from '../abi/MockUSDC.json';
+import USDCAbi from '../abi/MockUSDC.json';
 import styles from './AccountPage.module.css';
 
 export default function AccountPage({ account, provider, signer, onConnect, authenticated, walletReady, displayName }) {
   const [balance, setBalance] = useState(null);
-  const [claiming, setClaiming] = useState(false);
-  const [claimed, setClaimed] = useState(false);
 
   useEffect(() => {
     if (!provider || !account || !account.startsWith('0x')) return;
     (async () => {
       try {
-        const usdc = new Contract(USDC_ADDRESS, MockUSDCAbi, provider);
+        const usdc = new Contract(USDC_ADDRESS, USDCAbi, provider);
         const bal = await usdc.balanceOf(account);
         setBalance(bal);
       } catch {}
     })();
-  }, [provider, account, claimed]);
-
-  const handleFaucet = async () => {
-    if (!signer || claiming) return;
-    setClaiming(true);
-    setClaimed(false);
-    try {
-      const usdc = new Contract(USDC_ADDRESS, MockUSDCAbi, signer);
-      const tx = await usdc.faucet();
-      await tx.wait();
-      setClaimed(true);
-      // Refresh balance
-      const bal = await usdc.balanceOf(account);
-      setBalance(bal);
-    } catch (e) {
-      console.error('Faucet failed:', e);
-    } finally {
-      setClaiming(false);
-    }
-  };
+  }, [provider, account]);
 
   if (!authenticated) {
     return (
@@ -76,18 +55,7 @@ export default function AccountPage({ account, provider, signer, onConnect, auth
         </div>
       </div>
 
-      <div className={styles.faucetSection}>
-        <h2 className={styles.subtitle}>Get testnet USDC</h2>
-        <p className={styles.muted}>Claim 10,000 free USDC to start picking sides. This is Base Sepolia testnet — tokens have no real value.</p>
-        {claimed && <p className={styles.success}>10,000 USDC claimed!</p>}
-        <button
-          className={styles.primaryBtn}
-          onClick={handleFaucet}
-          disabled={claiming || !walletReady}
-        >
-          {claiming ? 'Claiming...' : 'Get 10,000 USDC'}
-        </button>
-      </div>
+      <p className={styles.note}>OPick runs on Base. USDC is the US dollar stablecoin used for all trades.</p>
     </div>
   );
 }

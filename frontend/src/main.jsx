@@ -7,18 +7,19 @@ import { PrivyProvider } from '@privy-io/react-auth';
 import App from './App.jsx';
 
 const privyAppId = import.meta.env.VITE_PRIVY_APP_ID || 'PLACEHOLDER';
-console.log('Privy App ID:', privyAppId === 'PLACEHOLDER' ? 'NOT SET' : privyAppId.slice(0, 8) + '...');
 
-const baseSepoliaChain = {
-  id: 84532,
-  name: 'Base Sepolia',
-  network: 'base-sepolia',
+const baseChain = {
+  id: 8453,
+  name: 'Base',
+  network: 'base',
   nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
   rpcUrls: {
-    default: { http: ['https://sepolia.base.org'] },
-    public: { http: ['https://sepolia.base.org'] },
+    default: { http: ['https://mainnet.base.org'] },
+    public: { http: ['https://mainnet.base.org'] },
   },
-  testnet: true,
+  blockExplorers: {
+    default: { name: 'BaseScan', url: 'https://basescan.org' },
+  },
 };
 
 createRoot(document.getElementById('root')).render(
@@ -36,8 +37,8 @@ createRoot(document.getElementById('root')).render(
           createOnLogin: 'all-users',
           noPromptOnSignature: true,
         },
-        defaultChain: baseSepoliaChain,
-        supportedChains: [baseSepoliaChain],
+        defaultChain: baseChain,
+        supportedChains: [baseChain],
       }}
     >
       <App />

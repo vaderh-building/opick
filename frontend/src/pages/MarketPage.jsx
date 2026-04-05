@@ -103,9 +103,6 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
   const [position, setPosition] = useState(null);
   const [sellLoading, setSellLoading] = useState(false);
 
-  // Faucet
-  const [faucetLoading, setFaucetLoading] = useState(false);
-  const [faucetDone, setFaucetDone] = useState(false);
 
   // Get live prices or fall back to market data → percentage 0-100
   const livePrice = prices[marketAddress];
@@ -197,26 +194,6 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
     }
   };
 
-  const handleFaucet = async () => {
-    if (!signer || !usdc || faucetLoading) return;
-    setFaucetLoading(true);
-    setFaucetDone(false);
-    try {
-      const tx = await usdc.faucet();
-      await tx.wait();
-      setFaucetDone(true);
-      setTxError('');
-      if (account) {
-        const bal = await usdc.balanceOf(account);
-        setUsdcBalance(bal);
-      }
-    } catch (e) {
-      setTxError('Faucet failed: ' + (e?.reason || e?.message || ''));
-    } finally {
-      setFaucetLoading(false);
-    }
-  };
-
   // Buy shares
   const handleBuy = async () => {
     if (!amount || !signer || !usdc || !getMarket) {
@@ -232,7 +209,7 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
       if (account) {
         const balance = await usdc.balanceOf(account);
         if (balance < amountBigInt) {
-          setTxError(`Insufficient USDC balance. You have $${(Number(balance) / 1e6).toFixed(2)}. Use the faucet to get testnet USDC.`);
+          setTxError(`Insufficient USDC. You have $${(Number(balance) / 1e6).toFixed(2)}. You need USDC on Base to trade.`);
           setTxLoading(false);
           return;
         }
@@ -257,7 +234,7 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
       console.error('Transaction failed:', e);
       const msg = e?.reason || e?.message || 'Transaction failed';
       if (msg.includes('insufficient')) {
-        setTxError('Insufficient USDC. Use the faucet to get testnet tokens.');
+        setTxError('Insufficient USDC. You need USDC on Base to trade.');
       } else {
         setTxError(msg.length > 100 ? msg.slice(0, 100) + '...' : msg);
       }
@@ -586,18 +563,7 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
               </div>
             </div>
 
-            {faucetDone && <div className={s.successMsg}>10,000 USDC claimed!</div>}
-
-            {txError && (
-              <div className={s.errorMsg}>
-                {txError}
-                {txError.includes('nsufficient') && walletReady && (
-                  <button className={s.faucetLink} onClick={handleFaucet} disabled={faucetLoading}>
-                    {faucetLoading ? 'Claiming...' : '→ Get 10,000 free USDC'}
-                  </button>
-                )}
-              </div>
-            )}
+            {txError && <div className={s.errorMsg}>{txError}</div>}
 
             {!authenticated ? (
               <button className={s.pickBtnGreen} onClick={onConnect}>

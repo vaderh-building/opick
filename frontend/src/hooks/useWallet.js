@@ -6,7 +6,7 @@ import { RPC_URL } from '../config.js';
 const HARDHAT_PRIVATE_KEY = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80';
 const IS_DEV = import.meta.env.VITE_DEV_MODE === 'true' ||
   (typeof window !== 'undefined' && window.location.hostname === 'localhost');
-const BASE_SEPOLIA_CHAIN_ID = 84532;
+const BASE_CHAIN_ID = 8453;
 
 function getUserDisplay(user) {
   if (!user) return null;
@@ -77,7 +77,7 @@ export function useWallet() {
 
     (async () => {
       try {
-        try { await wallet.switchChain(BASE_SEPOLIA_CHAIN_ID); } catch {}
+        try { await wallet.switchChain(BASE_CHAIN_ID); } catch {}
         const ethProvider = await wallet.getEthereumProvider();
         if (cancelled) return;
         const bp = new BrowserProvider(ethProvider);

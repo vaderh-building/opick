@@ -69,9 +69,6 @@ export default function Navbar({ account, authenticated, displayName, onConnect,
                   <Link to="/account" className={styles.dropdownLink} onClick={() => setDropdownOpen(false)}>
                     Your account
                   </Link>
-                  <Link to="/account" className={styles.dropdownLink} onClick={() => setDropdownOpen(false)}>
-                    Get testnet USDC
-                  </Link>
                   <button
                     className={styles.dropdownItem}
                     onClick={() => { onDisconnect(); setDropdownOpen(false); }}
