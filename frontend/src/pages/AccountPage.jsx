@@ -1,22 +1,33 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Contract, formatUnits } from 'ethers';
+import { useFundWallet } from '@privy-io/react-auth';
+import { base } from 'viem/chains';
 import { USDC_ADDRESS } from '../config.js';
 import USDCAbi from '../abi/MockUSDC.json';
 import styles from './AccountPage.module.css';
 
 export default function AccountPage({ account, provider, signer, onConnect, authenticated, walletReady, displayName }) {
   const [balance, setBalance] = useState(null);
+  const { fundWallet } = useFundWallet();
 
-  useEffect(() => {
+  const refreshBalance = useCallback(async () => {
     if (!provider || !account || !account.startsWith('0x')) return;
-    (async () => {
-      try {
-        const usdc = new Contract(USDC_ADDRESS, USDCAbi, provider);
-        const bal = await usdc.balanceOf(account);
-        setBalance(bal);
-      } catch {}
-    })();
+    try {
+      const usdc = new Contract(USDC_ADDRESS, USDCAbi, provider);
+      const bal = await usdc.balanceOf(account);
+      setBalance(bal);
+    } catch {}
   }, [provider, account]);
+
+  useEffect(() => { refreshBalance(); }, [refreshBalance]);
+
+  const handleFund = async () => {
+    if (!account) return;
+    try {
+      await fundWallet(account, { chain: base, asset: 'USDC' });
+      setTimeout(refreshBalance, 3000);
+    } catch {}
+  };
 
   if (!authenticated) {
     return (
@@ -30,7 +41,8 @@ export default function AccountPage({ account, provider, signer, onConnect, auth
     );
   }
 
-  const formattedBalance = balance != null ? formatUnits(balance, 6) : '—';
+  const balNum = balance != null ? Number(formatUnits(balance, 6)) : null;
+  const balStr = balNum != null ? `$${balNum.toLocaleString(undefined, { maximumFractionDigits: 2 })}` : '...';
 
   return (
     <div className={styles.page}>
@@ -51,11 +63,16 @@ export default function AccountPage({ account, provider, signer, onConnect, auth
         )}
         <div className={styles.row}>
           <span className={styles.label}>USDC Balance</span>
-          <span className={styles.mono}>${Number(formattedBalance).toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
+          <div className={styles.balanceRow}>
+            <span className={styles.mono}>{balStr}</span>
+            {account && (
+              <button className={styles.fundBtn} onClick={handleFund}>Add USDC</button>
+            )}
+          </div>
         </div>
       </div>
 
-      <p className={styles.note}>OPick runs on Base. USDC is the US dollar stablecoin used for all trades.</p>
+      <p className={styles.note}>OPick runs on Base. Add USDC to your wallet to start picking sides.</p>
     </div>
   );
 }

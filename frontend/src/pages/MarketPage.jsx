@@ -5,6 +5,8 @@ import {
   AreaChart, Area, XAxis, YAxis, ReferenceLine,
   ResponsiveContainer, Tooltip,
 } from 'recharts';
+import { useFundWallet } from '@privy-io/react-auth';
+import { base } from 'viem/chains';
 import { useMarket } from '../hooks/useMarkets.js';
 import { useContracts } from '../hooks/useContracts.js';
 import { usePriceWebSocket } from '../hooks/usePriceWebSocket.js';
@@ -70,6 +72,7 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
   const { market: rawMarket, loading, refetch } = useMarket(marketAddress);
   const { usdc, getMarket } = useContracts(signer || provider);
   const prices = usePriceWebSocket();
+  const { fundWallet } = useFundWallet();
 
   // Parse market data from API
   const market = rawMarket ? {
@@ -510,6 +513,15 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
                 {sideBName}
               </button>
             </div>
+
+            {authenticated && walletReady && usdcBalance != null && usdcBalance === 0n && (
+              <div className={s.fundPrompt}>
+                <p className={s.fundText}>Add USDC to your wallet to start picking sides.</p>
+                <button className={s.fundBtn} onClick={() => { if (account) fundWallet(account, { chain: base, asset: 'USDC' }).catch(() => {}); }}>
+                  Add USDC
+                </button>
+              </div>
+            )}
 
             <div className={s.amountSection}>
               <div className={s.amountLabel}>Amount</div>

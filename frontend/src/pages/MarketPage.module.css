@@ -446,22 +446,35 @@
   border-radius: 4px;
 }
 
-.faucetLink {
-  display: block;
-  margin-top: 6px;
-  font-family: var(--font-sans);
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--green);
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  text-decoration: underline;
+.fundPrompt {
+  text-align: center;
+  padding: 16px;
+  margin-bottom: 16px;
+  background: var(--green-bg);
+  border-radius: 4px;
 }
 
-.faucetLink:hover { opacity: 0.8; }
-.faucetLink:disabled { opacity: 0.4; cursor: not-allowed; text-decoration: none; }
+.fundText {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--dim);
+  margin: 0 0 10px;
+}
+
+.fundBtn {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--green);
+  border: none;
+  border-radius: 4px;
+  padding: 8px 20px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.fundBtn:hover { opacity: 0.9; }
 
 .pickBtn {
   width: 100%;
@@ -559,8 +572,17 @@
 @media (max-width: 900px) {
   .layout { flex-direction: column; }
   .left { flex: 1 1 100%; border-right: none; padding: 0 20px; }
-  .right { flex: 1 1 100%; position: static; width: 100%; padding: 20px; }
-  .title { font-size: 26px; }
+  .right { flex: 1 1 100%; position: static; width: 100%; padding: 20px 16px; }
+  .title { font-size: 24px; }
   .priceBar { flex-direction: column; gap: 8px; }
   .page { padding: 16px 0 60px; }
+  .tradeCard { padding: 20px 16px; }
+  .sideToggle { gap: 6px; }
+  .sideBtn, .sideBtnA, .sideBtnB { padding: 12px 8px; font-size: 13px; min-height: 44px; }
+  .pickBtn, .pickBtnGreen, .pickBtnRed { min-height: 44px; font-size: 14px; }
+  .quickAmounts { gap: 6px; }
+  .quickBtn { padding: 6px 12px; min-height: 36px; }
+  .timeButtons { flex-wrap: wrap; gap: 4px; }
+  .tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .tab, .tabActive { white-space: nowrap; }
 }

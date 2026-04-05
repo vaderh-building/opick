@@ -115,23 +115,25 @@ export default function Navbar({ account, authenticated, displayName, onConnect,
               {label}
             </Link>
           ))}
-          {!account && (
+          {(authenticated || account) ? (
             <>
+              <Link to="/account" className={styles.mobileLink} onClick={() => setMenuOpen(false)}>
+                {account ? truncateAddress(account) : (displayName || 'Account')}
+              </Link>
               <button
-                className={styles.connectBtnMobile}
-                onClick={() => { onConnect(); setMenuOpen(false); }}
+                className={styles.disconnectBtnMobile}
+                onClick={() => { onDisconnect(); setMenuOpen(false); }}
               >
-                Connect
+                Disconnect
               </button>
-              {isDevMode && onConnectLocal && (
-                <button
-                  className={styles.devBtnMobile}
-                  onClick={() => { onConnectLocal(); setMenuOpen(false); }}
-                >
-                  Use Test Account
-                </button>
-              )}
             </>
+          ) : (
+            <button
+              className={styles.connectBtnMobile}
+              onClick={() => { onConnect(); setMenuOpen(false); }}
+            >
+              Connect
+            </button>
           )}
         </div>
       )}
