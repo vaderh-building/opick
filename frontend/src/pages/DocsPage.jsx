@@ -126,6 +126,13 @@ export default function DocsPage() {
         <p className={styles.body}>
           Nobody. Markets never resolve. That is the point.
         </p>
+
+        <h3 className={styles.question}>How do you define who's the best, or who's the GOAT?</h3>
+        <p className={styles.body}>
+          There is no single right answer. These are opinions, and everyone sees it differently.
+          OPick simply lets you put real money behind what you believe. The price reflects where
+          the crowd stands right now, and it is always moving.
+        </p>
       </section>
     </div>
   );
