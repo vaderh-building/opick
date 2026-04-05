@@ -30,16 +30,6 @@
   margin: 0 0 14px;
 }
 
-.subTitle {
-  font-family: var(--font-sans);
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--text);
-  margin: 24px 0 8px;
-}
-
-.subTitle:first-of-type { margin-top: 0; }
-
 .body {
   font-family: var(--font-sans);
   font-size: 14px;
@@ -58,41 +48,14 @@
 
 .link:hover { text-decoration: underline; }
 
-/* Lists */
-.list {
-  list-style: none;
-  padding: 0;
-  margin: 0 0 12px;
-}
-
-.list li {
-  font-family: var(--font-sans);
-  font-size: 14px;
-  line-height: 1.75;
-  color: var(--dim);
-  padding: 4px 0 4px 16px;
-  position: relative;
-}
-
-.list li::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 14px;
-  width: 4px;
-  height: 4px;
-  background: var(--green);
-  border-radius: 1px;
-}
-
-.numberedList {
+.steps {
   list-style: none;
   counter-reset: step;
   padding: 0;
-  margin: 0 0 12px;
+  margin: 0;
 }
 
-.numberedList li {
+.steps li {
   font-family: var(--font-sans);
   font-size: 14px;
   line-height: 1.75;
@@ -103,9 +66,9 @@
   counter-increment: step;
 }
 
-.numberedList li:last-child { border-bottom: none; }
+.steps li:last-child { border-bottom: none; }
 
-.numberedList li::before {
+.steps li::before {
   content: counter(step);
   font-family: var(--font-mono);
   font-size: 11px;
@@ -123,54 +86,30 @@
   border-radius: 2px;
 }
 
-/* Contract addresses (monospace only here) */
-.addressBlock {
-  border: 0.5px solid var(--border);
-  border-radius: 4px;
-  margin: 12px 0;
-  overflow: hidden;
+.cta {
+  padding: 40px 0 0;
+  border-top: 0.5px solid var(--border);
+  text-align: center;
 }
 
-.addressRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 14px;
-  border-bottom: 0.5px solid var(--border);
-  gap: 12px;
-}
-
-.addressRow:last-child { border-bottom: none; }
-
-.addressLabel {
-  font-family: var(--font-sans);
-  font-size: 12px;
-  color: var(--muted);
-  flex-shrink: 0;
-}
-
-.addressMono {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--text);
-  word-break: break-all;
-}
-
-/* FAQ */
-.question {
+.ctaBtn {
+  display: inline-block;
   font-family: var(--font-sans);
   font-size: 14px;
   font-weight: 600;
-  color: var(--text);
-  margin: 20px 0 6px;
+  color: #fff;
+  background: var(--green);
+  border-radius: 4px;
+  padding: 12px 28px;
+  text-decoration: none;
+  transition: opacity 0.15s;
 }
 
-.question:first-of-type { margin-top: 0; }
+.ctaBtn:hover { opacity: 0.9; }
 
 @media (max-width: 600px) {
   .page { padding: 32px 16px 60px; }
   .pageTitle { font-size: 26px; }
   .sectionTitle { font-size: 18px; }
-  .addressRow { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .ctaBtn { min-height: 44px; }
 }

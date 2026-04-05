@@ -12,8 +12,12 @@ export default function DocsPage() {
           and let the price reflect what people believe.
         </p>
         <p className={styles.body}>
-          There is no resolution and no expiry. You profit by being early, not by being right. If you pick a
-          side before the crowd agrees with you, the price rises and your position is worth more. Sell whenever you want.
+          When you pick a side, you become an advocate. The more people who join your side after you,
+          the more your position is worth. You profit when the world agrees with you.
+        </p>
+        <p className={styles.body}>
+          OPick is not a prediction market. There is no resolution, no expiry, and no one decides who is right.
+          The price simply reflects how many people back each side. Think of it like a stock market for opinions.
         </p>
         <p className={styles.body}>
           OPick is permissionless. Anyone can create a market on any topic.
@@ -35,24 +39,22 @@ export default function DocsPage() {
         <h2 className={styles.sectionTitle}>Pricing</h2>
         <p className={styles.body}>
           OPick uses a bonding curve (constant product market maker) to set prices automatically based on demand.
-          The price of each side always sums to <span className={styles.mono}>$1.00</span>.
+          The price of each side always sums to $1.00.
         </p>
         <p className={styles.body}>
-          There is a <span className={styles.mono}>1%</span> spread on sells only.
-          Zero fees on buys, deposits, and withdrawals.
-          Of the spread, <span className={styles.mono}>30%</span> goes to the market creator
-          and <span className={styles.mono}>70%</span> goes to the protocol.
+          There is a 1% spread on sells only. Zero fees on buys, deposits, and withdrawals.
+          Of the spread, 30% goes to the market creator and 70% goes to the protocol.
         </p>
       </section>
 
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Creating a market</h2>
         <p className={styles.body}>
-          Creating a market costs <span className={styles.mono}>$5</span> USDC, which seeds the initial liquidity.
+          Creating a market costs $5 USDC, which seeds the initial liquidity.
           Pick a topic, name both sides, choose a category, and your market goes live instantly.
         </p>
         <p className={styles.body}>
-          You earn <span className={styles.mono}>30%</span> of all spread revenue from your market, forever.
+          You earn 30% of all spread revenue from your market, forever.
           The better the topic and the more trading it attracts, the more you earn.
           Create markets on trending topics and promote them to your audience.
         </p>
@@ -61,21 +63,43 @@ export default function DocsPage() {
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>For builders</h2>
         <p className={styles.body}>
-          OPick's smart contracts are deployed on Base (EVM compatible). OPickFactory creates and indexes markets.
-          Each OPickMarket uses a CPMM bonding curve for automated pricing.
+          OPick is fully onchain and permissionless. Everything you need to build on top of the protocol is public.
         </p>
+
+        <h3 className={styles.subTitle}>What you can build</h3>
+        <ul className={styles.list}>
+          <li>Trading bots that monitor price movements and trade automatically</li>
+          <li>Custom frontends or mobile apps using OPick's smart contracts</li>
+          <li>Analytics dashboards tracking volume, price history, and market trends</li>
+          <li>Market creation tools that programmatically spin up new markets</li>
+        </ul>
+
+        <h3 className={styles.subTitle}>Smart contracts (Base, EVM compatible)</h3>
         <div className={styles.addressBlock}>
           <div className={styles.addressRow}>
             <span className={styles.addressLabel}>Factory</span>
-            <span className={styles.mono}>0xf2bd8D38a96fcb05D625735DF1826b6f190a0362</span>
+            <span className={styles.addressMono}>0xf2bd8D38a96fcb05D625735DF1826b6f190a0362</span>
           </div>
           <div className={styles.addressRow}>
             <span className={styles.addressLabel}>USDC</span>
-            <span className={styles.mono}>0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913</span>
+            <span className={styles.addressMono}>0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913</span>
           </div>
         </div>
+
+        <h3 className={styles.subTitle}>How it works under the hood</h3>
+        <ul className={styles.list}>
+          <li>OPickFactory creates new markets and indexes them</li>
+          <li>Each OPickMarket is a standalone contract with a CPMM bonding curve</li>
+          <li>Call buyA(amount) or buyB(amount) to pick a side</li>
+          <li>Call sellA(shares) or sellB(shares) to exit</li>
+          <li>All functions accept USDC (6 decimals). Approve the market contract first.</li>
+          <li>Read priceA() and priceB() for current prices (always sum to 1.0)</li>
+          <li>Read sharesA(address) and sharesB(address) for user positions</li>
+        </ul>
+
         <p className={styles.body}>
-          Open source at <a href="https://github.com/vaderh-building/opick" target="_blank" rel="noopener noreferrer" className={styles.link}>github.com/vaderh-building/opick</a>. API documentation coming soon.
+          Source code: <a href="https://github.com/vaderh-building/opick" target="_blank" rel="noopener noreferrer" className={styles.link}>github.com/vaderh-building/opick</a>.
+          API documentation coming soon.
         </p>
       </section>
 

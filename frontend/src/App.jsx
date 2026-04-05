@@ -8,6 +8,7 @@ import MarketPage from './pages/MarketPage.jsx';
 import PortfolioPage from './pages/PortfolioPage.jsx';
 import CreatePage from './pages/CreatePage.jsx';
 import AccountPage from './pages/AccountPage.jsx';
+import CreatorsPage from './pages/CreatorsPage.jsx';
 import DocsPage from './pages/DocsPage.jsx';
 import TermsPage from './pages/TermsPage.jsx';
 import PrivacyPage from './pages/PrivacyPage.jsx';
@@ -39,6 +40,7 @@ function App() {
           <Route path="/portfolio" element={<PortfolioPage {...pageProps} />} />
           <Route path="/create" element={<CreatePage {...pageProps} />} />
           <Route path="/account" element={<AccountPage {...pageProps} />} />
+          <Route path="/creators" element={<CreatorsPage />} />
           <Route path="/docs" element={<DocsPage />} />
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />

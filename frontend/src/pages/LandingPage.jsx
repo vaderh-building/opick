@@ -37,8 +37,8 @@ export default function LandingPage() {
           A market for every <em>opinion.</em>
         </h1>
         <p className={styles.heroSub}>
-          Create a debate on anything. Pick a side with real money.<br />
-          No right answer — only what people believe.
+          Back your opinion with real money.<br />
+          Profit when others join your side.
         </p>
         <Link to="/markets" className={styles.cta}>Browse Markets</Link>
       </section>
