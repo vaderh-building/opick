@@ -9,7 +9,7 @@ export default function PortfolioPage({ account, provider, signer, onConnect, au
   const { markets, loading: marketsLoading } = useMarkets();
 
   const [positions, setPositions] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [sellingId, setSellingId] = useState(null);
 
   const fetchPositions = useCallback(async () => {
@@ -110,7 +110,7 @@ export default function PortfolioPage({ account, provider, signer, onConnect, au
   if (!authenticated) {
     return (
       <div className={styles.page}>
-        <h1 className={styles.title}>Your Opinions</h1>
+        <h1 className={styles.title}>Your <em>Opinions</em></h1>
         <div className={styles.notConnected}>
           <p className={styles.notConnectedText}>Sign in to see your opinions</p>
           <button className={styles.connectBtn} onClick={onConnect}>
@@ -124,7 +124,7 @@ export default function PortfolioPage({ account, provider, signer, onConnect, au
   if (authenticated && !account) {
     return (
       <div className={styles.page}>
-        <h1 className={styles.title}>Your Opinions</h1>
+        <h1 className={styles.title}>Your <em>Opinions</em></h1>
         <div className={styles.loading}>
           <p>Loading your account...</p>
         </div>
@@ -134,7 +134,7 @@ export default function PortfolioPage({ account, provider, signer, onConnect, au
 
   return (
     <div className={styles.page}>
-      <h1 className={styles.title}>Your Opinions</h1>
+      <h1 className={styles.title}>Your <em>Opinions</em></h1>
 
       {/* Summary */}
       <div className={styles.summary}>
@@ -155,7 +155,7 @@ export default function PortfolioPage({ account, provider, signer, onConnect, au
       </div>
 
       {/* Loading */}
-      {(loading || marketsLoading) && (
+      {loading && (
         <div className={styles.loading}>
           <div className={styles.spinner} />
           <p>Loading opinions...</p>
@@ -163,7 +163,7 @@ export default function PortfolioPage({ account, provider, signer, onConnect, au
       )}
 
       {/* Empty state */}
-      {!loading && !marketsLoading && positions.length === 0 && (
+      {!loading && positions.length === 0 && (
         <div className={styles.empty}>
           <p className={styles.emptyText}>No opinions yet</p>
           <p className={styles.emptySubtext}>Browse markets to pick your first side.</p>
