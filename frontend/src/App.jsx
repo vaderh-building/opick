@@ -9,6 +9,9 @@ import PortfolioPage from './pages/PortfolioPage.jsx';
 import CreatePage from './pages/CreatePage.jsx';
 import AccountPage from './pages/AccountPage.jsx';
 import DocsPage from './pages/DocsPage.jsx';
+import TermsPage from './pages/TermsPage.jsx';
+import PrivacyPage from './pages/PrivacyPage.jsx';
+import RiskPage from './pages/RiskPage.jsx';
 import './index.css';
 
 function App() {
@@ -36,6 +39,9 @@ function App() {
           <Route path="/create" element={<CreatePage {...pageProps} />} />
           <Route path="/account" element={<AccountPage {...pageProps} />} />
           <Route path="/docs" element={<DocsPage />} />
+          <Route path="/terms" element={<TermsPage />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/risk" element={<RiskPage />} />
         </Routes>
       </main>
       <Footer />
