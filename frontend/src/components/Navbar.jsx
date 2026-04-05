@@ -4,7 +4,7 @@ import styles from './Navbar.module.css';
 
 const NAV_LINKS = [
   { to: '/markets', label: 'Markets' },
-  { to: '/portfolio', label: 'Picks' },
+  { to: '/opinions', label: 'Opinions' },
   { to: '/create', label: 'Create' },
   { to: '/docs', label: 'Docs' },
 ];

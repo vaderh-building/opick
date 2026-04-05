@@ -109,9 +109,9 @@ export default function PortfolioPage({ account, provider, signer, onConnect, au
   if (!authenticated) {
     return (
       <div className={styles.page}>
-        <h1 className={styles.title}>Your Picks</h1>
+        <h1 className={styles.title}>Your Opinions</h1>
         <div className={styles.notConnected}>
-          <p className={styles.notConnectedText}>Sign in to see your picks</p>
+          <p className={styles.notConnectedText}>Sign in to see your opinions</p>
           <button className={styles.connectBtn} onClick={onConnect}>
             Sign In
           </button>
@@ -123,7 +123,7 @@ export default function PortfolioPage({ account, provider, signer, onConnect, au
   if (authenticated && !account) {
     return (
       <div className={styles.page}>
-        <h1 className={styles.title}>Your Picks</h1>
+        <h1 className={styles.title}>Your Opinions</h1>
         <div className={styles.loading}>
           <p>Loading your account...</p>
         </div>
@@ -133,7 +133,7 @@ export default function PortfolioPage({ account, provider, signer, onConnect, au
 
   return (
     <div className={styles.page}>
-      <h1 className={styles.title}>Your Picks</h1>
+      <h1 className={styles.title}>Your Opinions</h1>
 
       {/* Summary */}
       <div className={styles.summary}>
@@ -157,14 +157,14 @@ export default function PortfolioPage({ account, provider, signer, onConnect, au
       {(loading || marketsLoading) && (
         <div className={styles.loading}>
           <div className={styles.spinner} />
-          <p>Loading picks...</p>
+          <p>Loading opinions...</p>
         </div>
       )}
 
       {/* Empty state */}
       {!loading && !marketsLoading && positions.length === 0 && (
         <div className={styles.empty}>
-          <p className={styles.emptyText}>No picks yet</p>
+          <p className={styles.emptyText}>No opinions yet</p>
           <p className={styles.emptySubtext}>Browse markets and pick a side to get started.</p>
         </div>
       )}

@@ -35,6 +35,7 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/markets" element={<HomePage />} />
           <Route path="/market/:address" element={<MarketPage {...pageProps} />} />
+          <Route path="/opinions" element={<PortfolioPage {...pageProps} />} />
           <Route path="/portfolio" element={<PortfolioPage {...pageProps} />} />
           <Route path="/create" element={<CreatePage {...pageProps} />} />
           <Route path="/account" element={<AccountPage {...pageProps} />} />
