@@ -72,13 +72,6 @@ export default function PrivacyPage() {
           Note that blockchain records cannot be deleted.
         </p>
       </div>
-
-      <div className={s.section}>
-        <h2 className={s.heading}>Contact</h2>
-        <p className={s.body}>
-          For privacy-related questions, contact privacy@opick.xyz.
-        </p>
-      </div>
     </div>
   );
 }
