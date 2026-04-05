@@ -13,8 +13,7 @@ export default function CreatorsPage() {
           sell in your market. Forever.
         </p>
         <p className={styles.body}>
-          If your market does $10,000 in sell volume, you earn $30. At $100,000, you earn $300.
-          At $1M in volume, you earn $3,000. There is no cap.
+          The more volume your market generates, the more you earn. There is no cap.
         </p>
         <p className={styles.body}>
           Earnings are automatic. No claiming, no waiting. USDC goes straight to your wallet on every trade.
