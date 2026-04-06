@@ -9,6 +9,7 @@ export default function createMarketsRouter({
   factoryAbi,
   marketAbi,
   cache,
+  priceHistory,
 }) {
   const router = Router();
 
@@ -51,6 +52,13 @@ export default function createMarketsRouter({
   }
   router.get("/refresh", handleRefresh);
   router.post("/refresh", handleRefresh);
+
+  // GET /api/markets/price-history/:address — BEFORE :address
+  router.get("/price-history/:address", (req, res) => {
+    const addr = req.params.address;
+    const history = priceHistory?.get(addr) || [];
+    res.json(history);
+  });
 
   // GET /api/markets/:address — from cache (AFTER all specific routes)
   router.get("/:address", (req, res) => {

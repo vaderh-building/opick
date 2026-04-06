@@ -2,8 +2,8 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { parseUnits, formatUnits } from 'ethers';
 import {
-  AreaChart, Area, XAxis, YAxis, ReferenceLine,
-  ResponsiveContainer, Tooltip,
+  LineChart, Line, XAxis, YAxis, ReferenceLine,
+  ResponsiveContainer, Tooltip, Legend,
 } from 'recharts';
 import { useFundWallet } from '@privy-io/react-auth';
 import { base } from 'viem/chains';
@@ -15,17 +15,8 @@ import s from './MarketPage.module.css';
 const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001') + '/api';
 const TIME_RANGES = ['1H', '6H', '1D', '1W', '1M', 'ALL'];
 
-// Generate a flat line at the current price (no fake data)
-function generateFlatLine(currentPrice) {
-  const price = currentPrice != null ? currentPrice : 50;
-  const now = Date.now();
-  const interval = (24 * 60 * 60 * 1000) / 10;
-  return Array.from({ length: 11 }, (_, i) => ({
-    time: new Date(now - (10 - i) * interval).toLocaleTimeString([], {
-      hour: '2-digit', minute: '2-digit',
-    }),
-    priceA: Math.round(price * 10) / 10,
-  }));
+function formatChartTime(ts) {
+  return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
 function truncateAddress(addr) {
@@ -119,11 +110,33 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
   const priceB = chainPriceB != null ? chainPriceB : smartParsePrice(livePrice?.priceB ?? market?.priceB);
   const currentPrice = selectedSide === 'A' ? priceA : priceB;
 
-  // Chart data — flat line at current price (real history when available)
-  const chartData = useMemo(
-    () => generateFlatLine(priceA),
-    [marketAddress, Math.round(priceA)]
-  );
+  // Price history for chart
+  const [priceHistoryData, setPriceHistoryData] = useState([]);
+
+  const fetchPriceHistory = useCallback(async () => {
+    if (!marketAddress) return;
+    try {
+      const res = await fetch(`${API_URL}/markets/price-history/${marketAddress}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) setPriceHistoryData(data);
+      }
+    } catch {}
+  }, [marketAddress]);
+
+  useEffect(() => { fetchPriceHistory(); }, [fetchPriceHistory]);
+
+  // Build chart data: history + current live point
+  const chartData = useMemo(() => {
+    const points = priceHistoryData.map(p => ({
+      time: formatChartTime(p.timestamp),
+      sideA: smartParsePrice(p.priceA),
+      sideB: smartParsePrice(p.priceB),
+    }));
+    // Always add current live point
+    points.push({ time: 'Now', sideA: priceA, sideB: priceB });
+    return points;
+  }, [priceHistoryData, priceA, priceB]);
 
   // Fetch USDC balance
   useEffect(() => {
@@ -222,8 +235,11 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
     } catch (e) {
       console.error('refreshFromChain failed:', e.message);
     }
-    // Refresh backend cache in background
-    try { fetch(`${API_URL}/markets/refresh`, { method: 'POST' }); } catch {}
+    // Refresh backend cache + price history
+    try {
+      await fetch(`${API_URL}/markets/refresh`, { method: 'POST' });
+      fetchPriceHistory();
+    } catch {}
     // Refresh USDC balance
     if (usdc && account) {
       try { setUsdcBalance(await usdc.balanceOf(account)); } catch {}
@@ -376,42 +392,25 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
           {/* Chart */}
           <div className={s.chartSection}>
             <div className={s.chartHeader}>
-              <span className={s.chartTitle}>{sideAName} Price</span>
-              <div className={s.timeButtons}>
-                {TIME_RANGES.map((t) => (
-                  <button
-                    key={t}
-                    className={timeRange === t ? s.timeBtnActive : s.timeBtn}
-                    onClick={() => setTimeRange(t)}
-                  >
-                    {t}
-                  </button>
-                ))}
-              </div>
+              <span className={s.chartTitle}>Price History</span>
             </div>
             <div className={s.chartArea}>
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
-                  <defs>
-                    <linearGradient id="greenGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#1a6b3c" stopOpacity={0.2} />
-                      <stop offset="100%" stopColor="#1a6b3c" stopOpacity={0.02} />
-                    </linearGradient>
-                  </defs>
+                <LineChart data={chartData} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
                   <XAxis
                     dataKey="time"
-                    tick={{ fontSize: 11, fill: '#9c9b96' }}
+                    tick={{ fontSize: 10, fill: '#9c9b96', fontFamily: 'DM Sans' }}
                     axisLine={false}
                     tickLine={false}
                     interval="preserveStartEnd"
                   />
                   <YAxis
                     domain={[0, 100]}
-                    tick={{ fontSize: 11, fill: '#9c9b96' }}
+                    tick={{ fontSize: 10, fill: '#9c9b96', fontFamily: 'DM Sans' }}
                     axisLine={false}
                     tickLine={false}
                     tickFormatter={(v) => `${v}%`}
-                    width={40}
+                    width={36}
                   />
                   <ReferenceLine
                     y={50}
@@ -421,20 +420,20 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
                   <Tooltip
                     contentStyle={{
                       background: '#fff',
-                      border: '1px solid #E8E7E2',
-                      borderRadius: 8,
-                      fontSize: 13,
+                      border: '0.5px solid #E8E7E2',
+                      borderRadius: 4,
+                      fontSize: 12,
+                      fontFamily: 'DM Sans',
                     }}
-                    formatter={(value) => [`${value}%`, sideAName]}
+                    formatter={(value, name) => [`${Number(value).toFixed(1)}%`, name === 'sideA' ? sideAName : sideBName]}
                   />
-                  <Area
-                    type="monotone"
-                    dataKey="priceA"
-                    stroke="#1a6b3c"
-                    strokeWidth={2}
-                    fill="url(#greenGrad)"
+                  <Legend
+                    formatter={(value) => value === 'sideA' ? sideAName : sideBName}
+                    wrapperStyle={{ fontSize: 11, fontFamily: 'DM Sans' }}
                   />
-                </AreaChart>
+                  <Line type="monotone" dataKey="sideA" stroke="#1a6b3c" strokeWidth={2} dot={chartData.length <= 2} />
+                  <Line type="monotone" dataKey="sideB" stroke="#8b2500" strokeWidth={2} dot={chartData.length <= 2} />
+                </LineChart>
               </ResponsiveContainer>
             </div>
           </div>

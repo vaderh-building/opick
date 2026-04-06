@@ -91,6 +91,22 @@ const cache = {
   refresh: null, // set below
 };
 
+// Price history: { [address]: [{ timestamp, priceA, priceB }] }
+const priceHistory = new Map();
+const MAX_HISTORY = 500;
+
+function recordPrices(markets) {
+  if (!markets) return;
+  const ts = Date.now();
+  for (const m of markets) {
+    if (!m.priceA) continue;
+    const arr = priceHistory.get(m.address) || [];
+    arr.push({ timestamp: ts, priceA: m.priceA, priceB: m.priceB });
+    if (arr.length > MAX_HISTORY) arr.shift();
+    priceHistory.set(m.address, arr);
+  }
+}
+
 // Fetch all market data sequentially (avoids RPC rate limits)
 async function fetchMarketData(addr) {
   const c = new ethers.Contract(addr, marketAbi, provider);
@@ -198,6 +214,7 @@ async function backgroundRefresh() {
       await sleep(500);
     }
     cache.markets = updated;
+    recordPrices(updated);
     console.log(`Background refresh done: ${updated.length} markets`);
   } catch (e) {
     console.error("Background refresh failed:", e.message);
@@ -210,6 +227,7 @@ cache.refresh = async () => {
     const markets = await loadAllMarkets();
     cache.markets = markets;
     console.log("Cache refresh done:", markets.length, "markets");
+    recordPrices(markets);
   } catch (e) {
     console.error("Cache refresh FAILED:", e.message);
     if (!cache.markets) cache.markets = [];
@@ -221,7 +239,7 @@ const app = express();
 app.use(cors({ origin: process.env.FRONTEND_URL || "*" }));
 app.use(express.json());
 
-app.use("/api/markets", createMarketsRouter({ provider, factoryAddress, factoryAbi, marketAbi, cache }));
+app.use("/api/markets", createMarketsRouter({ provider, factoryAddress, factoryAbi, marketAbi, cache, priceHistory }));
 app.use("/api/comments", commentsRouter);
 app.use("/api/users", usersRouter);
 
