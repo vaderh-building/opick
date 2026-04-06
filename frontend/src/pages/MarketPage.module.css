@@ -664,7 +664,35 @@
 
 .notFound { text-align: center; padding: 80px 24px; }
 .notFoundTitle { font-family: var(--font-serif); font-size: 24px; color: var(--text); margin-bottom: 8px; }
-.notFoundText { color: var(--muted); font-size: 13px; }
+.notFoundText { color: var(--muted); font-size: 13px; margin-bottom: 0; }
+
+.retryBtn {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--green);
+  border: none;
+  border-radius: 4px;
+  padding: 9px 20px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.retryBtn:hover { opacity: 0.9; }
+
+.backBtn {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--dim);
+  background: none;
+  border: 0.5px solid var(--border);
+  border-radius: 4px;
+  padding: 9px 20px;
+  text-decoration: none;
+  transition: border-color 0.15s;
+}
+.backBtn:hover { border-color: var(--dim); }
 
 .connectBtn {
   padding: 10px 20px;

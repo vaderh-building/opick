@@ -34,57 +34,57 @@ function isValidMarket(data) {
 export function useMarket(address) {
   const [market, setMarket] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [retrying, setRetrying] = useState(false);
 
   const fetchMarket = useCallback(async () => {
-    if (!address) return;
+    if (!address) { setLoading(false); return; }
+    setLoading(true);
+    setRetrying(false);
 
-    // Try the single market endpoint
-    try {
-      const res = await fetch(`${API_URL}/markets/${address}`);
-      if (res.ok) {
-        const data = await res.json();
-        if (isValidMarket(data)) {
-          setMarket(data);
-          setLoading(false);
-          return;
-        }
-      }
-    } catch {}
-
-    // Fallback: fetch the full list and find our market
-    try {
-      const res = await fetch(`${API_URL}/markets`);
-      if (res.ok) {
-        const list = await res.json();
-        if (Array.isArray(list)) {
-          const found = list.find(m => m.address.toLowerCase() === address.toLowerCase());
+    // First attempt: try single endpoint then list
+    for (const url of [`${API_URL}/markets/${address}`, `${API_URL}/markets`]) {
+      try {
+        const res = await fetch(url);
+        if (res.ok) {
+          const data = await res.json();
+          const found = Array.isArray(data)
+            ? data.find(m => m.address.toLowerCase() === address.toLowerCase())
+            : data;
           if (isValidMarket(found)) {
             setMarket(found);
             setLoading(false);
             return;
           }
         }
-      }
-    } catch {}
+      } catch {}
+    }
 
-    // Still not found — retry single endpoint after 3s (cache might still be loading)
-    await new Promise(r => setTimeout(r, 3000));
-    try {
-      const res = await fetch(`${API_URL}/markets/${address}`);
-      if (res.ok) {
-        const data = await res.json();
-        if (isValidMarket(data)) {
-          setMarket(data);
+    // Not found yet. Retry up to 5 times with 3s intervals.
+    setRetrying(true);
+    for (let i = 0; i < 5; i++) {
+      await new Promise(r => setTimeout(r, 3000));
+      try {
+        const res = await fetch(`${API_URL}/markets/${address}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (isValidMarket(data)) {
+            setMarket(data);
+            setLoading(false);
+            setRetrying(false);
+            return;
+          }
         }
-      }
-    } catch {}
+      } catch {}
+    }
 
+    // Give up
     setLoading(false);
+    setRetrying(false);
   }, [address]);
 
   useEffect(() => {
     fetchMarket();
   }, [fetchMarket]);
 
-  return { market, loading, refetch: fetchMarket };
+  return { market, loading, retrying, refetch: fetchMarket };
 }

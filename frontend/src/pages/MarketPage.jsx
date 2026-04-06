@@ -68,7 +68,7 @@ function smartParseUSDC(val) {
 
 export default function MarketPage({ account, provider, signer, onConnect, authenticated, walletReady }) {
   const { address: marketAddress } = useParams();
-  const { market: rawMarket, loading, refetch } = useMarket(marketAddress);
+  const { market: rawMarket, loading, retrying, refetch } = useMarket(marketAddress);
   const { usdc, getMarket } = useContracts(signer || provider);
   const prices = usePriceWebSocket();
   const { fundWallet } = useFundWallet();
@@ -398,17 +398,24 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
   const potentialReturn = priceDecimal > 0 ? (amountNum / priceDecimal) - amountNum : 0;
 
   if (loading) {
-    return <div className={s.loading}>Loading market...</div>;
+    return (
+      <div className={s.loading}>
+        {retrying
+          ? 'Looking for your market... This may take a moment.'
+          : 'Loading market...'}
+      </div>
+    );
   }
 
   if (!market) {
     return (
       <div className={s.notFound}>
         <h2 className={s.notFoundTitle}>Market not found</h2>
-        <p className={s.notFoundText}>This market may not exist or the address is invalid.</p>
-        <Link to="/" className={s.backLink} style={{ marginTop: 16, display: 'inline-flex' }}>
-          Back to markets
-        </Link>
+        <p className={s.notFoundText}>It may still be processing. Try refreshing in a few seconds.</p>
+        <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginTop: 16 }}>
+          <button className={s.retryBtn} onClick={refetch}>Refresh</button>
+          <Link to="/markets" className={s.backBtn}>Back to Markets</Link>
+        </div>
       </div>
     );
   }
