@@ -71,7 +71,17 @@ export default function createMarketsRouter({
     }
   });
 
-  // POST /api/refresh-cache — manual trigger
+  // POST /api/markets/refresh — force cache reload
+  router.post("/refresh", async (req, res) => {
+    try {
+      await cache.refresh();
+      res.json({ ok: true, count: cache.markets?.length || 0 });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Legacy alias
   router.post("/refresh-cache", async (req, res) => {
     try {
       await cache.refresh();

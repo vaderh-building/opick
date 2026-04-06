@@ -158,6 +158,12 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
       }
 
       setSuccess('Market created!');
+
+      // Refresh backend cache so new market appears immediately
+      try {
+        await fetch(`${API_URL}/markets/refresh`, { method: 'POST' });
+      } catch {}
+
       setTimeout(() => {
         navigate(marketAddress ? `/market/${marketAddress}` : '/markets');
       }, 1500);

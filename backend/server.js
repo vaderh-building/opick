@@ -244,6 +244,6 @@ server.listen(PORT, async () => {
     console.error("Preload failed:", e.message);
   }
 
-  // Background refresh every 5 minutes
-  setInterval(backgroundRefresh, 5 * 60 * 1000);
+  // Background refresh every 60 seconds
+  setInterval(backgroundRefresh, 60 * 1000);
 });
