@@ -99,11 +99,18 @@
 
 .positionCard {
   padding: 16px 0;
-  display: grid;
-  grid-template-columns: 1.5fr 0.8fr 0.6fr 0.8fr 0.8fr auto;
-  align-items: center;
-  gap: 16px;
   border-bottom: 0.5px solid var(--border);
+}
+
+.posCardTop {
+  margin-bottom: 10px;
+}
+
+.posCardRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 6px;
 }
 
 .marketLink {
@@ -199,12 +206,7 @@
 .browseLink:hover { text-decoration: underline; }
 
 @media (max-width: 768px) {
-  .page { padding: 32px 20px 60px; }
-  .summary { flex-direction: column; }
-  .statCard { border-right: none; border-bottom: 0.5px solid var(--border); }
-  .headerRow { display: none; }
-  .positionCard { grid-template-columns: 1fr 1fr; gap: 12px; }
-  .positionCard > *:first-child { grid-column: 1 / -1; }
-  .positionCard > *:last-child { grid-column: 1 / -1; }
-  .sellBtn { width: 100%; text-align: center; }
+  .page { padding: 32px 16px 60px; }
+  .posCardRow { flex-wrap: wrap; }
+  .sellBtn { min-height: 36px; }
 }

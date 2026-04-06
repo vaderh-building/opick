@@ -97,6 +97,12 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
   // Balance
   const [usdcBalance, setUsdcBalance] = useState(null);
 
+  // On-chain overrides (after trades)
+  const [chainPriceA, setChainPriceA] = useState(null);
+  const [chainPriceB, setChainPriceB] = useState(null);
+  const [chainVolume, setChainVolume] = useState(null);
+  const [txCount, setTxCount] = useState(0); // trigger for re-fetching position
+
   // Comments
   const [comments, setComments] = useState([]);
   const [commentText, setCommentText] = useState('');
@@ -107,10 +113,10 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
   const [sellLoading, setSellLoading] = useState(false);
 
 
-  // Get live prices or fall back to market data → percentage 0-100
+  // Prices: on-chain override > WS > API cache
   const livePrice = prices[marketAddress];
-  const priceA = smartParsePrice(livePrice?.priceA ?? market?.priceA);
-  const priceB = smartParsePrice(livePrice?.priceB ?? market?.priceB);
+  const priceA = chainPriceA != null ? chainPriceA : smartParsePrice(livePrice?.priceA ?? market?.priceA);
+  const priceB = chainPriceB != null ? chainPriceB : smartParsePrice(livePrice?.priceB ?? market?.priceB);
   const currentPrice = selectedSide === 'A' ? priceA : priceB;
 
   // Chart data — flat line at current price (real history when available)
@@ -155,7 +161,7 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
         setPosition(null);
       }
     })();
-  }, [account, marketAddress, getMarket, signer, priceA, priceB]);
+  }, [account, marketAddress, getMarket, signer, priceA, priceB, txCount]);
 
   // Fetch comments
   const fetchComments = useCallback(async () => {
@@ -197,6 +203,25 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
     }
   };
 
+  // Refresh prices/volume directly from chain
+  const refreshFromChain = async () => {
+    if (!getMarket || !marketAddress) return;
+    try {
+      const mc = getMarket(marketAddress);
+      const [pA, pB, vol] = await Promise.all([mc.priceA(), mc.priceB(), mc.totalVolume()]);
+      setChainPriceA(smartParsePrice(pA.toString()));
+      setChainPriceB(smartParsePrice(pB.toString()));
+      setChainVolume(smartParseUSDC(vol.toString()));
+      setTxCount(c => c + 1); // trigger position re-fetch
+    } catch {}
+    // Also refresh backend cache in background
+    try { fetch(`${API_URL}/markets/refresh`, { method: 'POST' }); } catch {}
+    // Refresh USDC balance
+    if (usdc && account) {
+      try { setUsdcBalance(await usdc.balanceOf(account)); } catch {}
+    }
+  };
+
   // Buy shares
   const handleBuy = async () => {
     if (!amount || !signer || !usdc || !getMarket) {
@@ -232,7 +257,7 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
 
       setAmount('');
       setTxError('');
-      refetch();
+      await refreshFromChain();
     } catch (e) {
       console.error('Transaction failed:', e);
       const msg = e?.reason || e?.message || 'Transaction failed';
@@ -259,7 +284,7 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
       const sellTx = await sellFn;
       await sellTx.wait();
       setPosition(null);
-      refetch();
+      await refreshFromChain();
     } catch (e) {
       console.error('Sell failed:', e);
       setTxError(e?.reason || e?.message || 'Sell failed');
@@ -317,7 +342,7 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
               <span className={s.categoryPill}>{market.category}</span>
             )}
             <span className={s.metaItem}>
-              Volume: <span>${(market.totalVolume || 0) === 0 ? '0' : market.totalVolume.toLocaleString(undefined, {maximumFractionDigits: 0})}</span>
+              Volume: <span>${(() => { const v = chainVolume != null ? chainVolume : (market.totalVolume || 0); return v === 0 ? '0' : v.toLocaleString(undefined, {maximumFractionDigits: 0}); })()}</span>
             </span>
             {market.creator && (
               <span className={s.metaItem}>

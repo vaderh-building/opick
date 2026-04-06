@@ -1,68 +1,82 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+import { Contract } from 'ethers';
 import { useContracts } from '../hooks/useContracts';
 import { useMarkets } from '../hooks/useMarkets';
+import { FACTORY_ADDRESS } from '../config.js';
+import OPickFactoryAbi from '../abi/OPickFactory.json';
+import OPickMarketAbi from '../abi/OPickMarket.json';
 import styles from './PortfolioPage.module.css';
 
 export default function PortfolioPage({ account, provider, signer, onConnect, authenticated, walletReady }) {
   const { getMarket } = useContracts(signer || provider);
-  const { markets, loading: marketsLoading } = useMarkets();
+  const { markets } = useMarkets();
 
   const [positions, setPositions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [sellingId, setSellingId] = useState(null);
 
   const fetchPositions = useCallback(async () => {
-    // Need a valid eth address and a signer-backed contract
-    if (!account || !account.startsWith('0x') || !markets.length || !getMarket) {
+    if (!account || !account.startsWith('0x') || !provider) {
       setPositions([]);
-      setLoading(false);
       return;
     }
     setLoading(true);
 
     try {
-      const results = [];
-
-      for (const m of markets) {
+      // Get market addresses: prefer backend cache, fallback to on-chain
+      let marketList = markets;
+      if (!marketList.length && FACTORY_ADDRESS && provider) {
         try {
-          const contract = getMarket(m.address);
-          if (!contract) continue;
+          const factory = new Contract(FACTORY_ADDRESS, OPickFactoryAbi, provider);
+          const total = Number(await factory.totalMarkets());
+          if (total > 0) {
+            const addrs = await factory.getMarkets(0, total);
+            marketList = Array.from(addrs).map(a => ({ address: a }));
+          }
+        } catch {}
+      }
 
-          const [sharesA, sharesB] = await Promise.all([
-            contract.sharesA(account),
-            contract.sharesB(account),
-          ]);
+      if (!marketList.length) {
+        setPositions([]);
+        setLoading(false);
+        return;
+      }
 
-          // BigInt comparison — both must be > 0n to count
-          const hasA = sharesA > 0n;
-          const hasB = sharesB > 0n;
+      const results = [];
+      for (const m of marketList) {
+        try {
+          const contract = new Contract(m.address, OPickMarketAbi, provider);
+          const sharesA = await contract.sharesA(account);
+          const sharesB = await contract.sharesB(account);
 
-          if (hasA || hasB) {
-            const [reserveA, reserveB] = await Promise.all([
+          if (sharesA > 0n || sharesB > 0n) {
+            const [topic, sideAName, sideBName, reserveA, reserveB] = await Promise.all([
+              m.topic ? Promise.resolve(m.topic) : contract.topic(),
+              m.sideAName ? Promise.resolve(m.sideAName) : contract.sideAName(),
+              m.sideBName ? Promise.resolve(m.sideBName) : contract.sideBName(),
               contract.reserveA(),
               contract.reserveB(),
             ]);
+
             const totalReserves = Number(reserveA) + Number(reserveB);
             const priceA = totalReserves > 0 ? Number(reserveB) / totalReserves : 0.5;
             const priceB = totalReserves > 0 ? Number(reserveA) / totalReserves : 0.5;
 
             results.push({
               address: m.address,
-              topic: m.topic || 'Untitled Market',
-              choiceA: m.sideAName || 'Side A',
-              choiceB: m.sideBName || 'Side B',
-              sharesA: hasA ? Number(sharesA) : 0,
-              sharesB: hasB ? Number(sharesB) : 0,
-              valueA: hasA ? (Number(sharesA) * priceA) / 1e6 : 0,
-              valueB: hasB ? (Number(sharesB) * priceB) / 1e6 : 0,
+              topic: topic || 'Untitled',
+              choiceA: sideAName || 'Side A',
+              choiceB: sideBName || 'Side B',
+              sharesA: sharesA > 0n ? Number(sharesA) : 0,
+              sharesB: sharesB > 0n ? Number(sharesB) : 0,
+              valueA: sharesA > 0n ? (Number(sharesA) * priceA) / 1e6 : 0,
+              valueB: sharesB > 0n ? (Number(sharesB) * priceB) / 1e6 : 0,
               priceA,
               priceB,
             });
           }
-        } catch {
-          // Skip markets that fail to read — don't add them
-        }
+        } catch {}
       }
 
       setPositions(results);
@@ -71,35 +85,32 @@ export default function PortfolioPage({ account, provider, signer, onConnect, au
     } finally {
       setLoading(false);
     }
-  }, [account, markets, getMarket]);
+  }, [account, markets, provider]);
 
   useEffect(() => {
-    if (account && markets.length) {
+    if (account && provider) {
       fetchPositions();
     } else {
       setLoading(false);
       setPositions([]);
     }
-  }, [account, markets, fetchPositions]);
+  }, [account, provider, fetchPositions]);
 
   const handleSell = async (position, side) => {
+    if (!signer) return;
     const key = `${position.address}-${side}`;
     setSellingId(key);
 
     try {
-      const contract = getMarket(position.address);
-      if (!contract) return;
-
+      const contract = new Contract(position.address, OPickMarketAbi, signer);
       const shares = side === 'A' ? position.sharesA : position.sharesB;
       const tx = side === 'A'
         ? await contract.sellA(shares)
         : await contract.sellB(shares);
-
       await tx.wait();
       await fetchPositions();
     } catch (err) {
       console.error('Sell failed:', err);
-      alert('Transaction failed: ' + (err.reason || err.message));
     } finally {
       setSellingId(null);
     }
@@ -113,9 +124,7 @@ export default function PortfolioPage({ account, provider, signer, onConnect, au
         <h1 className={styles.title}>Your <em>Opinions</em></h1>
         <div className={styles.notConnected}>
           <p className={styles.notConnectedText}>Sign in to see your opinions</p>
-          <button className={styles.connectBtn} onClick={onConnect}>
-            Sign In
-          </button>
+          <button className={styles.connectBtn} onClick={onConnect}>Sign In</button>
         </div>
       </div>
     );
@@ -125,9 +134,7 @@ export default function PortfolioPage({ account, provider, signer, onConnect, au
     return (
       <div className={styles.page}>
         <h1 className={styles.title}>Your <em>Opinions</em></h1>
-        <div className={styles.loading}>
-          <p>Loading your account...</p>
-        </div>
+        <div className={styles.loading}><p>Loading your account...</p></div>
       </div>
     );
   }
@@ -136,33 +143,13 @@ export default function PortfolioPage({ account, provider, signer, onConnect, au
     <div className={styles.page}>
       <h1 className={styles.title}>Your <em>Opinions</em></h1>
 
-      {/* Summary */}
-      <div className={styles.summary}>
-        <div className={styles.statCard}>
-          <p className={styles.statLabel}>Total Invested</p>
-          <p className={styles.statValue}>${totalValue.toFixed(2)}</p>
-        </div>
-        <div className={styles.statCard}>
-          <p className={styles.statLabel}>Current Value</p>
-          <p className={styles.statValue}>${totalValue.toFixed(2)}</p>
-        </div>
-        <div className={styles.statCard}>
-          <p className={styles.statLabel}>P&L</p>
-          <p className={totalValue >= 0 ? styles.statValueGreen : styles.statValueRed}>
-            ${totalValue >= 0 ? '+' : ''}{(0).toFixed(2)}
-          </p>
-        </div>
-      </div>
-
-      {/* Loading */}
       {loading && (
         <div className={styles.loading}>
           <div className={styles.spinner} />
-          <p>Loading opinions...</p>
+          <p>Checking your positions...</p>
         </div>
       )}
 
-      {/* Empty state */}
       {!loading && positions.length === 0 && (
         <div className={styles.empty}>
           <p className={styles.emptyText}>No opinions yet</p>
@@ -171,96 +158,47 @@ export default function PortfolioPage({ account, provider, signer, onConnect, au
         </div>
       )}
 
-      {/* Positions */}
       {!loading && positions.length > 0 && (
         <>
-          <div className={styles.headerRow}>
-            <span className={styles.headerLabel}>Market</span>
-            <span className={styles.headerLabel}>Side</span>
-            <span className={styles.headerLabel}>Shares</span>
-            <span className={styles.headerLabel}>Value</span>
-            <span className={styles.headerLabel}>Price</span>
-            <span className={styles.headerLabel}></span>
+          <div className={styles.summary}>
+            <div className={styles.statCard}>
+              <p className={styles.statLabel}>Current Value</p>
+              <p className={styles.statValue}>${totalValue.toFixed(2)}</p>
+            </div>
           </div>
+
           <div className={styles.positionsList}>
             {positions.map((p) => (
-              <div key={p.address}>
+              <div key={p.address} className={styles.positionCard}>
+                <div className={styles.posCardTop}>
+                  <Link to={`/market/${p.address}`} className={styles.marketLink}>{p.topic}</Link>
+                </div>
                 {p.sharesA > 0 && (
-                  <div className={styles.positionCard}>
-                    <div>
-                      <Link to={`/market/${p.address}`} className={styles.marketLink}>
-                        {p.topic}
-                      </Link>
-                    </div>
-                    <div>
-                      <span className={styles.pillA}>{p.choiceA}</span>
-                    </div>
-                    <div>
-                      <p className={styles.fieldLabel}>Shares</p>
-                      <p className={styles.fieldValue}>
-                        {(p.sharesA / 1e6).toFixed(2)}
-                      </p>
-                    </div>
-                    <div>
-                      <p className={styles.fieldLabel}>Value</p>
-                      <p className={styles.fieldValue}>
-                        ${p.valueA.toFixed(2)}
-                      </p>
-                    </div>
-                    <div>
-                      <p className={styles.fieldLabel}>Price</p>
-                      <p className={styles.fieldValue}>
-                        ${p.priceA.toFixed(4)}
-                      </p>
-                    </div>
-                    <div>
-                      <button
-                        className={styles.sellBtn}
-                        disabled={sellingId === `${p.address}-A`}
-                        onClick={() => handleSell(p, 'A')}
-                      >
-                        {sellingId === `${p.address}-A` ? 'Selling...' : 'Sell All'}
-                      </button>
-                    </div>
+                  <div className={styles.posCardRow}>
+                    <span className={styles.pillA}>{p.choiceA}</span>
+                    <span className={styles.fieldValue}>{(p.sharesA / 1e6).toFixed(2)} shares</span>
+                    <span className={styles.fieldValue}>${p.valueA.toFixed(2)}</span>
+                    <button
+                      className={styles.sellBtn}
+                      disabled={sellingId === `${p.address}-A`}
+                      onClick={() => handleSell(p, 'A')}
+                    >
+                      {sellingId === `${p.address}-A` ? 'Selling...' : 'Sell'}
+                    </button>
                   </div>
                 )}
                 {p.sharesB > 0 && (
-                  <div className={styles.positionCard}>
-                    <div>
-                      <Link to={`/market/${p.address}`} className={styles.marketLink}>
-                        {p.topic}
-                      </Link>
-                    </div>
-                    <div>
-                      <span className={styles.pillB}>{p.choiceB}</span>
-                    </div>
-                    <div>
-                      <p className={styles.fieldLabel}>Shares</p>
-                      <p className={styles.fieldValue}>
-                        {(p.sharesB / 1e6).toFixed(2)}
-                      </p>
-                    </div>
-                    <div>
-                      <p className={styles.fieldLabel}>Value</p>
-                      <p className={styles.fieldValue}>
-                        ${p.valueB.toFixed(2)}
-                      </p>
-                    </div>
-                    <div>
-                      <p className={styles.fieldLabel}>Price</p>
-                      <p className={styles.fieldValue}>
-                        ${p.priceB.toFixed(4)}
-                      </p>
-                    </div>
-                    <div>
-                      <button
-                        className={styles.sellBtn}
-                        disabled={sellingId === `${p.address}-B`}
-                        onClick={() => handleSell(p, 'B')}
-                      >
-                        {sellingId === `${p.address}-B` ? 'Selling...' : 'Sell All'}
-                      </button>
-                    </div>
+                  <div className={styles.posCardRow}>
+                    <span className={styles.pillB}>{p.choiceB}</span>
+                    <span className={styles.fieldValue}>{(p.sharesB / 1e6).toFixed(2)} shares</span>
+                    <span className={styles.fieldValue}>${p.valueB.toFixed(2)}</span>
+                    <button
+                      className={styles.sellBtn}
+                      disabled={sellingId === `${p.address}-B`}
+                      onClick={() => handleSell(p, 'B')}
+                    >
+                      {sellingId === `${p.address}-B` ? 'Selling...' : 'Sell'}
+                    </button>
                   </div>
                 )}
               </div>
