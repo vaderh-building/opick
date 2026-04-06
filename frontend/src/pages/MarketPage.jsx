@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { parseUnits, formatUnits } from 'ethers';
 import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid,
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, ReferenceLine,
   ResponsiveContainer, Tooltip,
 } from 'recharts';
 import { useFundWallet } from '@privy-io/react-auth';
@@ -158,12 +158,19 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
     }));
     points.push({ time: 'Now', sideA: priceA, sideB: priceB });
 
-    // Auto-scale Y-axis
+    // Deduplicate: if first and last both say "now", label first differently
+    if (points.length >= 2 && points[0].time === 'now' && points[points.length - 1].time === 'Now') {
+      points[0].time = '1m ago';
+    }
+
     const allVals = points.flatMap(p => [p.sideA, p.sideB]);
     let mn = Math.min(...allVals);
     let mx = Math.max(...allVals);
-    if (mx - mn < 1) { mn -= 5; mx += 5; } // all same value, show +/- 5%
+    if (mx - mn < 1) { mn = 47; mx = 53; } // flat at 50%, tight range
     else { mn -= 1; mx += 1; }
+    // Always include 50 in the range
+    mn = Math.min(mn, 49);
+    mx = Math.max(mx, 51);
     return { chartData: points, yDomain: [Math.max(0, mn), Math.min(100, mx)] };
   }, [priceHistoryData, priceA, priceB]);
 
@@ -477,6 +484,7 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#E8E7E2" vertical={false} />
+                  <ReferenceLine y={50} stroke="#ccc" strokeDasharray="4 4" label={{ value: '50%', position: 'right', fontSize: 9, fill: '#9c9b96' }} />
                   <XAxis
                     dataKey="time"
                     tick={{ fontSize: 10, fill: '#9c9b96', fontFamily: 'DM Sans' }}
