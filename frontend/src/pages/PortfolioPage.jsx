@@ -24,17 +24,24 @@ export default function PortfolioPage({ account, provider, signer, onConnect, au
     setLoading(true);
 
     try {
+      console.log('Opinions: checking positions for', account);
+
       // Get market addresses: prefer backend cache, fallback to on-chain
       let marketList = markets;
       if (!marketList.length && FACTORY_ADDRESS && provider) {
         try {
           const factory = new Contract(FACTORY_ADDRESS, OPickFactoryAbi, provider);
           const total = Number(await factory.totalMarkets());
+          console.log('Opinions: factory reports', total, 'markets (on-chain fallback)');
           if (total > 0) {
             const addrs = await factory.getMarkets(0, total);
             marketList = Array.from(addrs).map(a => ({ address: a }));
           }
-        } catch {}
+        } catch (e) {
+          console.error('Opinions: factory query failed:', e.message);
+        }
+      } else {
+        console.log('Opinions: using', marketList.length, 'markets from backend cache');
       }
 
       if (!marketList.length) {
@@ -49,6 +56,7 @@ export default function PortfolioPage({ account, provider, signer, onConnect, au
           const contract = new Contract(m.address, OPickMarketAbi, provider);
           const sharesA = await contract.sharesA(account);
           const sharesB = await contract.sharesB(account);
+          console.log('Opinions:', m.address.slice(0, 10), 'sharesA=', sharesA.toString(), 'sharesB=', sharesB.toString());
 
           if (sharesA > 0n || sharesB > 0n) {
             const [topic, sideAName, sideBName, reserveA, reserveB] = await Promise.all([
@@ -76,11 +84,15 @@ export default function PortfolioPage({ account, provider, signer, onConnect, au
               priceB,
             });
           }
-        } catch {}
+        } catch (e) {
+          console.error('Opinions: failed reading', m.address?.slice(0, 10), e.message?.slice(0, 80));
+        }
       }
 
+      console.log('Opinions: found', results.length, 'positions');
       setPositions(results);
-    } catch {
+    } catch (e) {
+      console.error('Opinions: fetchPositions failed:', e.message);
       setPositions([]);
     } finally {
       setLoading(false);
@@ -146,7 +158,7 @@ export default function PortfolioPage({ account, provider, signer, onConnect, au
       {loading && (
         <div className={styles.loading}>
           <div className={styles.spinner} />
-          <p>Checking your positions...</p>
+          <p>Checking positions...</p>
         </div>
       )}
 

@@ -208,13 +208,21 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
     if (!getMarket || !marketAddress) return;
     try {
       const mc = getMarket(marketAddress);
-      const [pA, pB, vol] = await Promise.all([mc.priceA(), mc.priceB(), mc.totalVolume()]);
-      setChainPriceA(smartParsePrice(pA.toString()));
-      setChainPriceB(smartParsePrice(pB.toString()));
-      setChainVolume(smartParseUSDC(vol.toString()));
-      setTxCount(c => c + 1); // trigger position re-fetch
-    } catch {}
-    // Also refresh backend cache in background
+      const pA = await mc.priceA();
+      const pB = await mc.priceB();
+      const vol = await mc.totalVolume();
+      const parsedA = smartParsePrice(pA.toString());
+      const parsedB = smartParsePrice(pB.toString());
+      const parsedVol = smartParseUSDC(vol.toString());
+      console.log('On-chain refresh:', { priceA: parsedA, priceB: parsedB, volume: parsedVol });
+      setChainPriceA(parsedA);
+      setChainPriceB(parsedB);
+      setChainVolume(parsedVol);
+      setTxCount(c => c + 1);
+    } catch (e) {
+      console.error('refreshFromChain failed:', e.message);
+    }
+    // Refresh backend cache in background
     try { fetch(`${API_URL}/markets/refresh`, { method: 'POST' }); } catch {}
     // Refresh USDC balance
     if (usdc && account) {
@@ -355,12 +363,12 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
           <div className={s.priceBar}>
             <div className={s.priceBox}>
               <div className={s.priceLabel}>{sideAName}</div>
-              <div className={s.priceValueGreen}>{Math.round(priceA)}%</div>
+              <div className={s.priceValueGreen}>{priceA.toFixed(1)}%</div>
               <div className={s.priceSide}>${(priceA / 100).toFixed(2)} per share</div>
             </div>
             <div className={s.priceBox}>
               <div className={s.priceLabel}>{sideBName}</div>
-              <div className={s.priceValueRed}>{Math.round(priceB)}%</div>
+              <div className={s.priceValueRed}>{priceB.toFixed(1)}%</div>
               <div className={s.priceSide}>${(priceB / 100).toFixed(2)} per share</div>
             </div>
           </div>
@@ -584,7 +592,7 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
             <div className={s.infoSection}>
               <div className={s.infoRow}>
                 <span className={s.infoLabel}>Entry price</span>
-                <span className={s.infoValue}>{Math.round(currentPrice)}%</span>
+                <span className={s.infoValue}>{currentPrice.toFixed(1)}%</span>
               </div>
               <div className={s.infoRow}>
                 <span className={s.infoLabel}>If everyone agrees with you</span>
