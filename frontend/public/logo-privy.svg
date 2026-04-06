@@ -1,8 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="360" height="180" viewBox="0 0 360 180">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,500&amp;family=DM+Sans:wght@600&amp;display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,500&amp;display=swap');
   </style>
-  <text y="108" text-anchor="middle" x="180" fill="#000000">
-    <tspan font-family="'Playfair Display', Georgia, serif" font-style="italic" font-weight="500" font-size="68">O</tspan><tspan font-family="'DM Sans', sans-serif" font-weight="600" font-size="62">Pick</tspan>
-  </text>
+  <text x="180" y="130" text-anchor="middle" font-family="'Playfair Display', Georgia, serif" font-style="italic" font-weight="500" font-size="120" fill="#000000">O</text>
 </svg>
