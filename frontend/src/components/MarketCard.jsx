@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import styles from './MarketCard.module.css';
 
@@ -16,6 +17,7 @@ function formatPercent(price) {
 
 export default function MarketCard({ market }) {
   if (!market) return null;
+  const [copied, setCopied] = useState(false);
 
   const {
     address = '',
@@ -32,11 +34,32 @@ export default function MarketCard({ market }) {
   const priceB = Number(rawB) || 0.5;
   const pctA = priceA * 100;
 
+  const handleShare = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const url = `https://opick.io/market/${address}`;
+    const text = `${topic} - ${sideAName} ${(pctA).toFixed(1)}% vs ${sideBName} ${(100 - pctA).toFixed(1)}% | Pick a side on OPick`;
+    if (navigator.share) {
+      try { await navigator.share({ title: topic, text, url }); return; } catch {}
+    }
+    try { await navigator.clipboard.writeText(url); } catch {}
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
     <Link to={`/market/${address}`} className={styles.card}>
       <div className={styles.topRow}>
         <span className={styles.category}>{category}</span>
-        <span className={styles.volume}>{formatVolume(totalVolume)}</span>
+        <div className={styles.topRight}>
+          <span className={styles.volume}>{formatVolume(totalVolume)}</span>
+          <button className={styles.shareBtn} onClick={handleShare} title="Share">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" /><polyline points="16 6 12 2 8 6" /><line x1="12" y1="2" x2="12" y2="15" />
+            </svg>
+            {copied && <span className={styles.cardToast}>Copied!</span>}
+          </button>
+        </div>
       </div>
 
       <h3 className={styles.title}>{topic}</h3>

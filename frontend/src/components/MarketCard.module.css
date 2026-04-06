@@ -29,6 +29,45 @@
   color: var(--muted);
 }
 
+.topRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.shareBtn {
+  position: relative;
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 2px;
+  transition: color 0.15s;
+  line-height: 1;
+}
+
+.shareBtn:hover { color: var(--green); }
+
+.cardToast {
+  position: absolute;
+  top: -22px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-sans);
+  font-size: 9px;
+  color: var(--green);
+  background: var(--green-bg);
+  padding: 2px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  animation: fadeCopied 2s ease forwards;
+}
+
+@keyframes fadeCopied {
+  0%, 70% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
 .volume {
   font-family: var(--font-mono);
   font-size: 12px;

@@ -415,6 +415,18 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
 
   const sideAName = market.sideAName || 'Side A';
   const sideBName = market.sideBName || 'Side B';
+  const [shareCopied, setShareCopied] = useState(false);
+
+  const handleShare = async () => {
+    const url = `https://opick.io/market/${marketAddress}`;
+    const text = `${market.topic} - ${sideAName} ${priceA.toFixed(1)}% vs ${sideBName} ${priceB.toFixed(1)}% | Pick a side on OPick`;
+    if (navigator.share) {
+      try { await navigator.share({ title: market.topic, text, url }); return; } catch {}
+    }
+    try { await navigator.clipboard.writeText(url); } catch {}
+    setShareCopied(true);
+    setTimeout(() => setShareCopied(false), 2000);
+  };
 
   return (
     <div className={s.page}>
@@ -424,7 +436,15 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
           <Link to="/markets" className={s.backLink}>
             &larr; All markets
           </Link>
-          <h1 className={s.title}>{market.topic}</h1>
+          <div className={s.titleRow}>
+            <h1 className={s.title}>{market.topic}</h1>
+            <button className={s.shareBtn} onClick={handleShare} title="Share this market">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" /><polyline points="16 6 12 2 8 6" /><line x1="12" y1="2" x2="12" y2="15" />
+              </svg>
+              {shareCopied && <span className={s.shareToast}>Link copied!</span>}
+            </button>
+          </div>
 
           <div className={s.meta}>
             {market.category && (

@@ -38,13 +38,54 @@
 
 .backLink:hover { color: var(--text); }
 
+.titleRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
 .title {
   font-family: var(--font-serif);
   font-size: 32px;
   font-weight: 600;
   line-height: 1.15;
   color: var(--text);
-  margin-bottom: 12px;
+  flex: 1;
+}
+
+.shareBtn {
+  position: relative;
+  flex-shrink: 0;
+  margin-top: 8px;
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 4px;
+  transition: color 0.15s;
+}
+
+.shareBtn:hover { color: var(--green); }
+
+.shareToast {
+  position: absolute;
+  top: -28px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: var(--green);
+  background: var(--green-bg);
+  padding: 4px 10px;
+  border-radius: 4px;
+  white-space: nowrap;
+  animation: fadeToast 2s ease forwards;
+}
+
+@keyframes fadeToast {
+  0%, 70% { opacity: 1; }
+  100% { opacity: 0; }
 }
 
 .meta {
