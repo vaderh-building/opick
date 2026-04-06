@@ -239,17 +239,37 @@ async function backgroundRefresh() {
   }
 }
 
+let refreshInProgress = null;
+
 cache.refresh = async () => {
-  console.log("Cache refresh triggered...");
-  try {
-    const markets = await loadAllMarkets();
-    cache.markets = markets;
-    console.log("Cache refresh done:", markets.length, "markets");
-    recordPrices(markets);
-  } catch (e) {
-    console.error("Cache refresh FAILED:", e.message);
-    if (!cache.markets) cache.markets = [];
+  // If refresh already running, wait for it instead of starting another
+  if (refreshInProgress) {
+    console.log("Refresh already in progress, waiting...");
+    return refreshInProgress;
   }
+
+  refreshInProgress = (async () => {
+    console.log("Cache refresh triggered...");
+    try {
+      const markets = await loadAllMarkets();
+      cache.markets = markets;
+      console.log("Cache refresh done:", markets.length, "markets");
+      recordPrices(markets);
+    } catch (e) {
+      console.error("Cache refresh FAILED:", e.message);
+      if (!cache.markets) cache.markets = [];
+    } finally {
+      refreshInProgress = null;
+    }
+  })();
+
+  // 30s timeout: return whatever we have if it takes too long
+  const timeout = new Promise(resolve => setTimeout(() => {
+    console.log("Refresh timeout after 30s");
+    resolve();
+  }, 30000));
+
+  await Promise.race([refreshInProgress, timeout]);
 };
 
 // ---------- Express ----------

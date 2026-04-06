@@ -139,8 +139,9 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
     }
 
     setCreating(true);
+    setError('');
+    setSuccess('');
     try {
-      // No USDC approval needed (creation is free)
       const createTx = await factory.createMarket(topic, a, b, category);
       const receipt = await createTx.wait();
 
@@ -155,20 +156,43 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
         } catch {}
       }
 
+      setCreating(false);
       setSuccess('Market created!');
 
-      // Refresh backend cache so new market appears immediately
+      // Refresh backend cache (wait up to 10s)
+      const controller = new AbortController();
+      const refreshTimeout = setTimeout(() => controller.abort(), 10000);
       try {
-        await fetch(`${API_URL}/markets/refresh`, { method: 'POST' });
+        await fetch(`${API_URL}/markets/refresh`, { method: 'POST', signal: controller.signal });
       } catch {}
+      clearTimeout(refreshTimeout);
 
-      setTimeout(() => {
-        navigate(marketAddress ? `/market/${marketAddress}` : '/markets');
-      }, 1500);
+      // Poll until the new market appears in the backend (up to 5 polls, 2s apart)
+      if (marketAddress) {
+        let found = false;
+        for (let i = 0; i < 5; i++) {
+          try {
+            const res = await fetch(`${API_URL}/markets/${marketAddress}`);
+            if (res.ok) {
+              const data = await res.json();
+              if (data && data.topic) { found = true; break; }
+            }
+          } catch {}
+          await new Promise(r => setTimeout(r, 2000));
+        }
+
+        if (found) {
+          navigate(`/market/${marketAddress}`);
+        } else {
+          setSuccess('Market created successfully! It may take a moment to appear.');
+        }
+      } else {
+        navigate('/markets');
+      }
     } catch (err) {
-      setError(err.reason || err.message || 'Transaction failed.');
-    } finally {
       setCreating(false);
+      const msg = err?.reason || err?.message || 'Transaction failed. Please try again.';
+      setError(msg.length > 120 ? msg.slice(0, 120) + '...' : msg);
     }
   };
 
@@ -272,7 +296,16 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
 
           {/* Messages */}
           {error && <div className={styles.errorMsg}>{error}</div>}
-          {success && <div className={styles.successMsg}>{success}</div>}
+          {success && (
+            <div className={styles.successMsg}>
+              {success}
+              {success.includes('moment') && (
+                <Link to="/markets" style={{ display: 'block', marginTop: 8, color: '#1a6b3c', fontWeight: 600, textDecoration: 'none' }}>
+                  View Markets
+                </Link>
+              )}
+            </div>
+          )}
 
           {/* Existing market match */}
           {showExisting && (
