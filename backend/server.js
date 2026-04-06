@@ -136,32 +136,32 @@ function withTimeout(promise, ms) {
   ]);
 }
 
-// Fetch market data with batched calls (4 rounds instead of 14 sequential)
+// Fetch market data with sequential calls (one at a time, avoids RPC rate limits)
 async function fetchMarketData(addr) {
   const c = new ethers.Contract(addr, marketAbi, provider);
 
-  // Static data (cached permanently)
   let stat;
   if (staticCache.has(addr)) {
     stat = staticCache.get(addr);
   } else {
-    const [topic, sideAName, sideBName] = await withTimeout(
-      Promise.all([c.topic(), c.sideAName(), c.sideBName()]), 8000
-    );
-    const [category, creator, createdAt] = await withTimeout(
-      Promise.all([c.category(), c.creator(), c.createdAt()]), 8000
-    );
+    const topic = await c.topic();
+    const sideAName = await c.sideAName();
+    const sideBName = await c.sideBName();
+    const category = await c.category();
+    const creator = await c.creator();
+    const createdAt = await c.createdAt();
     stat = { topic, sideAName, sideBName, category, creator, createdAt: createdAt.toString() };
     staticCache.set(addr, stat);
   }
 
-  // Dynamic data in 2 batches
-  const [priceA, priceB, totalVolume, creatorEarnings] = await withTimeout(
-    Promise.all([c.priceA(), c.priceB(), c.totalVolume(), c.creatorEarnings()]), 8000
-  );
-  const [reserveA, reserveB, totalSharesA, totalSharesB] = await withTimeout(
-    Promise.all([c.reserveA(), c.reserveB(), c.totalSharesA(), c.totalSharesB()]), 8000
-  );
+  const priceA = await c.priceA();
+  const priceB = await c.priceB();
+  const totalVolume = await c.totalVolume();
+  const creatorEarnings = await c.creatorEarnings();
+  const reserveA = await c.reserveA();
+  const reserveB = await c.reserveB();
+  const totalSharesA = await c.totalSharesA();
+  const totalSharesB = await c.totalSharesB();
 
   return {
     address: addr, ...stat,
