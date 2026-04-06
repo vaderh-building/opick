@@ -14,10 +14,16 @@ export default function createMarketsRouter({
 }) {
   const router = Router();
 
+  // Markets hidden from the list (still accessible via direct URL)
+  const HIDDEN_MARKETS = new Set([
+    "0x1De15b5510B8D7Cdee42AA662949b85276663962",
+  ].map(a => a.toLowerCase()));
+
   // GET /api/markets — always instant from cache
   router.get("/", (req, res) => {
     if (cache.markets && cache.markets.length > 0) {
-      return res.json(cache.markets);
+      const visible = cache.markets.filter(m => !HIDDEN_MARKETS.has(m.address.toLowerCase()));
+      return res.json(visible);
     }
     res.json([]);
   });
