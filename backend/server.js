@@ -128,18 +128,11 @@ function recordPrices(markets) {
   }
 }
 
-// Timeout wrapper for any promise
-function withTimeout(promise, ms) {
-  return Promise.race([
-    promise,
-    new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms)),
-  ]);
-}
-
-// Fetch market data with sequential calls (one at a time, avoids RPC rate limits)
+// Fetch all market data sequentially (avoids RPC rate limits)
 async function fetchMarketData(addr) {
   const c = new ethers.Contract(addr, marketAbi, provider);
 
+  // Static data (cached permanently)
   let stat;
   if (staticCache.has(addr)) {
     stat = staticCache.get(addr);
@@ -154,6 +147,7 @@ async function fetchMarketData(addr) {
     staticCache.set(addr, stat);
   }
 
+  // Dynamic data
   const priceA = await c.priceA();
   const priceB = await c.priceB();
   const totalVolume = await c.totalVolume();
@@ -172,44 +166,49 @@ async function fetchMarketData(addr) {
   };
 }
 
-async function fetchMarketWithRetry(addr) {
-  for (let attempt = 1; attempt <= 2; attempt++) {
+async function fetchMarketWithRetry(addr, maxRetries = 5) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       return await fetchMarketData(addr);
     } catch (err) {
-      console.error(`  ${addr.slice(0,10)} attempt ${attempt}/2: ${err.message.slice(0, 60)}`);
-      if (attempt < 2) await sleep(1000);
+      console.error(`  Market ${addr} attempt ${attempt}/${maxRetries}: ${err.message.slice(0, 100)}`);
+      if (attempt < maxRetries) {
+        await sleep(2000 * attempt);
+      } else {
+        if (staticCache.has(addr)) {
+          console.log(`  Using cached static data for ${addr}`);
+          return {
+            address: addr, ...staticCache.get(addr),
+            priceA: "500000000000000000", priceB: "500000000000000000",
+            totalVolume: "0", creatorEarnings: "0",
+            reserveA: "1000000000", reserveB: "1000000000",
+            totalSharesA: "0", totalSharesB: "0",
+          };
+        }
+        return null;
+      }
     }
-  }
-  // Fallback: return placeholder with static data if available
-  if (staticCache.has(addr)) {
-    return {
-      address: addr, ...staticCache.get(addr),
-      priceA: "500000000000000000", priceB: "500000000000000000",
-      totalVolume: "0", creatorEarnings: "0",
-      reserveA: "10000000000", reserveB: "10000000000",
-      totalSharesA: "0", totalSharesB: "0",
-    };
   }
   return null;
 }
 
 async function loadAllMarkets() {
-  if (!factoryAddress) { console.log("No factoryAddress"); return []; }
-  console.log("Loading markets from", factoryAddress);
+  if (!factoryAddress) { console.log("No factoryAddress, skipping market load"); return []; }
+  console.log("Querying factory at", factoryAddress, "via", config.rpcUrl);
   const factory = new ethers.Contract(factoryAddress, factoryAbi, provider);
-  const total = Number(await withTimeout(factory.totalMarkets(), 10000));
-  console.log("Factory:", total, "markets");
+  const total = Number(await factory.totalMarkets());
+  console.log("Factory reports", total, "markets");
   if (total === 0) return [];
 
-  const addresses = Array.from(await withTimeout(factory.getMarkets(0, total), 10000));
-  const results = [];
+  const addresses = Array.from(await factory.getMarkets(0, total));
+  console.log(`Loading ${addresses.length} markets...`);
 
+  const results = [];
   for (let i = 0; i < addresses.length; i++) {
     const m = await fetchMarketWithRetry(addresses[i]);
     if (m) results.push(m);
-    console.log(`  ${i + 1}/${addresses.length} ${m ? "ok" : "SKIP"}`);
-    if (i < addresses.length - 1) await sleep(200);
+    console.log(`  ${i + 1}/${addresses.length} ${m ? "ok" : "FAILED"}`);
+    if (i < addresses.length - 1) await sleep(500);
   }
   return results;
 }
@@ -217,29 +216,33 @@ async function loadAllMarkets() {
 // Background refresh
 async function backgroundRefresh() {
   if (!cache.markets || cache.markets.length === 0) {
-    try { await withTimeout(cache.refresh(), 45000); } catch {}
+    try { await cache.refresh(); } catch {}
     return;
   }
+  console.log("Background refresh...");
   try {
     const updated = [];
     for (const m of cache.markets) {
       try {
-        const fresh = await withTimeout(fetchMarketData(m.address), 15000);
+        const fresh = await fetchMarketData(m.address);
         updated.push(fresh);
       } catch {
         updated.push(m);
       }
-      await sleep(200);
+      await sleep(500);
     }
     cache.markets = updated;
     recordPrices(updated);
-  } catch {}
+    console.log(`Background refresh done: ${updated.length} markets`);
+  } catch (e) {
+    console.error("Background refresh failed:", e.message);
+  }
 }
 
 cache.refresh = async () => {
   console.log("Cache refresh triggered...");
   try {
-    const markets = await withTimeout(loadAllMarkets(), 45000);
+    const markets = await loadAllMarkets();
     cache.markets = markets;
     console.log("Cache refresh done:", markets.length, "markets");
     recordPrices(markets);
