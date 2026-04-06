@@ -26,9 +26,10 @@ function generateTopic(template, a, b) {
     case 'goat': return `Who is the GOAT? ${a} vs ${b || '...'}`;
     case 'h2h': return `${a} vs ${b || '...'}`;
     case 'bull-bear': return `${a}: Overhyped or Underhyped?`;
-    case 'hot-take': return a;
+    case 'hot-take': return `${a} vs ${b || '...'}`;
     case 'best-of': return `Best ${a}? ${a} vs ${b || '...'}`;
-    default: return '';
+    case 'custom': return `${a} vs ${b || '...'}`;
+    default: return `${a} vs ${b || '...'}`;
   }
 }
 
