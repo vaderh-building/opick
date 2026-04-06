@@ -4,7 +4,6 @@ import styles from './Navbar.module.css';
 
 const NAV_LINKS = [
   { to: '/markets', label: 'Markets' },
-  { to: '/account', label: 'Opinions' },
   { to: '/create', label: 'Create' },
   { to: '/creators', label: 'Creators' },
   { to: '/docs', label: 'Docs' },
@@ -94,12 +93,11 @@ export default function Navbar({ account, authenticated, displayName, onConnect,
                   <Link to="/account" className={styles.dropdownLink} onClick={() => setDropdownOpen(false)}>
                     Account
                   </Link>
-                  <Link to="/account" className={styles.dropdownLink} onClick={() => setDropdownOpen(false)}>
-                    Your Opinions
-                  </Link>
-                  <Link to="/account" className={styles.dropdownLink} onClick={() => setDropdownOpen(false)}>
-                    Add USDC
-                  </Link>
+                  {onFundWallet && (
+                    <button className={styles.dropdownItem} onClick={() => { onFundWallet(); setDropdownOpen(false); }}>
+                      Add USDC
+                    </button>
+                  )}
                   <div className={styles.dropdownDivider} />
                   <button
                     className={styles.dropdownItemMuted}
