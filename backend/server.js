@@ -56,6 +56,7 @@ const provider = new ethers.JsonRpcProvider(
   { chainId, name: chainName },
   { staticNetwork: true }
 );
+console.log("Provider: chainId=%d name=%s rpc=%s", chainId, chainName, config.rpcUrl);
 
 // ---------- ABIs ----------
 function loadAbi(name) {
@@ -189,9 +190,14 @@ async function backgroundRefresh() {
 
 cache.refresh = async () => {
   console.log("Cache refresh triggered...");
-  const markets = await loadAllMarkets();
-  cache.markets = markets;
-  console.log("Cache refresh done:", markets.length, "markets");
+  try {
+    const markets = await loadAllMarkets();
+    cache.markets = markets;
+    console.log("Cache refresh done:", markets.length, "markets");
+  } catch (e) {
+    console.error("Cache refresh FAILED:", e.message);
+    if (!cache.markets) cache.markets = [];
+  }
 };
 
 // ---------- Express ----------
@@ -203,14 +209,23 @@ app.use("/api/markets", createMarketsRouter({ provider, factoryAddress, factoryA
 app.use("/api/comments", commentsRouter);
 app.use("/api/users", usersRouter);
 
-app.get("/api/health", (req, res) => {
-  res.json({
-    status: cache.markets ? "ok" : "loading",
-    markets: cache.markets?.length || 0,
+app.get("/api/health", async (req, res) => {
+  const result = {
+    status: cache.markets?.length > 0 ? "ok" : "no_markets",
+    cachedMarkets: cache.markets?.length || 0,
     loading: cache.loading,
     rpcUrl: config.rpcUrl,
+    chainId,
     factoryAddress,
-  });
+  };
+  // Live check
+  try {
+    const factory = new ethers.Contract(factoryAddress, factoryAbi, provider);
+    result.onChainMarkets = Number(await factory.totalMarkets());
+  } catch (e) {
+    result.onChainError = e.message.slice(0, 100);
+  }
+  res.json(result);
 });
 
 // ---------- WebSocket ----------
