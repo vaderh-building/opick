@@ -91,6 +91,19 @@
   padding: 14px 16px;
   border: 0.5px solid var(--border);
   border-radius: 4px;
+  transition: background 0.3s;
+}
+
+.flashGreen { animation: flashG 1.2s ease; }
+.flashRed { animation: flashR 1.2s ease; }
+
+@keyframes flashG {
+  0% { background: var(--green-bg); }
+  100% { background: transparent; }
+}
+@keyframes flashR {
+  0% { background: var(--red-bg); }
+  100% { background: transparent; }
 }
 
 .priceLabel {
@@ -586,6 +599,43 @@
   transition: opacity 0.15s;
 }
 .connectBtn:hover { opacity: 0.9; }
+
+/* Activity feed */
+.activitySection {
+  margin-bottom: 20px;
+}
+
+.activityTitle {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 0 0 8px;
+}
+
+.activityList {
+  display: flex;
+  flex-direction: column;
+}
+
+.activityItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 0.5px solid var(--border);
+  font-family: var(--font-sans);
+  font-size: 13px;
+}
+
+.activityItem:last-child { border-bottom: none; }
+
+.activitySideA { color: var(--green); font-weight: 600; min-width: 70px; }
+.activitySideB { color: var(--red); font-weight: 600; min-width: 70px; }
+.activityAmount { color: var(--text); font-weight: 500; }
+.activityTime { color: var(--muted); font-size: 11px; margin-left: auto; }
 
 @media (max-width: 900px) {
   .layout { flex-direction: column; }

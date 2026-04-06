@@ -95,15 +95,36 @@ const cache = {
 const priceHistory = new Map();
 const MAX_HISTORY = 500;
 
+// Trade log: { [address]: [{ timestamp, side, amount, priceA, priceB }] }
+const tradeLogs = new Map();
+const MAX_TRADES = 100;
+
+// Track previous volumes to detect new trades
+const prevVolumes = new Map();
+
 function recordPrices(markets) {
   if (!markets) return;
   const ts = Date.now();
   for (const m of markets) {
     if (!m.priceA) continue;
+    // Price history
     const arr = priceHistory.get(m.address) || [];
     arr.push({ timestamp: ts, priceA: m.priceA, priceB: m.priceB });
     if (arr.length > MAX_HISTORY) arr.shift();
     priceHistory.set(m.address, arr);
+
+    // Detect volume change = new trade
+    const prevVol = prevVolumes.get(m.address) || "0";
+    if (m.totalVolume !== prevVol && prevVol !== "0") {
+      const delta = (Number(m.totalVolume) - Number(prevVol)) / 1e6;
+      if (delta > 0) {
+        const log = tradeLogs.get(m.address) || [];
+        log.push({ timestamp: ts, amount: delta, priceA: m.priceA, priceB: m.priceB });
+        if (log.length > MAX_TRADES) log.shift();
+        tradeLogs.set(m.address, log);
+      }
+    }
+    prevVolumes.set(m.address, m.totalVolume);
   }
 }
 
@@ -239,7 +260,7 @@ const app = express();
 app.use(cors({ origin: process.env.FRONTEND_URL || "*" }));
 app.use(express.json());
 
-app.use("/api/markets", createMarketsRouter({ provider, factoryAddress, factoryAbi, marketAbi, cache, priceHistory }));
+app.use("/api/markets", createMarketsRouter({ provider, factoryAddress, factoryAbi, marketAbi, cache, priceHistory, tradeLogs }));
 app.use("/api/comments", commentsRouter);
 app.use("/api/users", usersRouter);
 

@@ -103,6 +103,10 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
   const [position, setPosition] = useState(null);
   const [sellLoading, setSellLoading] = useState(false);
 
+  // Trade feed + price flash
+  const [trades, setTrades] = useState([]);
+  const [priceFlash, setPriceFlash] = useState(null); // 'up' | 'down' | null
+
 
   // Prices: on-chain override > WS > API cache
   const livePrice = prices[marketAddress];
@@ -125,6 +129,21 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
   }, [marketAddress]);
 
   useEffect(() => { fetchPriceHistory(); }, [fetchPriceHistory]);
+
+  // Trade feed
+  const fetchTrades = useCallback(async () => {
+    if (!marketAddress) return;
+    try {
+      const res = await fetch(`${API_URL}/markets/trades/${marketAddress}`);
+      if (res.ok) setTrades(await res.json());
+    } catch {}
+  }, [marketAddress]);
+
+  useEffect(() => { fetchTrades(); }, [fetchTrades]);
+  useEffect(() => {
+    const iv = setInterval(fetchTrades, 15000);
+    return () => clearInterval(iv);
+  }, [fetchTrades]);
 
   // Build chart data: history + current live point
   const chartData = useMemo(() => {
@@ -216,9 +235,10 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
     }
   };
 
-  // Refresh prices/volume directly from chain
-  const refreshFromChain = async () => {
+  // Refresh prices/volume directly from chain, log trade, flash price
+  const refreshFromChain = async (tradeSide, tradeAmount) => {
     if (!getMarket || !marketAddress) return;
+    const prevA = priceA;
     try {
       const mc = getMarket(marketAddress);
       const pA = await mc.priceA();
@@ -227,19 +247,30 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
       const parsedA = smartParsePrice(pA.toString());
       const parsedB = smartParsePrice(pB.toString());
       const parsedVol = smartParseUSDC(vol.toString());
-      console.log('On-chain refresh:', { priceA: parsedA, priceB: parsedB, volume: parsedVol });
       setChainPriceA(parsedA);
       setChainPriceB(parsedB);
       setChainVolume(parsedVol);
       setTxCount(c => c + 1);
+      // Price flash
+      if (parsedA > prevA + 0.01) { setPriceFlash('up'); setTimeout(() => setPriceFlash(null), 1200); }
+      else if (parsedA < prevA - 0.01) { setPriceFlash('down'); setTimeout(() => setPriceFlash(null), 1200); }
     } catch (e) {
       console.error('refreshFromChain failed:', e.message);
     }
-    // Refresh backend cache + price history
-    try {
-      await fetch(`${API_URL}/markets/refresh`, { method: 'POST' });
-      fetchPriceHistory();
-    } catch {}
+    // Log trade to backend (don't await)
+    if (tradeSide && tradeAmount) {
+      fetch(`${API_URL}/markets/trades/${marketAddress}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ side: tradeSide, amount: tradeAmount }),
+      }).catch(() => {});
+      // Optimistic: add to local trades
+      setTrades(prev => [{ timestamp: Date.now(), side: tradeSide, amount: tradeAmount }, ...prev].slice(0, 20));
+    }
+    // Refresh backend (don't block)
+    fetch(`${API_URL}/markets/refresh`, { method: 'POST' })
+      .then(() => { fetchPriceHistory(); fetchTrades(); })
+      .catch(() => {});
     // Refresh USDC balance
     if (usdc && account) {
       try { setUsdcBalance(await usdc.balanceOf(account)); } catch {}
@@ -279,9 +310,11 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
         : await marketContract.buyB(amountBigInt);
       await buyTx.wait();
 
+      const tradeAmt = parseFloat(amount);
       setAmount('');
       setTxError('');
-      await refreshFromChain();
+      setTxLoading(false);
+      refreshFromChain(selectedSide === 'A' ? sideAName : sideBName, tradeAmt);
     } catch (e) {
       console.error('Transaction failed:', e);
       const msg = e?.reason || e?.message || 'Transaction failed';
@@ -290,7 +323,6 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
       } else {
         setTxError(msg.length > 100 ? msg.slice(0, 100) + '...' : msg);
       }
-    } finally {
       setTxLoading(false);
     }
   };
@@ -308,11 +340,11 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
       const sellTx = await sellFn;
       await sellTx.wait();
       setPosition(null);
-      await refreshFromChain();
+      setSellLoading(false);
+      refreshFromChain();
     } catch (e) {
       console.error('Sell failed:', e);
       setTxError(e?.reason || e?.message || 'Sell failed');
-    } finally {
       setSellLoading(false);
     }
   };
@@ -377,15 +409,15 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
 
           {/* Price bar */}
           <div className={s.priceBar}>
-            <div className={s.priceBox}>
+            <div className={`${s.priceBox} ${priceFlash === 'up' ? s.flashGreen : priceFlash === 'down' ? s.flashRed : ''}`}>
               <div className={s.priceLabel}>{sideAName}</div>
-              <div className={s.priceValueGreen}>{priceA.toFixed(1)}%</div>
-              <div className={s.priceSide}>${(priceA / 100).toFixed(2)} per share</div>
+              <div className={s.priceValueGreen}>{priceA.toFixed(2)}%</div>
+              <div className={s.priceSide}>${(priceA / 100).toFixed(4)} per share</div>
             </div>
-            <div className={s.priceBox}>
+            <div className={`${s.priceBox} ${priceFlash === 'down' ? s.flashGreen : priceFlash === 'up' ? s.flashRed : ''}`}>
               <div className={s.priceLabel}>{sideBName}</div>
-              <div className={s.priceValueRed}>{priceB.toFixed(1)}%</div>
-              <div className={s.priceSide}>${(priceB / 100).toFixed(2)} per share</div>
+              <div className={s.priceValueRed}>{priceB.toFixed(2)}%</div>
+              <div className={s.priceSide}>${(priceB / 100).toFixed(4)} per share</div>
             </div>
           </div>
 
@@ -437,6 +469,24 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
               </ResponsiveContainer>
             </div>
           </div>
+
+          {/* Recent Activity */}
+          {trades.length > 0 && (
+            <div className={s.activitySection}>
+              <h3 className={s.activityTitle}>Recent Activity</h3>
+              <div className={s.activityList}>
+                {trades.slice(0, 8).map((t, i) => (
+                  <div key={i} className={s.activityItem}>
+                    <span className={t.side === sideAName ? s.activitySideA : s.activitySideB}>
+                      {t.side || 'Trade'}
+                    </span>
+                    <span className={s.activityAmount}>+${Number(t.amount).toFixed(2)}</span>
+                    <span className={s.activityTime}>{timeAgo(t.timestamp)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Tabs */}
           <div className={s.tabs}>
@@ -591,7 +641,7 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
             <div className={s.infoSection}>
               <div className={s.infoRow}>
                 <span className={s.infoLabel}>Entry price</span>
-                <span className={s.infoValue}>{currentPrice.toFixed(1)}%</span>
+                <span className={s.infoValue}>{currentPrice.toFixed(2)}%</span>
               </div>
               <div className={s.infoRow}>
                 <span className={s.infoLabel}>If everyone agrees with you</span>

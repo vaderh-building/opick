@@ -10,6 +10,7 @@ export default function createMarketsRouter({
   marketAbi,
   cache,
   priceHistory,
+  tradeLogs,
 }) {
   const router = Router();
 
@@ -52,6 +53,23 @@ export default function createMarketsRouter({
   }
   router.get("/refresh", handleRefresh);
   router.post("/refresh", handleRefresh);
+
+  // GET /api/markets/trades/:address — recent trades
+  router.get("/trades/:address", (req, res) => {
+    const log = tradeLogs?.get(req.params.address) || [];
+    res.json(log.slice(-20).reverse());
+  });
+
+  // POST /api/markets/trades/:address — record a trade from frontend
+  router.post("/trades/:address", (req, res) => {
+    const { side, amount, priceA, priceB } = req.body || {};
+    if (!side || !amount) return res.json({ ok: false });
+    const log = tradeLogs?.get(req.params.address) || [];
+    log.push({ timestamp: Date.now(), side, amount: Number(amount), priceA, priceB });
+    if (log.length > 100) log.shift();
+    tradeLogs?.set(req.params.address, log);
+    res.json({ ok: true });
+  });
 
   // GET /api/markets/price-history/:address — BEFORE :address
   router.get("/price-history/:address", (req, res) => {
