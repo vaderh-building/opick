@@ -87,7 +87,7 @@ export default function HomePage() {
       <section className={styles.hero}>
         <h1 className={styles.heroTitle}>A market for every <em className={styles.heroOpinion}>opinion.</em></h1>
         <p className={styles.heroSubtitle}>
-          Back your opinion with real money. Profit when others join your side.
+          See what the world thinks. Pick a side, profit when others agree.
         </p>
       </section>
 

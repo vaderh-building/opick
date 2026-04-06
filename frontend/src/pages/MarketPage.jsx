@@ -2,8 +2,8 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { parseUnits, formatUnits } from 'ethers';
 import {
-  LineChart, Line, XAxis, YAxis, ReferenceLine,
-  ResponsiveContainer, Tooltip, Legend,
+  AreaChart, Area, XAxis, YAxis, CartesianGrid,
+  ResponsiveContainer, Tooltip,
 } from 'recharts';
 import { useFundWallet } from '@privy-io/react-auth';
 import { base } from 'viem/chains';
@@ -16,7 +16,11 @@ const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001') + '/ap
 const TIME_RANGES = ['1H', '6H', '1D', '1W', '1M', 'ALL'];
 
 function formatChartTime(ts) {
-  return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const diff = Math.round((Date.now() - ts) / 60000);
+  if (diff < 1) return 'now';
+  if (diff < 60) return `${diff}m ago`;
+  if (diff < 1440) return `${Math.round(diff / 60)}h ago`;
+  return `${Math.round(diff / 1440)}d ago`;
 }
 
 function truncateAddress(addr) {
@@ -451,10 +455,28 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
           <div className={s.chartSection}>
             <div className={s.chartHeader}>
               <span className={s.chartTitle}>Price History</span>
+              <span className={s.chartLegend}>
+                <span className={s.legendDotA} /> {sideAName}
+                <span className={s.legendDotB} /> {sideBName}
+              </span>
             </div>
             <div className={s.chartArea}>
+              {chartData.length < 2 ? (
+                <div className={s.chartEmpty}>Waiting for trades...</div>
+              ) : (
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
+                <AreaChart data={chartData} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+                  <defs>
+                    <linearGradient id="fillA" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#1a6b3c" stopOpacity={0.08} />
+                      <stop offset="100%" stopColor="#1a6b3c" stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient id="fillB" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#8b2500" stopOpacity={0.08} />
+                      <stop offset="100%" stopColor="#8b2500" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E8E7E2" vertical={false} />
                   <XAxis
                     dataKey="time"
                     tick={{ fontSize: 10, fill: '#9c9b96', fontFamily: 'DM Sans' }}
@@ -468,31 +490,28 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
                     axisLine={false}
                     tickLine={false}
                     tickFormatter={(v) => `${Number(v).toFixed(1)}%`}
-                    width={36}
-                  />
-                  <ReferenceLine
-                    y={50}
-                    stroke="#E8E7E2"
-                    strokeDasharray="4 4"
+                    width={42}
                   />
                   <Tooltip
                     contentStyle={{
-                      background: '#fff',
+                      background: '#FAFAF7',
                       border: '0.5px solid #E8E7E2',
                       borderRadius: 4,
                       fontSize: 12,
                       fontFamily: 'DM Sans',
+                      padding: '8px 12px',
                     }}
-                    formatter={(value, name) => [`${Number(value).toFixed(1)}%`, name === 'sideA' ? sideAName : sideBName]}
+                    formatter={(value, name) => [
+                      `${Number(value).toFixed(2)}%`,
+                      name === 'sideA' ? sideAName : sideBName,
+                    ]}
+                    labelStyle={{ fontSize: 10, color: '#9c9b96', marginBottom: 4 }}
                   />
-                  <Legend
-                    formatter={(value) => value === 'sideA' ? sideAName : sideBName}
-                    wrapperStyle={{ fontSize: 11, fontFamily: 'DM Sans' }}
-                  />
-                  <Line type="monotone" dataKey="sideA" stroke="#1a6b3c" strokeWidth={2} dot={chartData.length <= 2} />
-                  <Line type="monotone" dataKey="sideB" stroke="#8b2500" strokeWidth={2} dot={chartData.length <= 2} />
-                </LineChart>
+                  <Area type="monotone" dataKey="sideA" stroke="#1a6b3c" strokeWidth={2} fill="url(#fillA)" dot={false} />
+                  <Area type="monotone" dataKey="sideB" stroke="#8b2500" strokeWidth={2} fill="url(#fillB)" dot={false} />
+                </AreaChart>
               </ResponsiveContainer>
+              )}
             </div>
           </div>
 

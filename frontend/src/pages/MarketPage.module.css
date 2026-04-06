@@ -178,7 +178,45 @@
   border-color: var(--text);
 }
 
-.chartArea { height: 240px; }
+.chartArea { height: 300px; }
+
+.chartEmpty {
+  height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.chartLegend {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: var(--dim);
+}
+
+.legendDotA {
+  display: inline-block;
+  width: 8px;
+  height: 3px;
+  background: var(--green);
+  border-radius: 1px;
+  margin-right: 4px;
+}
+
+.legendDotB {
+  display: inline-block;
+  width: 8px;
+  height: 3px;
+  background: var(--red);
+  border-radius: 1px;
+  margin-right: 4px;
+  margin-left: 4px;
+}
 
 .tabs {
   display: flex;
