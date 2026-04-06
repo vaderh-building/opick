@@ -145,16 +145,22 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
     return () => clearInterval(iv);
   }, [fetchTrades]);
 
-  // Build chart data: history + current live point
-  const chartData = useMemo(() => {
+  // Build chart data + compute Y-axis range
+  const { chartData, yDomain } = useMemo(() => {
     const points = priceHistoryData.map(p => ({
       time: formatChartTime(p.timestamp),
       sideA: smartParsePrice(p.priceA),
       sideB: smartParsePrice(p.priceB),
     }));
-    // Always add current live point
     points.push({ time: 'Now', sideA: priceA, sideB: priceB });
-    return points;
+
+    // Auto-scale Y-axis
+    const allVals = points.flatMap(p => [p.sideA, p.sideB]);
+    let mn = Math.min(...allVals);
+    let mx = Math.max(...allVals);
+    if (mx - mn < 1) { mn -= 5; mx += 5; } // all same value, show +/- 5%
+    else { mn -= 1; mx += 1; }
+    return { chartData: points, yDomain: [Math.max(0, mn), Math.min(100, mx)] };
   }, [priceHistoryData, priceA, priceB]);
 
   // Fetch USDC balance
@@ -170,26 +176,40 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
     })();
   }, [usdc, account, txLoading]);
 
-  // Fetch position
+  // Fetch position with accurate sell value
   useEffect(() => {
     if (!account || !marketAddress || !getMarket || !signer) return;
     (async () => {
       try {
-        const marketContract = getMarket(marketAddress);
-        if (!marketContract) return;
-        const sharesA = await marketContract.sharesA(account);
-        const sharesB = await marketContract.sharesB(account);
+        const mc = getMarket(marketAddress);
+        if (!mc) return;
+        const [sharesA, sharesB, reserveA, reserveB, k] = await Promise.all([
+          mc.sharesA(account), mc.sharesB(account),
+          mc.reserveA(), mc.reserveB(), mc.k(),
+        ]);
         if (sharesA > 0n || sharesB > 0n) {
           const side = sharesA > 0n ? 'A' : 'B';
           const shares = side === 'A' ? sharesA : sharesB;
-          const price = side === 'A' ? priceA : priceB;
-          const currentValue = (Number(formatUnits(shares, 6)) * price) / 100;
-          setPosition({ side, shares, currentValue });
+          // Simulate sell to get actual USDC out
+          let gross;
+          if (side === 'A') {
+            const newRA = reserveA + shares;
+            const newRB = k / newRA;
+            gross = reserveB - newRB;
+          } else {
+            const newRB = reserveB + shares;
+            const newRA = k / newRB;
+            gross = reserveA - newRA;
+          }
+          const usdcOut = Number(gross) * 0.99 / 1e6; // after 1% spread
+          // Cost basis from localStorage
+          const costKey = `opick_cost_${marketAddress}_${account}`;
+          const costBasis = parseFloat(localStorage.getItem(costKey) || '0');
+          setPosition({ side, shares, currentValue: usdcOut, costBasis });
         } else {
           setPosition(null);
         }
-      } catch (e) {
-        // Contract might not support these methods
+      } catch {
         setPosition(null);
       }
     })();
@@ -311,6 +331,12 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
       await buyTx.wait();
 
       const tradeAmt = parseFloat(amount);
+      // Track cost basis
+      if (account) {
+        const costKey = `opick_cost_${marketAddress}_${account}`;
+        const prev = parseFloat(localStorage.getItem(costKey) || '0');
+        localStorage.setItem(costKey, String(prev + tradeAmt));
+      }
       setAmount('');
       setTxError('');
       setTxLoading(false);
@@ -437,11 +463,11 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
                     interval="preserveStartEnd"
                   />
                   <YAxis
-                    domain={[0, 100]}
+                    domain={yDomain}
                     tick={{ fontSize: 10, fill: '#9c9b96', fontFamily: 'DM Sans' }}
                     axisLine={false}
                     tickLine={false}
-                    tickFormatter={(v) => `${v}%`}
+                    tickFormatter={(v) => `${Number(v).toFixed(1)}%`}
                     width={36}
                   />
                   <ReferenceLine
@@ -475,15 +501,17 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
             <div className={s.activitySection}>
               <h3 className={s.activityTitle}>Recent Activity</h3>
               <div className={s.activityList}>
-                {trades.slice(0, 8).map((t, i) => (
-                  <div key={i} className={s.activityItem}>
-                    <span className={t.side === sideAName ? s.activitySideA : s.activitySideB}>
-                      {t.side || 'Trade'}
-                    </span>
-                    <span className={s.activityAmount}>+${Number(t.amount).toFixed(2)}</span>
-                    <span className={s.activityTime}>{timeAgo(t.timestamp)}</span>
-                  </div>
-                ))}
+                {trades.slice(0, 8).map((t, i) => {
+                  const name = t.side === 'A' ? sideAName : t.side === 'B' ? sideBName : (t.side || 'Trade');
+                  const isA = t.side === 'A' || t.side === sideAName;
+                  return (
+                    <div key={i} className={s.activityItem}>
+                      <span className={isA ? s.activitySideA : s.activitySideB}>{name}</span>
+                      <span className={s.activityAmount}>+${Number(t.amount).toFixed(2)}</span>
+                      <span className={s.activityTime}>{timeAgo(t.timestamp)}</span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -702,8 +730,14 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
                     {Number(formatUnits(position.shares, 6)).toFixed(2)}
                   </span>
                 </div>
+                {position.costBasis > 0 && (
+                  <div className={s.positionRow}>
+                    <span className={s.positionLabel}>Cost basis</span>
+                    <span className={s.positionValue}>${position.costBasis.toFixed(2)}</span>
+                  </div>
+                )}
                 <div className={s.positionRow}>
-                  <span className={s.positionLabel}>Current value</span>
+                  <span className={s.positionLabel}>Sell value (after 1% spread)</span>
                   <span className={s.positionValue}>
                     ${position.currentValue.toFixed(2)}
                   </span>
