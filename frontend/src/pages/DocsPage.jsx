@@ -50,8 +50,8 @@ export default function DocsPage() {
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Creating a market</h2>
         <p className={styles.body}>
-          Creating a market costs $5 USDC, which seeds the initial liquidity.
-          Pick a topic, name both sides, choose a category, and your market goes live instantly.
+          Creating a market is free. Pick a topic, name both sides, choose a category,
+          and your market goes live instantly.
         </p>
         <p className={styles.body}>
           You earn 30% of all spread revenue from your market, forever.

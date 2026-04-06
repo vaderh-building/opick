@@ -9,7 +9,7 @@ export default function CreatorsPage() {
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>How creator earnings work</h2>
         <p className={styles.body}>
-          Anyone can create a market for $5 USDC. Once live, you earn 30% of the 1% spread on every
+          Anyone can create a market for free. Once live, you earn 30% of the 1% spread on every
           sell in your market. Forever.
         </p>
         <p className={styles.body}>
@@ -41,7 +41,7 @@ export default function CreatorsPage() {
           <li>Sign in to OPick</li>
           <li>Go to <Link to="/create" className={styles.link}>Create</Link> and pick a topic</li>
           <li>Name both sides, choose a category</li>
-          <li>Pay the $5 creation fee</li>
+          <li>Create your market (free, only gas needed)</li>
           <li>Share your market link with your audience</li>
           <li>Watch the volume and your earnings grow</li>
         </ol>

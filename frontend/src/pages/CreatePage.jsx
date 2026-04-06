@@ -140,9 +140,7 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
 
     setCreating(true);
     try {
-      const approveTx = await usdc.approve(FACTORY_ADDRESS, parseUnits('5', 6));
-      await approveTx.wait();
-
+      // No USDC approval needed (creation is free)
       const createTx = await factory.createMarket(topic, a, b, category);
       const receipt = await createTx.wait();
 
@@ -316,7 +314,7 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
                 {creating ? 'Creating...' : 'Create Market'}
               </button>
               <p className={styles.costNote}>
-                Creation costs 5 USDC. Your market goes live instantly.
+                Free to create. Your market goes live instantly.
               </p>
             </div>
           )}

@@ -9,7 +9,7 @@ contract OPickFactory is Ownable {
     using SafeERC20 for IERC20;
     IERC20 public immutable usdc;
     address public treasury;
-    uint256 public creationFee = 5e6;
+    uint256 public creationFee = 0;
     uint256 public constant INITIAL_RESERVE = 10_000e6;
     address[] public markets;
     mapping(address => bool) public isMarket;
