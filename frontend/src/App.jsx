@@ -1,4 +1,7 @@
+import { useCallback } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { useFundWallet } from '@privy-io/react-auth';
+import { base } from 'viem/chains';
 import { useWallet } from './hooks/useWallet.js';
 import Navbar from './components/Navbar.jsx';
 import Footer from './components/Footer.jsx';
@@ -19,6 +22,11 @@ function App() {
   const wallet = useWallet();
   const { account, provider, signer, connect, connectLocal, disconnect, authenticated, walletReady, displayName } = wallet;
 
+  const { fundWallet } = useFundWallet();
+  const onFundWallet = useCallback(() => {
+    if (account) fundWallet({ address: account, options: { chain: base, asset: 'USDC' } }).catch(() => {});
+  }, [account, fundWallet]);
+
   const pageProps = { account, provider, signer, onConnect: connect, authenticated, walletReady, displayName };
 
   return (
@@ -30,6 +38,7 @@ function App() {
         onConnect={connect}
         onConnectLocal={connectLocal}
         onDisconnect={disconnect}
+        onFundWallet={onFundWallet}
       />
       <main style={{ paddingTop: 52, minHeight: 'calc(100vh - 52px)' }}>
         <Routes>

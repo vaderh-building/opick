@@ -18,13 +18,17 @@ function truncateAddress(address) {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }
 
-export default function Navbar({ account, authenticated, displayName, onConnect, onConnectLocal, onDisconnect }) {
+function copyToClipboard(text) {
+  navigator.clipboard.writeText(text).catch(() => {});
+}
+
+export default function Navbar({ account, authenticated, displayName, onConnect, onConnectLocal, onDisconnect, onFundWallet }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
   const dropdownRef = useRef(null);
   const location = useLocation();
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClick = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -34,6 +38,13 @@ export default function Navbar({ account, authenticated, displayName, onConnect,
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
+
+  const handleCopy = () => {
+    if (!account) return;
+    copyToClipboard(account);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
 
   return (
     <nav className={styles.navbar}>
@@ -63,18 +74,40 @@ export default function Navbar({ account, authenticated, displayName, onConnect,
                 onClick={() => setDropdownOpen(!dropdownOpen)}
               >
                 <span className={styles.greenDot} />
-                {account ? truncateAddress(account) : (displayName || 'Logged in')}
+                Account
               </button>
               {dropdownOpen && (
                 <div className={styles.dropdown}>
+                  {account && (
+                    <div className={styles.dropdownHeader}>
+                      <span className={styles.dropdownAddr}>{truncateAddress(account)}</span>
+                      <button className={styles.copyBtn} onClick={handleCopy}>
+                        {copied ? 'Copied' : 'Copy'}
+                      </button>
+                    </div>
+                  )}
+                  {displayName && !account && (
+                    <div className={styles.dropdownHeader}>
+                      <span className={styles.dropdownDisplayName}>{displayName}</span>
+                    </div>
+                  )}
                   <Link to="/account" className={styles.dropdownLink} onClick={() => setDropdownOpen(false)}>
-                    Your account
+                    Account
                   </Link>
+                  <Link to="/opinions" className={styles.dropdownLink} onClick={() => setDropdownOpen(false)}>
+                    Your Opinions
+                  </Link>
+                  {onFundWallet && (
+                    <button className={styles.dropdownItem} onClick={() => { onFundWallet(); setDropdownOpen(false); }}>
+                      Add USDC
+                    </button>
+                  )}
+                  <div className={styles.dropdownDivider} />
                   <button
-                    className={styles.dropdownItem}
+                    className={styles.dropdownItemMuted}
                     onClick={() => { onDisconnect(); setDropdownOpen(false); }}
                   >
-                    Disconnect
+                    Sign Out
                   </button>
                 </div>
               )}
@@ -119,13 +152,13 @@ export default function Navbar({ account, authenticated, displayName, onConnect,
           {(authenticated || account) ? (
             <>
               <Link to="/account" className={styles.mobileLink} onClick={() => setMenuOpen(false)}>
-                {account ? truncateAddress(account) : (displayName || 'Account')}
+                Account
               </Link>
               <button
                 className={styles.disconnectBtnMobile}
                 onClick={() => { onDisconnect(); setMenuOpen(false); }}
               >
-                Disconnect
+                Sign Out
               </button>
             </>
           ) : (
