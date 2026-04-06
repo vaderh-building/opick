@@ -57,6 +57,19 @@
   color: var(--border);
 }
 
+.xLink {
+  display: flex;
+  align-items: center;
+  color: var(--muted);
+  opacity: 0.6;
+  transition: opacity 0.15s, color 0.15s;
+}
+
+.xLink:hover {
+  opacity: 1;
+  color: var(--green);
+}
+
 @media (max-width: 768px) {
   .inner { padding: 24px 20px; flex-direction: column; gap: 16px; }
 }
