@@ -91,25 +91,37 @@ const cache = {
   refresh: null, // set below
 };
 
-async function fetchStaticData(addr) {
-  if (staticCache.has(addr)) return staticCache.get(addr);
+// Fetch all market data sequentially (avoids RPC rate limits)
+async function fetchMarketData(addr) {
   const c = new ethers.Contract(addr, marketAbi, provider);
-  const [topic, sideAName, sideBName, category, creator, createdAt] = await Promise.all([
-    c.topic(), c.sideAName(), c.sideBName(), c.category(), c.creator(), c.createdAt(),
-  ]);
-  const data = { topic, sideAName, sideBName, category, creator, createdAt: createdAt.toString() };
-  staticCache.set(addr, data);
-  return data;
-}
 
-async function fetchDynamicData(addr) {
-  const c = new ethers.Contract(addr, marketAbi, provider);
-  const [priceA, priceB, totalVolume, creatorEarnings, reserveA, reserveB, totalSharesA, totalSharesB] =
-    await Promise.all([
-      c.priceA(), c.priceB(), c.totalVolume(), c.creatorEarnings(),
-      c.reserveA(), c.reserveB(), c.totalSharesA(), c.totalSharesB(),
-    ]);
+  // Static data (cached permanently)
+  let stat;
+  if (staticCache.has(addr)) {
+    stat = staticCache.get(addr);
+  } else {
+    const topic = await c.topic();
+    const sideAName = await c.sideAName();
+    const sideBName = await c.sideBName();
+    const category = await c.category();
+    const creator = await c.creator();
+    const createdAt = await c.createdAt();
+    stat = { topic, sideAName, sideBName, category, creator, createdAt: createdAt.toString() };
+    staticCache.set(addr, stat);
+  }
+
+  // Dynamic data
+  const priceA = await c.priceA();
+  const priceB = await c.priceB();
+  const totalVolume = await c.totalVolume();
+  const creatorEarnings = await c.creatorEarnings();
+  const reserveA = await c.reserveA();
+  const reserveB = await c.reserveB();
+  const totalSharesA = await c.totalSharesA();
+  const totalSharesB = await c.totalSharesB();
+
   return {
+    address: addr, ...stat,
     priceA: priceA.toString(), priceB: priceB.toString(),
     totalVolume: totalVolume.toString(), creatorEarnings: creatorEarnings.toString(),
     reserveA: reserveA.toString(), reserveB: reserveB.toString(),
@@ -120,15 +132,15 @@ async function fetchDynamicData(addr) {
 async function fetchMarketWithRetry(addr, maxRetries = 5) {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      const [stat, dyn] = await Promise.all([fetchStaticData(addr), fetchDynamicData(addr)]);
-      return { address: addr, ...stat, ...dyn };
+      return await fetchMarketData(addr);
     } catch (err) {
+      console.error(`  Market ${addr} attempt ${attempt}/${maxRetries}: ${err.message.slice(0, 100)}`);
       if (attempt < maxRetries) {
-        await sleep(2000);
+        await sleep(2000 * attempt);
       } else {
-        console.error(`  FAILED ${addr} after ${maxRetries} attempts: ${err.message}`);
-        // Return static data with placeholder dynamic if we have it
+        // Return placeholder with static data if available
         if (staticCache.has(addr)) {
+          console.log(`  Using cached static data for ${addr}`);
           return {
             address: addr, ...staticCache.get(addr),
             priceA: "500000000000000000", priceB: "500000000000000000",
@@ -166,20 +178,24 @@ async function loadAllMarkets() {
   return results;
 }
 
-// Background refresh — updates dynamic data only
+// Background refresh
 async function backgroundRefresh() {
-  if (!cache.markets || cache.markets.length === 0) return;
+  // If cache is empty, do a full reload instead of dynamic-only refresh
+  if (!cache.markets || cache.markets.length === 0) {
+    try { await cache.refresh(); } catch {}
+    return;
+  }
   console.log("Background refresh...");
   try {
     const updated = [];
     for (const m of cache.markets) {
       try {
-        const dyn = await fetchDynamicData(m.address);
-        updated.push({ ...m, ...dyn });
+        const fresh = await fetchMarketData(m.address);
+        updated.push(fresh);
       } catch {
-        updated.push(m); // Keep old data
+        updated.push(m);
       }
-      await sleep(300);
+      await sleep(500);
     }
     cache.markets = updated;
     console.log(`Background refresh done: ${updated.length} markets`);
