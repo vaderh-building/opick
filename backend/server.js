@@ -144,9 +144,11 @@ async function fetchMarketWithRetry(addr, maxRetries = 5) {
 }
 
 async function loadAllMarkets() {
-  if (!factoryAddress) return [];
+  if (!factoryAddress) { console.log("No factoryAddress, skipping market load"); return []; }
+  console.log("Querying factory at", factoryAddress, "via", config.rpcUrl);
   const factory = new ethers.Contract(factoryAddress, factoryAbi, provider);
   const total = Number(await factory.totalMarkets());
+  console.log("Factory reports", total, "markets");
   if (total === 0) return [];
 
   const addresses = Array.from(await factory.getMarkets(0, total));
@@ -186,10 +188,10 @@ async function backgroundRefresh() {
 }
 
 cache.refresh = async () => {
+  console.log("Cache refresh triggered...");
   const markets = await loadAllMarkets();
-  if (markets.length > 0) {
-    cache.markets = markets;
-  }
+  cache.markets = markets;
+  console.log("Cache refresh done:", markets.length, "markets");
 };
 
 // ---------- Express ----------
