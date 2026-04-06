@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Contract, formatUnits } from 'ethers';
 import { useFundWallet } from '@privy-io/react-auth';
+import { useSponsoredTx } from '../hooks/useSponsoredTx.js';
 import { base } from 'viem/chains';
 import { USDC_ADDRESS, FACTORY_ADDRESS } from '../config.js';
 import USDCAbi from '../abi/MockUSDC.json';
@@ -20,6 +21,7 @@ export default function AccountPage({ account, provider, signer, onConnect, auth
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState('active');
   const { fundWallet } = useFundWallet();
+  const { sponsoredCall } = useSponsoredTx();
   const { markets } = useMarkets();
 
   const refreshBalance = useCallback(async () => {
@@ -91,12 +93,11 @@ export default function AccountPage({ account, provider, signer, onConnect, auth
   }, [account, provider, fetchPositions]);
 
   const handleSell = async (pos) => {
-    if (!signer) return;
+    if (!account) return;
     setSellingId(pos.address);
     try {
-      const c = new Contract(pos.address, OPickMarketAbi, signer);
-      const tx = pos.side === 'A' ? await c.sellA(pos.shares) : await c.sellB(pos.shares);
-      await tx.wait();
+      const fn = pos.side === 'A' ? 'sellA' : 'sellB';
+      await sponsoredCall(pos.address, OPickMarketAbi, fn, [pos.shares]);
       await fetchPositions();
       refreshBalance();
     } catch {}

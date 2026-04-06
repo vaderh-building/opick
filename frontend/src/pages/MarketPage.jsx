@@ -10,6 +10,10 @@ import { base } from 'viem/chains';
 import { useMarket } from '../hooks/useMarkets.js';
 import { useContracts } from '../hooks/useContracts.js';
 import { usePriceWebSocket } from '../hooks/usePriceWebSocket.js';
+import { useSponsoredTx } from '../hooks/useSponsoredTx.js';
+import { USDC_ADDRESS } from '../config.js';
+import USDCAbi from '../abi/MockUSDC.json';
+import OPickMarketAbi from '../abi/OPickMarket.json';
 import s from './MarketPage.module.css';
 
 const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001') + '/api';
@@ -68,6 +72,7 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
   const { usdc, getMarket } = useContracts(signer || provider);
   const prices = usePriceWebSocket();
   const { fundWallet } = useFundWallet();
+  const { sponsoredCall } = useSponsoredTx();
 
   // Parse market data from API
   const market = rawMarket ? {
@@ -308,10 +313,10 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
     }
   };
 
-  // Buy shares
+  // Buy shares (gas sponsored via Privy)
   const handleBuy = async () => {
-    if (!amount || !signer || !usdc || !getMarket) {
-      if (!signer) setTxError('Wallet not ready. Please wait a moment.');
+    if (!amount || !account) {
+      setTxError('Wallet not ready. Please wait a moment.');
       return;
     }
     setTxError('');
@@ -320,7 +325,7 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
       const amountBigInt = parseUnits(amount, 6);
 
       // Check USDC balance
-      if (account) {
+      if (usdc) {
         const balance = await usdc.balanceOf(account);
         if (balance < amountBigInt) {
           setTxError(`Insufficient USDC. You have $${(Number(balance) / 1e6).toFixed(2)}. You need USDC on Base to trade.`);
@@ -329,17 +334,12 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
         }
       }
 
-      const marketContract = getMarket(marketAddress);
+      // Approve USDC (sponsored)
+      await sponsoredCall(USDC_ADDRESS, USDCAbi, 'approve', [marketAddress, amountBigInt]);
 
-      // Approve USDC
-      const approveTx = await usdc.approve(marketAddress, amountBigInt);
-      await approveTx.wait();
-
-      // Buy shares
-      const buyTx = selectedSide === 'A'
-        ? await marketContract.buyA(amountBigInt)
-        : await marketContract.buyB(amountBigInt);
-      await buyTx.wait();
+      // Buy shares (sponsored)
+      const fn = selectedSide === 'A' ? 'buyA' : 'buyB';
+      await sponsoredCall(marketAddress, OPickMarketAbi, fn, [amountBigInt]);
 
       const tradeAmt = parseFloat(amount);
       // Track cost basis
@@ -364,18 +364,14 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
     }
   };
 
-  // Sell shares
+  // Sell shares (gas sponsored via Privy)
   const handleSell = async () => {
-    if (!position || !signer || !getMarket) return;
+    if (!position || !account) return;
     setSellLoading(true);
     setTxError('');
     try {
-      const marketContract = getMarket(marketAddress);
-      const sellFn = position.side === 'A'
-        ? marketContract.sellA(position.shares)
-        : marketContract.sellB(position.shares);
-      const sellTx = await sellFn;
-      await sellTx.wait();
+      const fn = position.side === 'A' ? 'sellA' : 'sellB';
+      await sponsoredCall(marketAddress, OPickMarketAbi, fn, [position.shares]);
       setPosition(null);
       setSellLoading(false);
       refreshFromChain();

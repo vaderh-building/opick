@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { parseUnits } from 'ethers';
+import { parseUnits, Interface } from 'ethers';
+import { useSendTransaction } from '@privy-io/react-auth';
 import { useContracts } from '../hooks/useContracts';
 import { FACTORY_ADDRESS } from '../config.js';
+import OPickFactoryAbi from '../abi/OPickFactory.json';
 import styles from './CreatePage.module.css';
 
 const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001') + '/api';
@@ -41,6 +43,7 @@ function smartParsePrice(val) {
 export default function CreatePage({ account, provider, signer, onConnect, authenticated, walletReady }) {
   const navigate = useNavigate();
   const { usdc, factory } = useContracts(signer || provider);
+  const { sendTransaction } = useSendTransaction();
 
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [choiceA, setChoiceA] = useState('');
@@ -142,19 +145,23 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
     setError('');
     setSuccess('');
     try {
-      const createTx = await factory.createMarket(topic, a, b, category);
-      const receipt = await createTx.wait();
+      // Encode and send sponsored tx
+      const iface = new Interface(OPickFactoryAbi);
+      const data = iface.encodeFunctionData('createMarket', [topic, a, b, category]);
+      const { hash } = await sendTransaction(
+        { to: FACTORY_ADDRESS, data },
+        { sponsor: true }
+      );
 
+      // Get market address from factory (latest market)
       let marketAddress = null;
-      for (const log of receipt.logs) {
-        try {
-          const parsed = factory.interface.parseLog(log);
-          if (parsed && parsed.name === 'MarketCreated') {
-            marketAddress = parsed.args.market || parsed.args[0];
-            break;
-          }
-        } catch {}
-      }
+      try {
+        if (factory) {
+          const total = await factory.totalMarkets();
+          const markets = await factory.getMarkets(Number(total) - 1, 1);
+          if (markets.length > 0) marketAddress = markets[0];
+        }
+      } catch {}
 
       setCreating(false);
       setSuccess('Market created!');
