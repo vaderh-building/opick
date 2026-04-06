@@ -23,6 +23,30 @@ export default function createMarketsRouter({
     res.json([]);
   });
 
+  // GET /api/markets/search?a=messi&b=ronaldo
+  router.get("/search", (req, res) => {
+    const a = (req.query.a || "").trim().toLowerCase();
+    const b = (req.query.b || "").trim().toLowerCase();
+    if (!a || !b || !cache.markets) return res.json([]);
+
+    const matches = cache.markets.filter((m) => {
+      const mA = (m.sideAName || "").toLowerCase();
+      const mB = (m.sideBName || "").toLowerCase();
+      return (mA === a && mB === b) || (mA === b && mB === a);
+    });
+
+    res.json(matches.map((m) => ({
+      address: m.address,
+      topic: m.topic,
+      sideAName: m.sideAName,
+      sideBName: m.sideBName,
+      priceA: m.priceA,
+      priceB: m.priceB,
+      totalVolume: m.totalVolume,
+      category: m.category,
+    })));
+  });
+
   // GET /api/markets/:address — from cache
   router.get("/:address", (req, res) => {
     const addr = req.params.address.toLowerCase();
