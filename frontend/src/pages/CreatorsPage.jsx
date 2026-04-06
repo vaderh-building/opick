@@ -41,7 +41,7 @@ export default function CreatorsPage() {
           <li>Sign in to OPick</li>
           <li>Go to <Link to="/create" className={styles.link}>Create</Link> and pick a topic</li>
           <li>Name both sides, choose a category</li>
-          <li>Create your market (free, only gas needed)</li>
+          <li>Create your market for free</li>
           <li>Share your market link with your audience</li>
           <li>Watch the volume and your earnings grow</li>
         </ol>
