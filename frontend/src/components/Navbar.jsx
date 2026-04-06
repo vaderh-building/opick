@@ -97,11 +97,9 @@ export default function Navbar({ account, authenticated, displayName, onConnect,
                   <Link to="/opinions" className={styles.dropdownLink} onClick={() => setDropdownOpen(false)}>
                     Your Opinions
                   </Link>
-                  {onFundWallet && (
-                    <button className={styles.dropdownItem} onClick={() => { onFundWallet(); setDropdownOpen(false); }}>
-                      Add USDC
-                    </button>
-                  )}
+                  <Link to="/account" className={styles.dropdownLink} onClick={() => setDropdownOpen(false)}>
+                    Add USDC
+                  </Link>
                   <div className={styles.dropdownDivider} />
                   <button
                     className={styles.dropdownItemMuted}

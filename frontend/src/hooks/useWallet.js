@@ -73,7 +73,14 @@ export function useWallet() {
     if (wallet.address && !privyAccount) setPrivyAccount(wallet.address);
 
     let cancelled = false;
-    setupDone.current = true; // Mark as attempted
+    setupDone.current = true;
+
+    // 5s fallback: if setup hangs, enable the button anyway
+    const fallbackTimer = setTimeout(() => {
+      if (!cancelled && !walletReady) {
+        setWalletReady(true);
+      }
+    }, 5000);
 
     (async () => {
       try {
@@ -90,12 +97,12 @@ export function useWallet() {
       } catch {
         if (!cancelled) {
           setPrivyAccount(wallet.address || userAddr);
-          setupDone.current = false; // Allow retry
+          setWalletReady(true); // Enable button even if signer failed
         }
       }
     })();
 
-    return () => { cancelled = true; };
+    return () => { cancelled = true; clearTimeout(fallbackTimer); };
   }, [authenticated, ready, wallets.length]); // Only re-run when wallets.length changes
 
   // Create embedded wallet if none exists after 3s

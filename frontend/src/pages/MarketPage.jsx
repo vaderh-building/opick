@@ -484,7 +484,7 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#E8E7E2" vertical={false} />
-                  <ReferenceLine y={50} stroke="#ccc" strokeDasharray="4 4" label={{ value: '50%', position: 'right', fontSize: 9, fill: '#9c9b96' }} />
+                  <ReferenceLine y={50} stroke="#D1D0CB" strokeDasharray="6 3" strokeWidth={1.5} label={{ value: '50%', position: 'insideTopRight', fontSize: 9, fill: '#9c9b96', offset: 4 }} />
                   <XAxis
                     dataKey="time"
                     tick={{ fontSize: 10, fill: '#9c9b96', fontFamily: 'DM Sans' }}
