@@ -68,8 +68,10 @@ export default function AccountPage({ account, provider, signer, onConnect, auth
             if (side === 'A') { gross = reserveB - k / (reserveA + shares); }
             else { gross = reserveA - k / (reserveB + shares); }
             const sellValue = Number(gross) * 0.99 / 1e6;
+            // Try both original and lowercase keys for cost basis
             const costKey = `opick_cost_${m.address}_${account}`;
-            const costBasis = parseFloat(localStorage.getItem(costKey) || '0');
+            const costKeyLower = `opick_cost_${m.address.toLowerCase()}_${account.toLowerCase()}`;
+            const costBasis = parseFloat(localStorage.getItem(costKey) || localStorage.getItem(costKeyLower) || '0');
             results.push({
               address: m.address, topic, sideAName, sideBName,
               side, shares, sellValue, costBasis,
@@ -193,7 +195,8 @@ export default function AccountPage({ account, provider, signer, onConnect, auth
           {!posLoading && positions.length > 0 && (
             <div className={styles.positionList}>
               {positions.map((p) => {
-                const pnl = p.costBasis > 0 ? p.sellValue - p.costBasis : 0;
+                const hasCost = p.costBasis > 0;
+                const pnl = hasCost ? p.sellValue - p.costBasis : null;
                 return (
                   <div key={p.address} className={styles.posRow}>
                     <div className={styles.posInfo}>
@@ -209,14 +212,16 @@ export default function AccountPage({ account, provider, signer, onConnect, auth
                         <span className={styles.posLabel}>Value</span>
                         <span className={styles.posVal}>${p.sellValue.toFixed(2)}</span>
                       </div>
-                      {p.costBasis > 0 && (
-                        <div className={styles.posCol}>
-                          <span className={styles.posLabel}>P&L</span>
+                      <div className={styles.posCol}>
+                        <span className={styles.posLabel}>P&L</span>
+                        {pnl != null ? (
                           <span className={pnl >= 0 ? styles.posValGreen : styles.posValRed}>
-                            {pnl >= 0 ? '+' : ''}{pnl.toFixed(2)}
+                            {pnl >= 0 ? '+' : '-'}${Math.abs(pnl).toFixed(2)}
                           </span>
-                        </div>
-                      )}
+                        ) : (
+                          <span className={styles.posVal}>--</span>
+                        )}
+                      </div>
                       <button
                         className={styles.sellBtn}
                         onClick={() => handleSell(p)}
