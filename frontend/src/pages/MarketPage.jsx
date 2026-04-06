@@ -115,6 +115,7 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
   // Trade feed + price flash
   const [trades, setTrades] = useState([]);
   const [priceFlash, setPriceFlash] = useState(null); // 'up' | 'down' | null
+  const [shareCopied, setShareCopied] = useState(false);
 
 
   // Prices: on-chain override > WS > API cache
@@ -422,7 +423,6 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
 
   const sideAName = market.sideAName || 'Side A';
   const sideBName = market.sideBName || 'Side B';
-  const [shareCopied, setShareCopied] = useState(false);
 
   const handleShare = async () => {
     const url = `https://opick.io/market/${marketAddress}`;

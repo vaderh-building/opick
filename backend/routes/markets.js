@@ -84,14 +84,54 @@ export default function createMarketsRouter({
     res.json(history);
   });
 
-  // GET /api/markets/:address — from cache (AFTER all specific routes)
-  router.get("/:address", (req, res) => {
+  // GET /api/markets/:address — cache first, then on-chain fallback
+  router.get("/:address", async (req, res) => {
     const addr = req.params.address.toLowerCase();
+
+    // Check cache
     if (cache.markets) {
       const m = cache.markets.find((m) => m.address.toLowerCase() === addr);
       if (m) return res.json(m);
     }
-    res.status(404).json({ error: "Market not found in cache" });
+
+    // Not in cache. Try reading from chain directly.
+    try {
+      const c = new ethers.Contract(req.params.address, marketAbi, provider);
+      const topic = await c.topic();
+      const sideAName = await c.sideAName();
+      const sideBName = await c.sideBName();
+      const category = await c.category();
+      const creator = await c.creator();
+      const createdAt = await c.createdAt();
+      const priceA = await c.priceA();
+      const priceB = await c.priceB();
+      const totalVolume = await c.totalVolume();
+      const creatorEarnings = await c.creatorEarnings();
+      const reserveA = await c.reserveA();
+      const reserveB = await c.reserveB();
+      const totalSharesA = await c.totalSharesA();
+      const totalSharesB = await c.totalSharesB();
+
+      const market = {
+        address: req.params.address, topic, sideAName, sideBName, category, creator,
+        createdAt: createdAt.toString(),
+        priceA: priceA.toString(), priceB: priceB.toString(),
+        totalVolume: totalVolume.toString(), creatorEarnings: creatorEarnings.toString(),
+        reserveA: reserveA.toString(), reserveB: reserveB.toString(),
+        totalSharesA: totalSharesA.toString(), totalSharesB: totalSharesB.toString(),
+      };
+
+      // Add to cache for future requests
+      if (cache.markets) {
+        cache.markets.push(market);
+      } else {
+        cache.markets = [market];
+      }
+
+      return res.json(market);
+    } catch (err) {
+      res.status(404).json({ error: "Market not found", details: err.message });
+    }
   });
 
   // GET /api/markets/:address/positions/:userAddress
