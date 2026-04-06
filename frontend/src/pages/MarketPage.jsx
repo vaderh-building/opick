@@ -61,9 +61,9 @@ function smartParseUSDC(val) {
   if (!val && val !== 0) return 0;
   const n = Number(val);
   if (isNaN(n)) return 0;
-  // Raw 6-decimal string like "1000000000" → 1000
-  if (n > 1e7) return n / 1e6;
-  // Already parsed
+  // Raw 6-decimal string: anything above 1000 in raw units ($0.001) is raw
+  // $1 = 1000000, $0.01 = 10000. Threshold at 1000 catches everything > $0.001
+  if (n > 1000) return n / 1e6;
   return n;
 }
 
@@ -350,7 +350,7 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
               <span className={s.categoryPill}>{market.category}</span>
             )}
             <span className={s.metaItem}>
-              Volume: <span>${(() => { const v = chainVolume != null ? chainVolume : (market.totalVolume || 0); return v === 0 ? '0' : v.toLocaleString(undefined, {maximumFractionDigits: 0}); })()}</span>
+              Volume: <span>${(() => { const v = chainVolume != null ? chainVolume : (market.totalVolume || 0); if (v === 0) return '0'; if (v < 1) return v.toFixed(2); if (v < 1000) return v.toFixed(2); return v.toLocaleString(undefined, {maximumFractionDigits: 0}); })()}</span>
             </span>
             {market.creator && (
               <span className={s.metaItem}>

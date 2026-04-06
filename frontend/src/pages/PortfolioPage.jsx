@@ -30,7 +30,7 @@ export default function PortfolioPage({ account, provider, signer, onConnect, au
       let marketList = markets;
       if (!marketList.length && FACTORY_ADDRESS && provider) {
         try {
-          const factory = new Contract(FACTORY_ADDRESS, OPickFactoryAbi, provider);
+          const factory = new Contract(FACTORY_ADDRESS, OPickFactoryAbi, signer || provider);
           const total = Number(await factory.totalMarkets());
           console.log('Opinions: factory reports', total, 'markets (on-chain fallback)');
           if (total > 0) {
@@ -53,19 +53,18 @@ export default function PortfolioPage({ account, provider, signer, onConnect, au
       const results = [];
       for (const m of marketList) {
         try {
-          const contract = new Contract(m.address, OPickMarketAbi, provider);
+          const rpc = signer || provider;
+          const contract = new Contract(m.address, OPickMarketAbi, rpc);
           const sharesA = await contract.sharesA(account);
           const sharesB = await contract.sharesB(account);
           console.log('Opinions:', m.address.slice(0, 10), 'sharesA=', sharesA.toString(), 'sharesB=', sharesB.toString());
 
           if (sharesA > 0n || sharesB > 0n) {
-            const [topic, sideAName, sideBName, reserveA, reserveB] = await Promise.all([
-              m.topic ? Promise.resolve(m.topic) : contract.topic(),
-              m.sideAName ? Promise.resolve(m.sideAName) : contract.sideAName(),
-              m.sideBName ? Promise.resolve(m.sideBName) : contract.sideBName(),
-              contract.reserveA(),
-              contract.reserveB(),
-            ]);
+            const topic = m.topic || await contract.topic();
+            const sideAName = m.sideAName || await contract.sideAName();
+            const sideBName = m.sideBName || await contract.sideBName();
+            const reserveA = await contract.reserveA();
+            const reserveB = await contract.reserveB();
 
             const totalReserves = Number(reserveA) + Number(reserveB);
             const priceA = totalReserves > 0 ? Number(reserveB) / totalReserves : 0.5;
@@ -97,7 +96,7 @@ export default function PortfolioPage({ account, provider, signer, onConnect, au
     } finally {
       setLoading(false);
     }
-  }, [account, markets, provider]);
+  }, [account, markets, provider, signer]);
 
   useEffect(() => {
     if (account && provider) {
