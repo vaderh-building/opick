@@ -8,7 +8,7 @@ export default function createMarketsRouter({
   factoryAddress,
   factoryAbi,
   marketAbi,
-  cache, // shared cache object from server.js
+  cache,
 }) {
   const router = Router();
 
@@ -17,13 +17,10 @@ export default function createMarketsRouter({
     if (cache.markets && cache.markets.length > 0) {
       return res.json(cache.markets);
     }
-    if (cache.loading) {
-      return res.json([]); // Still loading on startup
-    }
     res.json([]);
   });
 
-  // GET /api/markets/search?a=messi&b=ronaldo
+  // GET /api/markets/search?a=messi&b=ronaldo — BEFORE :address
   router.get("/search", (req, res) => {
     const a = (req.query.a || "").trim().toLowerCase();
     const b = (req.query.b || "").trim().toLowerCase();
@@ -36,18 +33,26 @@ export default function createMarketsRouter({
     });
 
     res.json(matches.map((m) => ({
-      address: m.address,
-      topic: m.topic,
-      sideAName: m.sideAName,
-      sideBName: m.sideBName,
-      priceA: m.priceA,
-      priceB: m.priceB,
-      totalVolume: m.totalVolume,
-      category: m.category,
+      address: m.address, topic: m.topic,
+      sideAName: m.sideAName, sideBName: m.sideBName,
+      priceA: m.priceA, priceB: m.priceB,
+      totalVolume: m.totalVolume, category: m.category,
     })));
   });
 
-  // GET /api/markets/:address — from cache
+  // GET + POST /api/markets/refresh — BEFORE :address
+  async function handleRefresh(req, res) {
+    try {
+      await cache.refresh();
+      res.json({ success: true, markets: cache.markets?.length || 0 });
+    } catch (err) {
+      res.status(500).json({ success: false, error: err.message });
+    }
+  }
+  router.get("/refresh", handleRefresh);
+  router.post("/refresh", handleRefresh);
+
+  // GET /api/markets/:address — from cache (AFTER all specific routes)
   router.get("/:address", (req, res) => {
     const addr = req.params.address.toLowerCase();
     if (cache.markets) {
@@ -57,7 +62,7 @@ export default function createMarketsRouter({
     res.status(404).json({ error: "Market not found in cache" });
   });
 
-  // GET /api/markets/:address/positions/:userAddress — live RPC (small call)
+  // GET /api/markets/:address/positions/:userAddress
   router.get("/:address/positions/:userAddress", async (req, res) => {
     try {
       const contract = new ethers.Contract(req.params.address, marketAbi, provider);
@@ -68,26 +73,6 @@ export default function createMarketsRouter({
       res.json({ sharesA: sharesA.toString(), sharesB: sharesB.toString() });
     } catch (err) {
       res.status(500).json({ error: "Failed to fetch positions", details: err.message });
-    }
-  });
-
-  // POST /api/markets/refresh — force cache reload
-  router.post("/refresh", async (req, res) => {
-    try {
-      await cache.refresh();
-      res.json({ ok: true, count: cache.markets?.length || 0 });
-    } catch (err) {
-      res.status(500).json({ error: err.message });
-    }
-  });
-
-  // Legacy alias
-  router.post("/refresh-cache", async (req, res) => {
-    try {
-      await cache.refresh();
-      res.json({ ok: true, count: cache.markets?.length || 0 });
-    } catch (err) {
-      res.status(500).json({ error: err.message });
     }
   });
 
