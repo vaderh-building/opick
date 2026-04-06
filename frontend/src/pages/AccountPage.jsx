@@ -22,12 +22,15 @@ export default function AccountPage({ account, provider, signer, onConnect, auth
   useEffect(() => { refreshBalance(); }, [refreshBalance]);
 
   const handleFund = async () => {
-    if (!account) return;
+    console.log('Add USDC clicked, account:', account, 'fundWallet:', typeof fundWallet);
+    if (!account) { console.log('No account, aborting'); return; }
     try {
+      console.log('Calling fundWallet...');
       await fundWallet({ address: account, options: { chain: base, asset: 'USDC' } });
+      console.log('fundWallet completed');
       setTimeout(refreshBalance, 3000);
     } catch (e) {
-      console.error('Fund wallet error:', e);
+      console.error('Fund wallet error:', e?.message || e);
     }
   };
 

@@ -24,7 +24,8 @@ function App() {
 
   const { fundWallet } = useFundWallet();
   const onFundWallet = useCallback(() => {
-    if (account) fundWallet({ address: account, options: { chain: base, asset: 'USDC' } }).catch(() => {});
+    console.log('Navbar Add USDC, account:', account);
+    if (account) fundWallet({ address: account, options: { chain: base, asset: 'USDC' } }).catch((e) => console.error('fundWallet error:', e?.message || e));
   }, [account, fundWallet]);
 
   const pageProps = { account, provider, signer, onConnect: connect, authenticated, walletReady, displayName };
