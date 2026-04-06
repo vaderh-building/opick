@@ -4,7 +4,7 @@ import styles from './Navbar.module.css';
 
 const NAV_LINKS = [
   { to: '/markets', label: 'Markets' },
-  { to: '/opinions', label: 'Opinions' },
+  { to: '/account', label: 'Opinions' },
   { to: '/create', label: 'Create' },
   { to: '/creators', label: 'Creators' },
   { to: '/docs', label: 'Docs' },
@@ -94,7 +94,7 @@ export default function Navbar({ account, authenticated, displayName, onConnect,
                   <Link to="/account" className={styles.dropdownLink} onClick={() => setDropdownOpen(false)}>
                     Account
                   </Link>
-                  <Link to="/opinions" className={styles.dropdownLink} onClick={() => setDropdownOpen(false)}>
+                  <Link to="/account" className={styles.dropdownLink} onClick={() => setDropdownOpen(false)}>
                     Your Opinions
                   </Link>
                   <Link to="/account" className={styles.dropdownLink} onClick={() => setDropdownOpen(false)}>

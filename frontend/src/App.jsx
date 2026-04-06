@@ -46,8 +46,8 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/markets" element={<HomePage />} />
           <Route path="/market/:address" element={<MarketPage {...pageProps} />} />
-          <Route path="/opinions" element={<PortfolioPage {...pageProps} />} />
-          <Route path="/portfolio" element={<PortfolioPage {...pageProps} />} />
+          <Route path="/opinions" element={<AccountPage {...pageProps} />} />
+          <Route path="/portfolio" element={<AccountPage {...pageProps} />} />
           <Route path="/create" element={<CreatePage {...pageProps} />} />
           <Route path="/account" element={<AccountPage {...pageProps} />} />
           <Route path="/creators" element={<CreatorsPage />} />
