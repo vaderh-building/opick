@@ -88,7 +88,7 @@ export default function HomePage() {
         break;
     }
     return result;
-  }, [mergedMarkets, activeCategory, sortBy]);
+  }, [mergedMarkets, activeCategory, sortBy, search]);
 
   const totalVolume = mergedMarkets.reduce((s, m) => s + m.totalVolume, 0);
   const activeCount = mergedMarkets.length;
