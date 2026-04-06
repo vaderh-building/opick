@@ -17,8 +17,6 @@ export default function Footer() {
           <Link to="/privacy" className={styles.link}>Privacy</Link>
           <span className={styles.dot}>&middot;</span>
           <Link to="/risk" className={styles.link}>Risk</Link>
-          <span className={styles.dot}>&middot;</span>
-          <a href="https://github.com/vaderh-building/opick" className={styles.link} target="_blank" rel="noopener noreferrer">GitHub</a>
         </nav>
       </div>
     </footer>
