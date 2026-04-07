@@ -34,6 +34,15 @@ export default function AccountPage({ account, provider, signer, onConnect, auth
 
   useEffect(() => { refreshBalance(); }, [refreshBalance]);
 
+  // Auto-refresh every 20s + on visibility change
+  useEffect(() => {
+    if (!provider || !account) return;
+    const iv = setInterval(refreshBalance, 20000);
+    const onVis = () => { if (document.visibilityState === 'visible') refreshBalance(); };
+    document.addEventListener('visibilitychange', onVis);
+    return () => { clearInterval(iv); document.removeEventListener('visibilitychange', onVis); };
+  }, [refreshBalance, provider, account]);
+
   // Fetch positions
   const fetchPositions = useCallback(async () => {
     if (!account || !account.startsWith('0x') || !provider) return;

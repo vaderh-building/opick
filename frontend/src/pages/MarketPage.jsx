@@ -218,17 +218,19 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
   }, [priceHistoryData, priceA, priceB]);
 
   // Fetch USDC balance
+  const refreshBalance = useCallback(async () => {
+    if (!usdc || !account) return;
+    try { setUsdcBalance(await usdc.balanceOf(account)); } catch {}
+  }, [usdc, account]);
+
+  useEffect(() => { refreshBalance(); }, [refreshBalance, txLoading]);
+
+  // Auto-refresh balance every 20s
   useEffect(() => {
     if (!usdc || !account) return;
-    (async () => {
-      try {
-        const bal = await usdc.balanceOf(account);
-        setUsdcBalance(bal);
-      } catch (e) {
-        console.error('Failed to fetch USDC balance:', e);
-      }
-    })();
-  }, [usdc, account, txLoading]);
+    const iv = setInterval(refreshBalance, 20000);
+    return () => clearInterval(iv);
+  }, [refreshBalance, usdc, account]);
 
   // Fetch positions (both sides) with accurate sell values
   useEffect(() => {
