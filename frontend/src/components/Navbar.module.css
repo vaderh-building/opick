@@ -87,8 +87,26 @@
 .connectGroup {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
+
+.freeBtn {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--green);
+  border: none;
+  border-radius: 4px;
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.freeBtn:hover { opacity: 0.9; }
+
+.freeBtnFull { display: inline; }
+.freeBtnShort { display: none; }
 
 .devBtn {
   font-family: var(--font-mono);
@@ -324,8 +342,14 @@
 @media (max-width: 768px) {
   .inner { padding: 14px 20px; }
   .navLinks { display: none; }
-  .connectGroup { display: none; }
+  .connectGroup { display: flex; }
+  .connectBtn { display: none; }
+  .devBtn { display: none; }
+  .inviteBtn { display: none; }
   .accountWrap { display: none; }
   .hamburger { display: flex; }
   .mobileMenu { display: flex; padding: 8px 20px 20px; }
+  .freeBtnFull { display: none; }
+  .freeBtnShort { display: inline; }
+  .freeBtn { font-size: 10px; padding: 6px 10px; }
 }

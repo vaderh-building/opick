@@ -115,14 +115,13 @@ export default function Navbar({ account, authenticated, displayName, onConnect,
             </>
           ) : (
             <div className={styles.connectGroup}>
+              <button className={styles.freeBtn} onClick={() => { if (onConnect) onConnect(); }}>
+                <span className={styles.freeBtnFull}>Get $2 free</span>
+                <span className={styles.freeBtnShort}>$2 free</span>
+              </button>
               <button className={styles.connectBtn} onClick={() => { if (onConnect) onConnect(); }}>
                 Connect
               </button>
-              {isDevMode && onConnectLocal && (
-                <button className={styles.devBtn} onClick={onConnectLocal}>
-                  Dev
-                </button>
-              )}
             </div>
           )}
 
