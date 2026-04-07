@@ -12,7 +12,7 @@ function formatVolume(value) {
 
 function formatPercent(price) {
   const p = Number(price) || 0;
-  return `${(p * 100).toFixed(1)}%`;
+  return `${(p * 100).toFixed(2)}%`;
 }
 
 export default function MarketCard({ market }) {
