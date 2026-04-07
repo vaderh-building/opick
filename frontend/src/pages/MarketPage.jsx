@@ -66,6 +66,20 @@ function smartParseUSDC(val) {
   return n;
 }
 
+// Simulate profit at a target price for a given number of shares
+// side: 'A' or 'B', shares in raw units, target is percentage 0-100
+// Returns USDC value after 1% spread
+function simulateValueAtPrice(shares, side, targetPct, reserveA, reserveB) {
+  if (!shares || !reserveA || !reserveB) return 0;
+  const k = Number(reserveA) * Number(reserveB);
+  const total = Number(reserveA) + Number(reserveB);
+  // At targetPct for side A: reserveB_new / total_new = targetPct/100
+  // Since k = rA * rB and total changes with shares, this is approximate
+  // Simpler: value = shares * (targetPct/100) / 1e6 for sideA shares
+  const priceFraction = side === 'A' ? targetPct / 100 : (100 - targetPct) / 100;
+  return (Number(shares) * priceFraction * 0.99) / 1e6; // after 1% spread
+}
+
 export default function MarketPage({ account, provider, signer, onConnect, authenticated, walletReady }) {
   const { address: marketAddress } = useParams();
   const { market: rawMarket, loading, retrying, refetch } = useMarket(marketAddress);
@@ -721,18 +735,24 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
                 <span className={s.infoLabel}>Entry price</span>
                 <span className={s.infoValue}>{currentPrice.toFixed(2)}%</span>
               </div>
-              <div className={s.infoRow}>
-                <span className={s.infoLabel}>If everyone agrees with you</span>
-                <span className={s.infoValueGreen}>
-                  {potentialReturn > 0 ? `+$${potentialReturn.toFixed(2)}` : '$0.00'}
-                </span>
-              </div>
-              <div className={s.infoRow}>
-                <span className={s.infoLabel}>Avg price</span>
-                <span className={s.infoValue}>
-                  ${priceDecimal > 0 ? priceDecimal.toFixed(2) : '0.00'} / share
-                </span>
-              </div>
+              {amountNum > 0 && (
+                <>
+                  <div className={s.infoSectionLabel}>If {selectedSide === 'A' ? sideAName : sideBName} reaches:</div>
+                  {[55, 65, 80, 100].map(target => {
+                    const shares = amountNum / (currentPrice / 100) * 1e6;
+                    const val = simulateValueAtPrice(shares, selectedSide, target, market.reserveA, market.reserveB);
+                    const profit = val - amountNum;
+                    return (
+                      <div className={s.infoRow} key={target}>
+                        <span className={s.infoLabel}>{target}%</span>
+                        <span className={profit >= 0 ? s.infoValueGreen : s.infoValueRed}>
+                          {profit >= 0 ? '+' : '-'}${Math.abs(profit).toFixed(2)}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </>
+              )}
             </div>
 
             {txError && <div className={s.errorMsg}>{txError}</div>}
@@ -791,6 +811,21 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
                   <span className={s.positionValue}>
                     ${position.currentValue.toFixed(2)}
                   </span>
+                </div>
+                <div className={s.positionScenarios}>
+                  <div className={s.infoSectionLabel}>If {position.side === 'A' ? sideAName : sideBName} reaches:</div>
+                  {[55, 65, 80, 100].map(target => {
+                    const val = simulateValueAtPrice(position.shares, position.side, target, market.reserveA, market.reserveB);
+                    const profit = position.costBasis > 0 ? val - position.costBasis : val - position.currentValue;
+                    return (
+                      <div className={s.infoRow} key={target}>
+                        <span className={s.infoLabel}>{target}%</span>
+                        <span className={profit >= 0 ? s.infoValueGreen : s.infoValueRed}>
+                          {profit >= 0 ? '+' : '-'}${Math.abs(profit).toFixed(2)}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
                 <button
                   className={s.sellBtn}

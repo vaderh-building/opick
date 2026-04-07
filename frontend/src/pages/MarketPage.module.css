@@ -518,6 +518,23 @@
 .infoLabel { color: var(--dim); }
 .infoValue { font-family: var(--font-mono); font-weight: 500; color: var(--text); }
 .infoValueGreen { composes: infoValue; color: var(--green); }
+.infoValueRed { composes: infoValue; color: var(--red); }
+
+.infoSectionLabel {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 6px 0 2px;
+}
+
+.positionScenarios {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 0.5px solid var(--border);
+}
 
 .errorMsg {
   margin-bottom: 12px;
