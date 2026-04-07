@@ -39,6 +39,13 @@ db.exec(`
 
   CREATE INDEX IF NOT EXISTS idx_comments_market ON comments(market_address);
   CREATE INDEX IF NOT EXISTS idx_comment_likes_comment ON comment_likes(comment_id);
+
+  CREATE TABLE IF NOT EXISTS welcome_bonus_claims (
+    address TEXT PRIMARY KEY,
+    claimed_at INTEGER NOT NULL,
+    tx_hash TEXT,
+    ip TEXT
+  );
 `);
 
 export default db;

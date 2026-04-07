@@ -11,6 +11,7 @@ import { fileURLToPath } from "url";
 import createMarketsRouter from "./routes/markets.js";
 import commentsRouter from "./routes/comments.js";
 import usersRouter from "./routes/users.js";
+import db from "./db.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -281,33 +282,20 @@ app.use("/api/markets", createMarketsRouter({ provider, factoryAddress, factoryA
 app.use("/api/comments", commentsRouter);
 app.use("/api/users", usersRouter);
 
-// ---------- Welcome Bonus ----------
+// ---------- Welcome Bonus (SQLite backed) ----------
 const BONUS_AMOUNT = 2_000_000n; // $2 USDC
-const BONUS_CAP = 250; // max 250 claims ($500 total)
-const BONUS_FILE = path.join(__dirname, "data", "welcome-bonus-claimed.json");
+const BONUS_CAP = 250;
 const bonusRateLimit = new Map(); // IP -> timestamp
 
-function loadBonusClaims() {
-  try {
-    if (fs.existsSync(BONUS_FILE)) return JSON.parse(fs.readFileSync(BONUS_FILE, "utf-8"));
-  } catch {}
-  return {};
-}
-
-function saveBonusClaims(claims) {
-  const dir = path.dirname(BONUS_FILE);
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-  const tmp = BONUS_FILE + ".tmp";
-  fs.writeFileSync(tmp, JSON.stringify(claims, null, 2));
-  fs.renameSync(tmp, BONUS_FILE);
-}
+const stmtCheckClaim = db.prepare("SELECT tx_hash FROM welcome_bonus_claims WHERE address = ?");
+const stmtCountClaims = db.prepare("SELECT COUNT(*) AS cnt FROM welcome_bonus_claims");
+const stmtInsertClaim = db.prepare("INSERT INTO welcome_bonus_claims (address, claimed_at, tx_hash, ip) VALUES (?, ?, ?, ?)");
 
 app.get("/api/welcome-bonus-status", (req, res) => {
   const addr = (req.query.address || "").toLowerCase();
   if (!addr || !addr.startsWith("0x")) return res.json({ claimed: false });
-  const claims = loadBonusClaims();
-  const entry = claims[addr];
-  if (entry) return res.json({ claimed: true, txHash: entry.txHash });
+  const row = stmtCheckClaim.get(addr);
+  if (row) return res.json({ claimed: true, txHash: row.tx_hash });
   res.json({ claimed: false });
 });
 
@@ -317,26 +305,22 @@ app.post("/api/claim-welcome-bonus", async (req, res) => {
     return res.json({ success: false, reason: "invalid_address" });
   }
 
-  // Rate limit: 1 per IP per hour
   const ip = req.ip || req.connection?.remoteAddress || "unknown";
   const lastClaim = bonusRateLimit.get(ip);
   if (lastClaim && Date.now() - lastClaim < 3600000) {
     return res.json({ success: false, reason: "rate_limited" });
   }
 
-  // Check if already claimed
-  const claims = loadBonusClaims();
-  if (claims[addr]) {
+  if (stmtCheckClaim.get(addr)) {
     return res.json({ success: false, reason: "already_claimed" });
   }
 
-  // Check cap
-  if (Object.keys(claims).length >= BONUS_CAP) {
+  const { cnt } = stmtCountClaims.get();
+  if (cnt >= BONUS_CAP) {
     return res.json({ success: false, reason: "bonus_pool_exhausted" });
   }
 
-  // Send USDC
-  const pk = process.env.DEPLOYER_PRIVATE_KEY;
+  const pk = process.env.BONUS_WALLET_KEY || process.env.DEPLOYER_PRIVATE_KEY;
   if (!pk) return res.json({ success: false, reason: "server_config_error" });
 
   try {
@@ -349,9 +333,7 @@ app.post("/api/claim-welcome-bonus", async (req, res) => {
     const tx = await usdc.transfer(addr, BONUS_AMOUNT);
     const receipt = await tx.wait();
 
-    // Record claim
-    claims[addr] = { txHash: receipt.hash, timestamp: Date.now(), amount: "2.00" };
-    saveBonusClaims(claims);
+    stmtInsertClaim.run(addr, Date.now(), receipt.hash, ip);
     bonusRateLimit.set(ip, Date.now());
 
     console.log(`Welcome bonus: $2 sent to ${addr} tx:${receipt.hash}`);
