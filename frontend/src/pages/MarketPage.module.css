@@ -653,6 +653,8 @@
 
 .positionLabel { color: var(--dim); }
 .positionValue { font-family: var(--font-mono); font-weight: 500; color: var(--text); }
+.positionValueGreen { composes: positionValue; color: var(--green); }
+.positionValueRed { composes: positionValue; color: var(--red); }
 
 .sellBtn {
   width: 100%;

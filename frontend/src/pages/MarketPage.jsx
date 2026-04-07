@@ -66,18 +66,40 @@ function smartParseUSDC(val) {
   return n;
 }
 
-// Simulate profit at a target price for a given number of shares
-// side: 'A' or 'B', shares in raw units, target is percentage 0-100
-// Returns USDC value after 1% spread
-function simulateValueAtPrice(shares, side, targetPct, reserveA, reserveB) {
-  if (!shares || !reserveA || !reserveB) return 0;
-  const k = Number(reserveA) * Number(reserveB);
-  const total = Number(reserveA) + Number(reserveB);
-  // At targetPct for side A: reserveB_new / total_new = targetPct/100
-  // Since k = rA * rB and total changes with shares, this is approximate
-  // Simpler: value = shares * (targetPct/100) / 1e6 for sideA shares
-  const priceFraction = side === 'A' ? targetPct / 100 : (100 - targetPct) / 100;
-  return (Number(shares) * priceFraction * 0.99) / 1e6; // after 1% spread
+// Simulate sell value using EXACT AMM math from OPickMarket.sol
+// At current reserves: sellA puts shares back into reserveA, gets USDC from reserveB
+// gross = reserveB - k / (reserveA + shares), then usdcOut = gross * 0.99
+function simulateSellValue(sharesRaw, side, rA, rB) {
+  if (!sharesRaw || !rA || !rB) return 0;
+  const shares = Number(sharesRaw);
+  const reserveA = Number(rA);
+  const reserveB = Number(rB);
+  const k = reserveA * reserveB;
+  let gross;
+  if (side === 'A') {
+    gross = reserveB - k / (reserveA + shares);
+  } else {
+    gross = reserveA - k / (reserveB + shares);
+  }
+  return (gross * 0.99) / 1e6; // after 1% spread, convert from raw to USDC
+}
+
+// Simulate sell value at a hypothetical price level
+// targetPct = what priceA would be (e.g. 60 means 60% for sideA)
+// We compute what reserves would look like at that price, then sell
+function simulateValueAtPrice(sharesRaw, side, targetPct, rA, rB) {
+  if (!sharesRaw || !rA || !rB) return 0;
+  const k = Number(rA) * Number(rB);
+  // At target: priceA = rB_new / (rA_new + rB_new) = targetPct/100
+  // And rA_new * rB_new = k
+  // So rB_new = rA_new * targetPct / (100 - targetPct)
+  // And rA_new * rA_new * targetPct / (100 - targetPct) = k
+  // rA_new = sqrt(k * (100 - targetPct) / targetPct)
+  const t = targetPct / 100;
+  if (t <= 0 || t >= 1) return 0;
+  const rA_new = Math.sqrt(k * (1 - t) / t);
+  const rB_new = k / rA_new;
+  return simulateSellValue(sharesRaw, side, rA_new, rB_new);
 }
 
 export default function MarketPage({ account, provider, signer, onConnect, authenticated, walletReady }) {
@@ -207,39 +229,32 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
     })();
   }, [usdc, account, txLoading]);
 
-  // Fetch position with accurate sell value
+  // Fetch positions (both sides) with accurate sell values
   useEffect(() => {
     if (!account || !marketAddress || !getMarket || !signer) return;
     (async () => {
       try {
         const mc = getMarket(marketAddress);
         if (!mc) return;
-        const [sharesA, sharesB, reserveA, reserveB, k] = await Promise.all([
-          mc.sharesA(account), mc.sharesB(account),
-          mc.reserveA(), mc.reserveB(), mc.k(),
-        ]);
-        if (sharesA > 0n || sharesB > 0n) {
-          const side = sharesA > 0n ? 'A' : 'B';
-          const shares = side === 'A' ? sharesA : sharesB;
-          // Simulate sell to get actual USDC out
-          let gross;
-          if (side === 'A') {
-            const newRA = reserveA + shares;
-            const newRB = k / newRA;
-            gross = reserveB - newRB;
-          } else {
-            const newRB = reserveB + shares;
-            const newRA = k / newRB;
-            gross = reserveA - newRA;
-          }
-          const usdcOut = Number(gross) * 0.99 / 1e6; // after 1% spread
-          // Cost basis from localStorage
-          const costKey = `opick_cost_${marketAddress}_${account}`;
+        const sharesA = await mc.sharesA(account);
+        const sharesB = await mc.sharesB(account);
+        const reserveA = await mc.reserveA();
+        const reserveB = await mc.reserveB();
+
+        const positions = [];
+        if (sharesA > 0n) {
+          const sellVal = simulateSellValue(sharesA, 'A', reserveA, reserveB);
+          const costKey = `opick_cost_${marketAddress}_${account}_A`;
           const costBasis = parseFloat(localStorage.getItem(costKey) || '0');
-          setPosition({ side, shares, currentValue: usdcOut, costBasis });
-        } else {
-          setPosition(null);
+          positions.push({ side: 'A', shares: sharesA, currentValue: sellVal, costBasis });
         }
+        if (sharesB > 0n) {
+          const sellVal = simulateSellValue(sharesB, 'B', reserveA, reserveB);
+          const costKey = `opick_cost_${marketAddress}_${account}_B`;
+          const costBasis = parseFloat(localStorage.getItem(costKey) || '0');
+          positions.push({ side: 'B', shares: sharesB, currentValue: sellVal, costBasis });
+        }
+        setPosition(positions.length > 0 ? positions : null);
       } catch {
         setPosition(null);
       }
@@ -357,9 +372,10 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
       await sponsoredCall(marketAddress, OPickMarketAbi, fn, [amountBigInt]);
 
       const tradeAmt = parseFloat(amount);
-      // Track cost basis
+      // Track cost basis per side
       if (account) {
-        const costKey = `opick_cost_${marketAddress}_${account}`;
+        const sideKey = selectedSide === 'A' ? 'A' : 'B';
+        const costKey = `opick_cost_${marketAddress}_${account}_${sideKey}`;
         const prev = parseFloat(localStorage.getItem(costKey) || '0');
         localStorage.setItem(costKey, String(prev + tradeAmt));
       }
@@ -380,13 +396,13 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
   };
 
   // Sell shares (gas sponsored via Privy)
-  const handleSell = async () => {
-    if (!position || !account) return;
+  const handleSell = async (pos) => {
+    if (!pos || !account) return;
     setSellLoading(true);
     setTxError('');
     try {
-      const fn = position.side === 'A' ? 'sellA' : 'sellB';
-      await sponsoredCall(marketAddress, OPickMarketAbi, fn, [position.shares]);
+      const fn = pos.side === 'A' ? 'sellA' : 'sellB';
+      await sponsoredCall(marketAddress, OPickMarketAbi, fn, [pos.shares]);
       setPosition(null);
       setSellLoading(false);
       refreshFromChain();
@@ -472,7 +488,7 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
               <span className={s.categoryPill}>{market.category}</span>
             )}
             <span className={s.metaItem}>
-              Volume: <span>${(() => { const v = chainVolume != null ? chainVolume : (market.totalVolume || 0); if (v === 0) return '0'; if (v < 1) return v.toFixed(2); if (v < 1000) return v.toFixed(2); return v.toLocaleString(undefined, {maximumFractionDigits: 0}); })()}</span>
+              Volume: <span>{'$'}{(() => { const v = chainVolume != null ? chainVolume : (market.totalVolume || 0); if (v === 0) return '0'; if (v < 1) return v.toFixed(2); if (v < 1000) return v.toFixed(2); return v.toLocaleString(undefined, {maximumFractionDigits: 0}); })()}</span>
             </span>
             {market.creator && (
               <span className={s.metaItem}>
@@ -486,12 +502,12 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
             <div className={`${s.priceBox} ${priceFlash === 'up' ? s.flashGreen : priceFlash === 'down' ? s.flashRed : ''}`}>
               <div className={s.priceLabel}>{sideAName}</div>
               <div className={s.priceValueGreen}>{priceA.toFixed(2)}%</div>
-              <div className={s.priceSide}>${(priceA / 100).toFixed(4)} per share</div>
+              <div className={s.priceSide}>{"$"}{((priceA / 100).toFixed(4))} per share</div>
             </div>
             <div className={`${s.priceBox} ${priceFlash === 'down' ? s.flashGreen : priceFlash === 'up' ? s.flashRed : ''}`}>
               <div className={s.priceLabel}>{sideBName}</div>
               <div className={s.priceValueRed}>{priceB.toFixed(2)}%</div>
-              <div className={s.priceSide}>${(priceB / 100).toFixed(4)} per share</div>
+              <div className={s.priceSide}>{"$"}{((priceB / 100).toFixed(4))} per share</div>
             </div>
           </div>
 
@@ -571,7 +587,7 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
                   return (
                     <div key={i} className={s.activityItem}>
                       <span className={isA ? s.activitySideA : s.activitySideB}>{name}</span>
-                      <span className={s.activityAmount}>+${Number(t.amount).toFixed(2)}</span>
+                      <span className={s.activityAmount}>+{'$'}{Number(t.amount).toFixed(2)}</span>
                       <span className={s.activityTime}>{timeAgo(t.timestamp)}</span>
                     </div>
                   );
@@ -718,7 +734,7 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
                     className={s.quickBtn}
                     onClick={() => handleQuickAdd(v)}
                   >
-                    +${v}
+                    +{'$'}{v}
                   </button>
                 ))}
                 <button
@@ -739,14 +755,25 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
                 <>
                   <div className={s.infoSectionLabel}>If {selectedSide === 'A' ? sideAName : sideBName} reaches:</div>
                   {[55, 65, 80, 100].map(target => {
-                    const shares = amountNum / (currentPrice / 100) * 1e6;
-                    const val = simulateValueAtPrice(shares, selectedSide, target, market.reserveA, market.reserveB);
+                    // Simulate buyA/buyB to get shares, then simulate sell at target
+                    const rA = Number(market.reserveA || 0);
+                    const rB = Number(market.reserveB || 0);
+                    const k = rA * rB;
+                    const amt = amountNum * 1e6;
+                    let shares;
+                    if (selectedSide === 'A') {
+                      const nr = rB + amt; shares = rA - k / nr;
+                    } else {
+                      const na = rA + amt; shares = rB - k / na;
+                    }
+                    const targetForSide = selectedSide === 'A' ? target : 100 - target;
+                    const val = simulateValueAtPrice(shares, selectedSide, targetForSide, rA, rB);
                     const profit = val - amountNum;
                     return (
                       <div className={s.infoRow} key={target}>
                         <span className={s.infoLabel}>{target}%</span>
                         <span className={profit >= 0 ? s.infoValueGreen : s.infoValueRed}>
-                          {profit >= 0 ? '+' : '-'}${Math.abs(profit).toFixed(2)}
+                          {profit >= 0 ? '+' : '-'}{'$'}{Math.abs(profit).toFixed(2)}
                         </span>
                       </div>
                     );
@@ -784,58 +811,64 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
               By trading, you agree to our <a href="/terms" target="_blank" rel="noopener noreferrer">Terms</a>, <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>, and <a href="/risk" target="_blank" rel="noopener noreferrer">Risk Disclosure</a>.
             </p>
 
-            {/* Position */}
-            {position && (
-              <div className={s.positionSection}>
-                <div className={s.positionTitle}>Your Position</div>
-                <div className={s.positionRow}>
-                  <span className={s.positionLabel}>Side</span>
-                  <span className={s.positionValue}>
-                    {position.side === 'A' ? sideAName : sideBName}
-                  </span>
-                </div>
-                <div className={s.positionRow}>
-                  <span className={s.positionLabel}>Shares</span>
-                  <span className={s.positionValue}>
-                    {Number(formatUnits(position.shares, 6)).toFixed(2)}
-                  </span>
-                </div>
-                {position.costBasis > 0 && (
+            {/* Positions (both sides) */}
+            {position && position.map((pos) => {
+              const posName = pos.side === 'A' ? sideAName : sideBName;
+              const pnl = pos.costBasis > 0 ? pos.currentValue - pos.costBasis : null;
+              return (
+                <div className={s.positionSection} key={pos.side}>
+                  <div className={s.positionTitle}>{posName}</div>
                   <div className={s.positionRow}>
-                    <span className={s.positionLabel}>Cost basis</span>
-                    <span className={s.positionValue}>${position.costBasis.toFixed(2)}</span>
+                    <span className={s.positionLabel}>Shares</span>
+                    <span className={s.positionValue}>
+                      {Number(formatUnits(pos.shares, 6)).toFixed(2)}
+                    </span>
                   </div>
-                )}
-                <div className={s.positionRow}>
-                  <span className={s.positionLabel}>Sell value (after 1% spread)</span>
-                  <span className={s.positionValue}>
-                    ${position.currentValue.toFixed(2)}
-                  </span>
+                  {pos.costBasis > 0 && (
+                    <div className={s.positionRow}>
+                      <span className={s.positionLabel}>Cost</span>
+                      <span className={s.positionValue}>{'$'}{pos.costBasis.toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div className={s.positionRow}>
+                    <span className={s.positionLabel}>Sell value</span>
+                    <span className={s.positionValue}>{'$'}{pos.currentValue.toFixed(2)}</span>
+                  </div>
+                  {pnl != null && (
+                    <div className={s.positionRow}>
+                      <span className={s.positionLabel}>P&L</span>
+                      <span className={pnl >= 0 ? s.positionValueGreen : s.positionValueRed}>
+                        {pnl >= 0 ? '+' : '-'}{'$'}{Math.abs(pnl).toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+                  <div className={s.positionScenarios}>
+                    <div className={s.infoSectionLabel}>If {posName} reaches:</div>
+                    {[55, 65, 80, 100].map(target => {
+                      const targetForSide = pos.side === 'A' ? target : 100 - target;
+                      const val = simulateValueAtPrice(pos.shares, pos.side, targetForSide, market.reserveA, market.reserveB);
+                      const cost = pos.costBasis > 0 ? pos.costBasis : pos.currentValue;
+                      const profit = val - cost;
+                      return (
+                        <div className={s.infoRow} key={target}>
+                          <span className={s.infoLabel}>{target}%</span>
+                          <span className={profit >= 0 ? s.infoValueGreen : s.infoValueRed}>
+                            {profit >= 0 ? '+' : '-'}{'$'}{Math.abs(profit).toFixed(2)}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <button
+                    className={s.sellBtn}
+                    onClick={() => handleSell(pos)}
+                    disabled={sellLoading}
+                  >
+                    {sellLoading ? 'Selling...' : `Sell ${posName}`}
+                  </button>
                 </div>
-                <div className={s.positionScenarios}>
-                  <div className={s.infoSectionLabel}>If {position.side === 'A' ? sideAName : sideBName} reaches:</div>
-                  {[55, 65, 80, 100].map(target => {
-                    const val = simulateValueAtPrice(position.shares, position.side, target, market.reserveA, market.reserveB);
-                    const profit = position.costBasis > 0 ? val - position.costBasis : val - position.currentValue;
-                    return (
-                      <div className={s.infoRow} key={target}>
-                        <span className={s.infoLabel}>{target}%</span>
-                        <span className={profit >= 0 ? s.infoValueGreen : s.infoValueRed}>
-                          {profit >= 0 ? '+' : '-'}${Math.abs(profit).toFixed(2)}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-                <button
-                  className={s.sellBtn}
-                  onClick={handleSell}
-                  disabled={sellLoading}
-                >
-                  {sellLoading ? 'Selling...' : 'Sell All'}
-                </button>
-              </div>
-            )}
+              );
+            })}
           </div>
         </div>
       </div>
