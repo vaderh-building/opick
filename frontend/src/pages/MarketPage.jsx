@@ -759,7 +759,7 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
               {amountNum > 0 && (
                 <>
                   <div className={s.infoSectionLabel}>If {selectedSide === 'A' ? sideAName : sideBName} reaches:</div>
-                  {[55, 65, 80, 100].map(target => {
+                  {[55, 65, 80].map(target => {
                     // Simulate buyA/buyB to get shares, then simulate sell at target
                     const rA = Number(market.reserveA || 0);
                     const rB = Number(market.reserveB || 0);
@@ -849,7 +849,7 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
                   )}
                   <div className={s.positionScenarios}>
                     <div className={s.infoSectionLabel}>If {posName} reaches:</div>
-                    {[55, 65, 80, 100].map(target => {
+                    {[55, 65, 80].map(target => {
                       const targetForSide = pos.side === 'A' ? target : 100 - target;
                       const val = simulateValueAtPrice(pos.shares, pos.side, targetForSide, market.reserveA, market.reserveB);
                       const cost = pos.costBasis > 0 ? pos.costBasis : pos.currentValue;
