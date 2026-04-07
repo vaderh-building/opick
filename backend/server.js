@@ -281,6 +281,87 @@ app.use("/api/markets", createMarketsRouter({ provider, factoryAddress, factoryA
 app.use("/api/comments", commentsRouter);
 app.use("/api/users", usersRouter);
 
+// ---------- Welcome Bonus ----------
+const BONUS_AMOUNT = 2_000_000n; // $2 USDC
+const BONUS_CAP = 250; // max 250 claims ($500 total)
+const BONUS_FILE = path.join(__dirname, "data", "welcome-bonus-claimed.json");
+const bonusRateLimit = new Map(); // IP -> timestamp
+
+function loadBonusClaims() {
+  try {
+    if (fs.existsSync(BONUS_FILE)) return JSON.parse(fs.readFileSync(BONUS_FILE, "utf-8"));
+  } catch {}
+  return {};
+}
+
+function saveBonusClaims(claims) {
+  const dir = path.dirname(BONUS_FILE);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  const tmp = BONUS_FILE + ".tmp";
+  fs.writeFileSync(tmp, JSON.stringify(claims, null, 2));
+  fs.renameSync(tmp, BONUS_FILE);
+}
+
+app.get("/api/welcome-bonus-status", (req, res) => {
+  const addr = (req.query.address || "").toLowerCase();
+  if (!addr || !addr.startsWith("0x")) return res.json({ claimed: false });
+  const claims = loadBonusClaims();
+  const entry = claims[addr];
+  if (entry) return res.json({ claimed: true, txHash: entry.txHash });
+  res.json({ claimed: false });
+});
+
+app.post("/api/claim-welcome-bonus", async (req, res) => {
+  const addr = (req.body?.walletAddress || "").toLowerCase();
+  if (!addr || !addr.startsWith("0x") || addr.length !== 42) {
+    return res.json({ success: false, reason: "invalid_address" });
+  }
+
+  // Rate limit: 1 per IP per hour
+  const ip = req.ip || req.connection?.remoteAddress || "unknown";
+  const lastClaim = bonusRateLimit.get(ip);
+  if (lastClaim && Date.now() - lastClaim < 3600000) {
+    return res.json({ success: false, reason: "rate_limited" });
+  }
+
+  // Check if already claimed
+  const claims = loadBonusClaims();
+  if (claims[addr]) {
+    return res.json({ success: false, reason: "already_claimed" });
+  }
+
+  // Check cap
+  if (Object.keys(claims).length >= BONUS_CAP) {
+    return res.json({ success: false, reason: "bonus_pool_exhausted" });
+  }
+
+  // Send USDC
+  const pk = process.env.DEPLOYER_PRIVATE_KEY;
+  if (!pk) return res.json({ success: false, reason: "server_config_error" });
+
+  try {
+    const signer = new ethers.Wallet(pk, provider);
+    const usdc = new ethers.Contract(
+      config.usdcAddress,
+      ["function transfer(address to, uint256 amount) returns (bool)"],
+      signer
+    );
+    const tx = await usdc.transfer(addr, BONUS_AMOUNT);
+    const receipt = await tx.wait();
+
+    // Record claim
+    claims[addr] = { txHash: receipt.hash, timestamp: Date.now(), amount: "2.00" };
+    saveBonusClaims(claims);
+    bonusRateLimit.set(ip, Date.now());
+
+    console.log(`Welcome bonus: $2 sent to ${addr} tx:${receipt.hash}`);
+    res.json({ success: true, txHash: receipt.hash, amount: "2.00" });
+  } catch (e) {
+    console.error("Welcome bonus failed:", e.message);
+    res.json({ success: false, reason: "transfer_failed", details: e.message });
+  }
+});
+
 app.get("/api/health", async (req, res) => {
   const result = {
     status: cache.markets?.length > 0 ? "ok" : "no_markets",

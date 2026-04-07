@@ -3,8 +3,10 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { useFundWallet } from '@privy-io/react-auth';
 import { base } from 'viem/chains';
 import { useWallet } from './hooks/useWallet.js';
+import { useWelcomeBonus } from './hooks/useWelcomeBonus.js';
 import Navbar from './components/Navbar.jsx';
 import Footer from './components/Footer.jsx';
+import WelcomeBonusToast from './components/WelcomeBonusToast.jsx';
 import LandingPage from './pages/LandingPage.jsx';
 import HomePage from './pages/HomePage.jsx';
 import MarketPage from './pages/MarketPage.jsx';
@@ -28,10 +30,12 @@ function App() {
     if (account) fundWallet({ address: account, options: { chain: base, asset: 'USDC' } }).catch((e) => console.error('fundWallet error:', e?.message || e));
   }, [account, fundWallet]);
 
+  const bonus = useWelcomeBonus(account);
   const pageProps = { account, provider, signer, onConnect: connect, authenticated, walletReady, displayName };
 
   return (
     <BrowserRouter>
+      <WelcomeBonusToast status={bonus.status} amount={bonus.amount} />
       <Navbar
         account={account}
         authenticated={authenticated}
