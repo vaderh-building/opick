@@ -3,7 +3,7 @@ import hre from "hardhat";
 const { ethers } = hre;
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
-const FACTORY = "0x1a9be5D425B78188a4b6b15d37d5cE5f5815005A";
+const FACTORY = "0x049131B36277322410f19039Af0c4e0E7Bc824CA";
 
 const MARKETS = [
   { topic: "Who is the GOAT? Messi vs Ronaldo", a: "Messi", b: "Ronaldo", cat: "Sports" },
