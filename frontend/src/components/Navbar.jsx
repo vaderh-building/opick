@@ -21,7 +21,7 @@ function copyToClipboard(text) {
   navigator.clipboard.writeText(text).catch(() => {});
 }
 
-export default function Navbar({ account, authenticated, displayName, onConnect, onConnectLocal, onDisconnect, onFundWallet }) {
+export default function Navbar({ account, authenticated, displayName, onConnect, onConnectLocal, onDisconnect, onFundWallet, onInvite }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -67,6 +67,10 @@ export default function Navbar({ account, authenticated, displayName, onConnect,
           </div>
 
           {(authenticated || account) ? (
+            <>
+            {onInvite && (
+              <button className={styles.inviteBtn} onClick={onInvite}>Invite & Earn</button>
+            )}
             <div className={styles.accountWrap} ref={dropdownRef}>
               <button
                 className={styles.accountBtn}
@@ -108,6 +112,7 @@ export default function Navbar({ account, authenticated, displayName, onConnect,
                 </div>
               )}
             </div>
+            </>
           ) : (
             <div className={styles.connectGroup}>
               <button className={styles.connectBtn} onClick={() => { if (onConnect) onConnect(); }}>

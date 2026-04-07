@@ -1,12 +1,14 @@
-import { useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { useFundWallet } from '@privy-io/react-auth';
 import { base } from 'viem/chains';
 import { useWallet } from './hooks/useWallet.js';
 import { useWelcomeBonus } from './hooks/useWelcomeBonus.js';
+import { useReferralCapture } from './hooks/useReferralCapture.js';
 import Navbar from './components/Navbar.jsx';
 import Footer from './components/Footer.jsx';
 import WelcomeBonusToast from './components/WelcomeBonusToast.jsx';
+import InviteEarnModal from './components/InviteEarnModal.jsx';
 import LandingPage from './pages/LandingPage.jsx';
 import HomePage from './pages/HomePage.jsx';
 import MarketPage from './pages/MarketPage.jsx';
@@ -26,16 +28,19 @@ function App() {
 
   const { fundWallet } = useFundWallet();
   const onFundWallet = useCallback(() => {
-    console.log('Navbar Add USDC, account:', account);
-    if (account) fundWallet({ address: account, options: { chain: base, asset: 'USDC' } }).catch((e) => console.error('fundWallet error:', e?.message || e));
+    if (account) fundWallet({ address: account, options: { chain: base, asset: 'USDC' } }).catch(() => {});
   }, [account, fundWallet]);
 
   const bonus = useWelcomeBonus(account);
+  useReferralCapture(account);
+
+  const [inviteOpen, setInviteOpen] = useState(false);
   const pageProps = { account, provider, signer, onConnect: connect, authenticated, walletReady, displayName };
 
   return (
     <BrowserRouter>
       <WelcomeBonusToast status={bonus.status} amount={bonus.amount} />
+      <InviteEarnModal isOpen={inviteOpen} onClose={() => setInviteOpen(false)} account={account} />
       <Navbar
         account={account}
         authenticated={authenticated}
@@ -44,6 +49,7 @@ function App() {
         onConnectLocal={connectLocal}
         onDisconnect={disconnect}
         onFundWallet={onFundWallet}
+        onInvite={() => setInviteOpen(true)}
       />
       <main style={{ paddingTop: 52, minHeight: 'calc(100vh - 52px)' }}>
         <Routes>

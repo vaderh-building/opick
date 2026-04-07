@@ -11,6 +11,7 @@ import { useMarket } from '../hooks/useMarkets.js';
 import { useContracts } from '../hooks/useContracts.js';
 import { usePriceWebSocket } from '../hooks/usePriceWebSocket.js';
 import { useSponsoredTx } from '../hooks/useSponsoredTx.js';
+import { triggerReferralCheck } from '../hooks/useReferralPayoutTrigger.js';
 import { USDC_ADDRESS } from '../config.js';
 import USDCAbi from '../abi/MockUSDC.json';
 import OPickMarketAbi from '../abi/OPickMarket.json';
@@ -383,6 +384,8 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
       setTxError('');
       setTxLoading(false);
       refreshFromChain(selectedSide === 'A' ? sideAName : sideBName, tradeAmt);
+      // Fire-and-forget referral check
+      triggerReferralCheck(account);
     } catch (e) {
       console.error('Transaction failed:', e);
       const msg = e?.reason || e?.message || 'Transaction failed';

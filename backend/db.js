@@ -46,6 +46,17 @@ db.exec(`
     tx_hash TEXT,
     ip TEXT
   );
+
+  CREATE TABLE IF NOT EXISTS referrals (
+    referee_address TEXT PRIMARY KEY,
+    referrer_address TEXT NOT NULL,
+    signed_up_at INTEGER NOT NULL,
+    first_trade_at INTEGER,
+    payout_tx_hash TEXT,
+    payout_at INTEGER
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_referrer ON referrals(referrer_address);
 `);
 
 export default db;

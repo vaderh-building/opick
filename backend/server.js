@@ -344,6 +344,95 @@ app.post("/api/claim-welcome-bonus", async (req, res) => {
   }
 });
 
+// ---------- Referrals ----------
+const REFERRAL_CAP = 150;
+const REFERRAL_AMOUNT = 2_000_000n;
+const stmtGetReferral = db.prepare("SELECT * FROM referrals WHERE referee_address = ?");
+const stmtInsertReferral = db.prepare("INSERT INTO referrals (referee_address, referrer_address, signed_up_at) VALUES (?, ?, ?)");
+const stmtMarkTrade = db.prepare("UPDATE referrals SET first_trade_at = ? WHERE referee_address = ? AND first_trade_at IS NULL");
+const stmtMarkPayout = db.prepare("UPDATE referrals SET payout_tx_hash = ?, payout_at = ? WHERE referee_address = ?");
+const stmtCountPayouts = db.prepare("SELECT COUNT(*) AS cnt FROM referrals WHERE payout_tx_hash IS NOT NULL");
+const stmtReferrerStats = db.prepare(`
+  SELECT
+    COUNT(*) AS total,
+    SUM(CASE WHEN first_trade_at IS NOT NULL THEN 1 ELSE 0 END) AS activated,
+    SUM(CASE WHEN payout_tx_hash IS NOT NULL THEN 1 ELSE 0 END) AS paid
+  FROM referrals WHERE referrer_address = ?
+`);
+
+app.post("/api/register-referral", (req, res) => {
+  const referee = (req.body?.referee || "").toLowerCase();
+  const referrer = (req.body?.referrer || "").toLowerCase();
+  if (!referee || !referrer || referee.length !== 42 || referrer.length !== 42) {
+    return res.json({ success: false, reason: "invalid_address" });
+  }
+  if (referee === referrer) {
+    return res.json({ success: false, reason: "self_referral" });
+  }
+  if (stmtGetReferral.get(referee)) {
+    return res.json({ success: false, reason: "already_referred" });
+  }
+  try {
+    stmtInsertReferral.run(referee, referrer, Date.now());
+    console.log(`Referral registered: ${referrer.slice(0,10)} referred ${referee.slice(0,10)}`);
+    res.json({ success: true });
+  } catch (e) {
+    res.json({ success: false, reason: e.message });
+  }
+});
+
+app.post("/api/check-referral-payout", async (req, res) => {
+  const addr = (req.body?.address || "").toLowerCase();
+  if (!addr || addr.length !== 42) return res.json({ success: true, paid: false });
+
+  const row = stmtGetReferral.get(addr);
+  if (!row || row.first_trade_at) return res.json({ success: true, paid: false });
+
+  // Mark first trade
+  stmtMarkTrade.run(Date.now(), addr);
+
+  // Check cap
+  const { cnt } = stmtCountPayouts.get();
+  if (cnt >= REFERRAL_CAP) {
+    console.log("Referral cap reached, skipping payout for", addr);
+    return res.json({ success: true, paid: false, reason: "cap_reached" });
+  }
+
+  // Pay referrer
+  const pk = process.env.BONUS_WALLET_KEY || process.env.DEPLOYER_PRIVATE_KEY;
+  if (!pk) return res.json({ success: true, paid: false, reason: "no_key" });
+
+  try {
+    const signer = new ethers.Wallet(pk, provider);
+    const usdc = new ethers.Contract(
+      config.usdcAddress,
+      ["function transfer(address to, uint256 amount) returns (bool)"],
+      signer
+    );
+    const tx = await usdc.transfer(row.referrer_address, REFERRAL_AMOUNT);
+    const receipt = await tx.wait();
+    stmtMarkPayout.run(receipt.hash, Date.now(), addr);
+    console.log(`Referral payout: $2 to ${row.referrer_address.slice(0,10)} for ${addr.slice(0,10)} tx:${receipt.hash}`);
+    res.json({ success: true, paid: true, txHash: receipt.hash, referrerAddress: row.referrer_address });
+  } catch (e) {
+    console.error("Referral payout failed:", e.message);
+    res.json({ success: true, paid: false, reason: "transfer_failed" });
+  }
+});
+
+app.get("/api/referral-stats", (req, res) => {
+  const addr = (req.query.address || "").toLowerCase();
+  if (!addr) return res.json({ totalReferred: 0, activated: 0, earned: 0, pending: 0 });
+  const row = stmtReferrerStats.get(addr);
+  if (!row) return res.json({ totalReferred: 0, activated: 0, earned: 0, pending: 0 });
+  res.json({
+    totalReferred: row.total,
+    activated: row.activated,
+    earned: row.paid * 2,
+    pending: row.total - row.activated,
+  });
+});
+
 app.get("/api/health", async (req, res) => {
   const result = {
     status: cache.markets?.length > 0 ? "ok" : "no_markets",
