@@ -694,6 +694,12 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
           <div className={s.tradeCard}>
             <div className={s.tradeHeader}>Pick a Side</div>
 
+            {!position && (
+              <div className={s.howItWorks}>
+                How this works: there is no right answer. Buy a side, and your shares gain value when more people buy that side after you. Sell anytime.
+              </div>
+            )}
+
             <div className={s.sideToggle}>
               <button
                 className={selectedSide === 'A' ? s.sideBtnA : s.sideBtn}
@@ -758,6 +764,7 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
               </div>
               {amountNum > 0 && (
                 <>
+                  <div className={s.scenarioIntro}>Projected profit if more people pick your side:</div>
                   <div className={s.infoSectionLabel}>If {selectedSide === 'A' ? sideAName : sideBName} reaches:</div>
                   {[55, 65, 80].map(target => {
                     // Simulate buyA/buyB to get shares, then simulate sell at target

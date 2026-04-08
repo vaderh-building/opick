@@ -58,6 +58,15 @@
 
 .link:hover { text-decoration: underline; }
 
+.disclaimer {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.75;
+  color: var(--text);
+  margin: 12px 0 0;
+}
+
 /* Lists */
 .list {
   list-style: none;

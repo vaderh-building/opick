@@ -40,6 +40,9 @@ export default function LandingPage() {
           See what the world thinks. Pick a side,<br />
           profit when others agree.
         </p>
+        <p className={styles.heroSub2}>
+          No resolution, no expiry. Profit comes from being early to a side that gets popular.
+        </p>
         <Link to="/markets" className={styles.cta}>Browse Markets</Link>
         <p className={styles.tosLine}>
           By using OPick, you agree to our <a href="/terms" target="_blank" rel="noopener noreferrer">Terms</a>, <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>, and <a href="/risk" target="_blank" rel="noopener noreferrer">Risk Disclosure</a>.

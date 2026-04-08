@@ -36,6 +36,36 @@ export default function DocsPage() {
       </section>
 
       <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>No resolution</h2>
+        <p className={styles.body}>
+          OPick markets do not resolve to a winner. There is no judge, no oracle,
+          no expiry date. Markets stay open forever.
+        </p>
+      </section>
+
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>Early bird advantage</h2>
+        <p className={styles.body}>
+          When you buy a side, you get shares at the current price. As more
+          people buy that same side after you, your shares become worth more.
+          The earlier you buy, the more upside you capture.
+        </p>
+      </section>
+
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>Profit and exit</h2>
+        <p className={styles.body}>
+          You can sell your shares anytime at the current market price. Your
+          profit is the difference between what you paid and what you sell for,
+          minus a 1% spread. There is no waiting for a result.
+        </p>
+        <p className={styles.disclaimer}>
+          This is not a prediction market. Being "right" about the future does
+          not earn you money. Getting in early on a popular side does.
+        </p>
+      </section>
+
+      <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Pricing</h2>
         <p className={styles.body}>
           OPick uses a bonding curve (constant product market maker) to set prices automatically based on demand.

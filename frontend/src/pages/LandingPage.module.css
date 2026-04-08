@@ -28,7 +28,16 @@
   font-weight: 300;
   color: var(--dim);
   line-height: 1.6;
-  margin: 0 0 28px;
+  margin: 0 0 10px;
+}
+
+.heroSub2 {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--muted);
+  line-height: 1.5;
+  margin: 0 0 24px;
 }
 
 .cta {

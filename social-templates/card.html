@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1080">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;1,400&family=DM+Sans:wght@700&display=swap" rel="stylesheet">
+<title>OPick Social Card</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --green: #1a6b3c;
+    --offwhite: #FAFAF7;
+    --warm-pink: #f5edea;
+    --dark: #1a1a1a;
+    --red: #8b2500;
+  }
+
+  body {
+    width: 1080px;
+    height: 1350px;
+    overflow: hidden;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .card {
+    width: 1080px;
+    height: 1350px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Top section: 40% */
+  .top {
+    height: 540px;
+    padding: 60px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
+
+  /* Variant backgrounds + text colors */
+  .variant-A .top { background: var(--offwhite); }
+  .variant-A .kicker { color: var(--green); }
+  .variant-A .headline { color: var(--dark); }
+  .variant-A .subhead { color: #666; }
+
+  .variant-B .top { background: var(--green); }
+  .variant-B .kicker { color: rgba(255,255,255,0.7); }
+  .variant-B .headline { color: #fff; }
+  .variant-B .subhead { color: rgba(255,255,255,0.75); }
+
+  .variant-C .top { background: var(--warm-pink); }
+  .variant-C .kicker { color: var(--red); }
+  .variant-C .headline { color: var(--red); }
+  .variant-C .subhead { color: #a04a2a; }
+
+  .kicker {
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 20px;
+  }
+
+  .headline {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: 56px;
+    line-height: 1.1;
+    margin-bottom: 16px;
+    max-width: 840px;
+  }
+
+  .subhead {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: 22px;
+    line-height: 1.3;
+    max-width: 700px;
+  }
+
+  /* Bottom section: 60% */
+  .bottom {
+    height: 810px;
+    background-color: #e8e7e2;
+    background-size: cover;
+    background-position: center;
+    position: relative;
+  }
+
+  /* OPick watermark */
+  .watermark {
+    position: absolute;
+    bottom: 32px;
+    right: 40px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 0.5px;
+    opacity: 0.5;
+  }
+
+  .variant-A .watermark { color: var(--dark); }
+  .variant-B .watermark { color: var(--dark); }
+  .variant-C .watermark { color: var(--red); }
+</style>
+</head>
+<body>
+
+<script>
+  // ═══════════════════════════════════════
+  // EDIT THESE PARAMETERS
+  // ═══════════════════════════════════════
+  const KICKER    = "TRENDING DEBATE";
+  const HEADLINE  = "Will Messi end his career as the GOAT?";
+  const SUBHEAD   = "Live on opick.io. 50.18% say yes.";
+  const VARIANT   = "A";  // A, B, or C
+  const IMAGE     = "";   // path to illustration PNG (optional)
+  // ═══════════════════════════════════════
+
+  document.body.innerHTML = `
+    <div class="card variant-${VARIANT}">
+      <div class="top">
+        <div class="kicker">${KICKER}</div>
+        <div class="headline">${HEADLINE}</div>
+        ${SUBHEAD ? `<div class="subhead">${SUBHEAD}</div>` : ''}
+      </div>
+      <div class="bottom" style="${IMAGE ? `background-image: url('${IMAGE}')` : ''}">
+        <div class="watermark">opick.io</div>
+      </div>
+    </div>
+  `;
+</script>
+
+</body>
+</html>
