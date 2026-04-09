@@ -104,7 +104,7 @@ export default function DocsPage() {
         <div className={styles.addressBlock}>
           <div className={styles.addressRow}>
             <span className={styles.addressLabel}>Factory</span>
-            <span className={styles.addressMono}>0xf2bd8D38a96fcb05D625735DF1826b6f190a0362</span>
+            <span className={styles.addressMono}>0x049131B36277322410f19039Af0c4e0E7Bc824CA</span>
           </div>
           <div className={styles.addressRow}>
             <span className={styles.addressLabel}>USDC</span>
