@@ -154,6 +154,13 @@ export default function DocsPage() {
           the crowd stands right now, and it is always moving.
         </p>
       </section>
+
+      <div className={styles.disclosures}>
+        <h2 className={styles.sectionTitle}>Important disclosures</h2>
+        <p className={styles.disclosureText}>
+          OPick is experimental software. Using OPick involves financial risk and you may lose money. OPick is not a prediction market, a securities exchange, or a gambling platform. OPick markets do not resolve to any outcome and returns depend entirely on subsequent trading activity. OPick is not available in jurisdictions where its use would be illegal. You are responsible for complying with your local laws.
+        </p>
+      </div>
     </div>
   );
 }

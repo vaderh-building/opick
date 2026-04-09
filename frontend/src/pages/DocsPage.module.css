@@ -177,6 +177,21 @@
 
 .question:first-of-type { margin-top: 0; }
 
+.disclosures {
+  margin-top: 48px;
+  padding-top: 24px;
+  border-top: 0.5px solid var(--border);
+}
+
+.disclosureText {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-style: italic;
+  line-height: 1.7;
+  color: #888;
+  margin: 12px 0 0;
+}
+
 @media (max-width: 600px) {
   .page { padding: 32px 16px 60px; }
   .pageTitle { font-size: 26px; }
