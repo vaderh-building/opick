@@ -59,10 +59,6 @@ export default function DocsPage() {
           profit is the difference between what you paid and what you sell for,
           minus a 1% spread. There is no waiting for a result.
         </p>
-        <p className={styles.disclaimer}>
-          This is not a prediction market. Being "right" about the future does
-          not earn you money. Getting in early on a popular side does.
-        </p>
       </section>
 
       <section className={styles.section}>
