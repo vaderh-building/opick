@@ -219,7 +219,41 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
 
   return (
     <div className={styles.page}>
-      <h1 className={styles.title}>Create a new market</h1>
+      {/* Marketing pitch */}
+      <h1 className={styles.heroTitle}>Create markets. Earn forever.</h1>
+
+      <div className={styles.pitchSection}>
+        <h2 className={styles.pitchHeading}>How creator earnings work</h2>
+        <p className={styles.pitchBody}>
+          Anyone can create a market for free. Once live, you earn 30% of the 1% spread on every
+          sell in your market. Forever.
+        </p>
+        <p className={styles.pitchBody}>
+          The more volume your market generates, the more you earn. There is no cap.
+        </p>
+        <p className={styles.pitchBody}>
+          Earnings are automatic. No claiming, no waiting. USDC goes straight to your wallet on every trade.
+        </p>
+      </div>
+
+      <div className={styles.pitchSection}>
+        <h2 className={styles.pitchHeading}>Why create a market?</h2>
+        <p className={styles.pitchBody}>
+          You know what your audience argues about. Turn that energy into a market.
+        </p>
+        <p className={styles.pitchBody}>
+          When you create a market and pick a side early, you earn from both price movement and creator spread.
+          Your position grows in value as your audience joins, and you collect revenue from every trade they make.
+        </p>
+        <p className={styles.pitchBody}>
+          Your followers become advocates. They pick a side and promote it to their own networks.
+          The more controversial the topic, the more volume, the more you earn.
+        </p>
+      </div>
+
+      <div className={styles.formDivider} />
+
+      <h2 className={styles.title}>Create a new market</h2>
       <p className={styles.subtitle}>Start a debate, earn from every trade.</p>
 
       <div className={styles.layout}>
