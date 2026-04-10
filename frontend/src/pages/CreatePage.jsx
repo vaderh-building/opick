@@ -80,9 +80,9 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
 
   // Auto-generate topic
   const generatedTopic = useMemo(() => {
-    if (isCustom) return customTopic;
+    if (isCustom || isWorldCup) return customTopic;
     return generateTopic(selectedTemplate, choiceA, choiceB);
-  }, [selectedTemplate, choiceA, choiceB, customTopic, isCustom]);
+  }, [selectedTemplate, choiceA, choiceB, customTopic, isCustom, isWorldCup]);
 
   // Labels based on template
   const labelA = isBullBear ? 'Topic' : isHotTake ? 'Your hot take' : 'Choice A';
@@ -104,10 +104,13 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
     setExistingMarket(null);
     setForceCreate(false);
 
-    const a = (isBullBear ? 'Overhyped' : choiceA).trim();
-    const b = (isBullBear ? 'Underhyped' : choiceB).trim();
+    const a = (isBullBear ? 'Overhyped' : choiceA).trim().toLowerCase();
+    const b = (isBullBear ? 'Underhyped' : choiceB).trim().toLowerCase();
+    const t = customTopic.trim().toLowerCase();
 
     if (!a || !b || a.length < 2 || b.length < 2) return;
+    // World Cup and Custom require a topic before searching
+    if ((isWorldCup || isCustom) && (!t || t.length < 3)) return;
 
     if (searchTimer.current) clearTimeout(searchTimer.current);
     searchTimer.current = setTimeout(async () => {
@@ -116,14 +119,22 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
         const res = await fetch(`${API_URL}/markets/search?a=${encodeURIComponent(a)}&b=${encodeURIComponent(b)}`);
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0) {
-          setExistingMarket(data[0]);
+          // For World Cup/Custom, also check topic similarity
+          if (isWorldCup || isCustom) {
+            const match = data.find(m =>
+              m.topic && m.topic.trim().toLowerCase() === t
+            );
+            if (match) setExistingMarket(match);
+          } else {
+            setExistingMarket(data[0]);
+          }
         }
       } catch {}
       setSearching(false);
     }, 500);
 
     return () => { if (searchTimer.current) clearTimeout(searchTimer.current); };
-  }, [choiceA, choiceB, isBullBear]);
+  }, [choiceA, choiceB, customTopic, isBullBear, isWorldCup, isCustom]);
 
   const handleTemplateClick = (t) => {
     setSelectedTemplate(t.id);
@@ -290,14 +301,14 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
           {/* Form fields */}
           {selectedTemplate && (
             <div className={styles.formFields}>
-              {/* Custom topic field */}
-              {isCustom && (
+              {/* Topic field for Custom and World Cup */}
+              {(isCustom || isWorldCup) && (
                 <div className={styles.fieldGroup}>
                   <label className={styles.fieldLabel}>Topic</label>
                   <input
                     type="text"
                     className={styles.fieldInput}
-                    placeholder="e.g., Who is the football GOAT?"
+                    placeholder={isWorldCup ? 'e.g., Brazil vs Argentina, bigger football culture forever' : 'e.g., Who is the football GOAT?'}
                     value={customTopic}
                     onChange={(e) => setCustomTopic(e.target.value)}
                   />
@@ -358,13 +369,12 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
                     type="button"
                     className={styles.wcSugBtn}
                     onClick={() => {
-                      const parts = ex.split(', ');
-                      if (parts.length >= 2 && ex.includes(' vs ')) {
+                      setCustomTopic(ex);
+                      if (ex.includes(' vs ')) {
                         const vs = ex.split(' vs ');
                         setChoiceA(vs[0].trim());
-                        setChoiceB(vs[1]?.split(',')[0]?.trim() || '');
-                      } else {
-                        setCustomTopic(ex);
+                        const rest = vs[1] || '';
+                        setChoiceB(rest.split(',')[0].trim());
                       }
                     }}
                   >
