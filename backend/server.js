@@ -278,9 +278,52 @@ const app = express();
 app.use(cors({ origin: process.env.FRONTEND_URL || "*" }));
 app.use(express.json());
 
-app.use("/api/markets", createMarketsRouter({ provider, factoryAddress, factoryAbi, marketAbi, cache, priceHistory, tradeLogs }));
+const marketsRouter = createMarketsRouter({ provider, factoryAddress, factoryAbi, marketAbi, cache, priceHistory, tradeLogs });
+app.use("/api/markets", marketsRouter);
 app.use("/api/comments", commentsRouter);
 app.use("/api/users", usersRouter);
+
+// ---------- Public Developer API v1 (read-only aliases) ----------
+import { Router } from "express";
+const v1 = Router();
+v1.use(cors({ origin: "*" }));
+
+// Alias existing read endpoints
+v1.get("/markets", (req, res, next) => { req.url = "/"; marketsRouter(req, res, next); });
+v1.get("/markets/price-history/:address", (req, res, next) => { req.url = `/price-history/${req.params.address}`; marketsRouter(req, res, next); });
+v1.get("/markets/trades/:address", (req, res, next) => { req.url = `/trades/${req.params.address}`; marketsRouter(req, res, next); });
+v1.get("/markets/:address/positions/:userAddress", (req, res, next) => { req.url = `/${req.params.address}/positions/${req.params.userAddress}`; marketsRouter(req, res, next); });
+v1.get("/markets/:address", (req, res, next) => { req.url = `/${req.params.address}`; marketsRouter(req, res, next); });
+
+// Snapshot: entire market state in one call
+v1.get("/snapshot", (req, res) => {
+  if (!cache.markets || cache.markets.length === 0) return res.json([]);
+  res.json(cache.markets.map(m => ({
+    address: m.address,
+    topic: m.topic,
+    sideAName: m.sideAName,
+    sideBName: m.sideBName,
+    category: m.category,
+    creator: m.creator,
+    priceA: m.priceA,
+    priceB: m.priceB,
+    totalVolume: m.totalVolume,
+    yesReserve: m.reserveA,
+    noReserve: m.reserveB,
+    createdAt: m.createdAt,
+  })));
+});
+
+v1.get("/health", (req, res) => {
+  res.json({
+    status: cache.markets?.length > 0 ? "ok" : "no_markets",
+    cachedMarkets: cache.markets?.length || 0,
+    chainId,
+    factoryAddress,
+  });
+});
+
+app.use("/api/v1", v1);
 
 // ---------- Welcome Bonus (SQLite backed) ----------
 const BONUS_AMOUNT = 2_000_000n; // $2 USDC

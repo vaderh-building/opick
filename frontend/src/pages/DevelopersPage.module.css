@@ -1,0 +1,127 @@
+.page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 48px 48px 100px;
+}
+
+.title {
+  font-family: var(--font-serif);
+  font-size: 32px;
+  font-weight: 400;
+  font-style: italic;
+  color: var(--text);
+  margin: 0 0 16px;
+}
+
+.intro {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.75;
+  color: var(--dim);
+  margin: 0 0 8px;
+}
+
+.baseUrl {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--dim);
+  margin: 0 0 32px;
+}
+
+.code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: var(--surface2);
+  padding: 2px 6px;
+  border-radius: 2px;
+  color: var(--text);
+}
+
+/* Endpoint sections */
+.endpoint {
+  padding: 24px 0 0;
+  border-top: 0.5px solid var(--border);
+}
+
+.epHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.method {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--green);
+  background: var(--green-bg);
+  padding: 3px 8px;
+  border-radius: 2px;
+}
+
+.path {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.epDesc {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--dim);
+  margin: 0 0 10px;
+  line-height: 1.5;
+}
+
+.responseLabel {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: var(--muted);
+  margin: 10px 0 4px;
+}
+
+.codeBlock {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text);
+  background: var(--bg);
+  border: 0.5px solid var(--border);
+  border-radius: 4px;
+  padding: 12px 14px;
+  overflow-x: auto;
+  white-space: pre;
+  margin: 0;
+}
+
+/* Contact */
+.contact {
+  margin-top: 48px;
+  padding-top: 24px;
+  border-top: 0.5px solid var(--border);
+}
+
+.contactTitle {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--text);
+  margin: 0 0 6px;
+}
+
+.contactText {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--dim);
+  margin: 0;
+}
+
+@media (max-width: 600px) {
+  .page { padding: 32px 16px 60px; }
+  .title { font-size: 26px; }
+  .path { font-size: 12px; }
+}

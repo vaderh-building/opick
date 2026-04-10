@@ -6,6 +6,7 @@ const NAV_LINKS = [
   { to: '/markets', label: 'Markets' },
   { to: '/create', label: 'Create' },
   { to: '/creators', label: 'Creators' },
+  { to: '/developers', label: 'Developers' },
   { to: '/docs', label: 'Docs' },
 ];
 
