@@ -16,6 +16,7 @@ const TEMPLATES = [
   { id: 'hot-take', icon: '\u{1F525}', name: 'Hot Take', desc: 'A spicy opinion for the crowd' },
   { id: 'best-of', icon: '\u{2B50}', name: 'Best of', desc: "What's the best in a category?" },
   { id: 'custom', icon: '\u{270F}\u{FE0F}', name: 'Custom', desc: 'Create your own format' },
+  { id: 'worldcup', icon: '\u{26BD}', name: 'World Cup 2026', desc: 'Football debates, no resolution' },
 ];
 
 const CATEGORIES = ['Sports', 'Music', 'Tech', 'Culture', 'Finance', 'Lifestyle'];
@@ -28,6 +29,7 @@ function generateTopic(template, a, b) {
     case 'bull-bear': return `${a}: Overhyped or Underhyped?`;
     case 'hot-take': return `${a} vs ${b || '...'}`;
     case 'best-of': return `Best ${a}? ${a} vs ${b || '...'}`;
+    case 'worldcup': return `${a} vs ${b || '...'}`;
     case 'custom': return `${a} vs ${b || '...'}`;
     default: return `${a} vs ${b || '...'}`;
   }
@@ -70,6 +72,7 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
   const isBullBear = selectedTemplate === 'bull-bear';
   const isHotTake = selectedTemplate === 'hot-take';
   const isCustom = selectedTemplate === 'custom';
+  const isWorldCup = selectedTemplate === 'worldcup';
 
   // Compute actual sideA/sideB for contract
   const sideA = isBullBear ? 'Overhyped' : choiceA;
@@ -84,6 +87,14 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
   // Labels based on template
   const labelA = isBullBear ? 'Topic' : isHotTake ? 'Your hot take' : 'Choice A';
   const labelB = isHotTake ? 'The other side' : 'Choice B';
+
+  const WC_EXAMPLES = [
+    'Brazil vs Argentina, bigger football culture forever',
+    'Mbapp\u00e9 vs Messi, who is the real face of football now',
+    "USA Men's team, finally serious or still a joke",
+    'Did VAR ruin the World Cup',
+    'Best World Cup jersey of all time',
+  ];
   const placeholderA = isBullBear ? 'e.g., AI' : isHotTake ? 'e.g., Pineapple belongs on pizza' : 'e.g., Messi';
   const placeholderB = isHotTake ? 'e.g., It does not' : 'e.g., Ronaldo';
   const showChoiceB = !isBullBear;
@@ -121,7 +132,7 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
     setCustomTopic('');
     setExistingMarket(null);
     setForceCreate(false);
-    if (t.id === 'goat' && !category) setCategory('Sports');
+    if ((t.id === 'goat' || t.id === 'worldcup') && !category) setCategory('Sports');
   };
 
   const handleCreate = async () => {
@@ -333,6 +344,37 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
                   ))}
                 </select>
               </div>
+            </div>
+          )}
+
+          {/* World Cup suggestions */}
+          {isWorldCup && (
+            <div className={styles.wcSection}>
+              <p className={styles.wcSugLabel}>Example debates:</p>
+              <div className={styles.wcSuggestions}>
+                {WC_EXAMPLES.map((ex) => (
+                  <button
+                    key={ex}
+                    type="button"
+                    className={styles.wcSugBtn}
+                    onClick={() => {
+                      const parts = ex.split(', ');
+                      if (parts.length >= 2 && ex.includes(' vs ')) {
+                        const vs = ex.split(' vs ');
+                        setChoiceA(vs[0].trim());
+                        setChoiceB(vs[1]?.split(',')[0]?.trim() || '');
+                      } else {
+                        setCustomTopic(ex);
+                      }
+                    }}
+                  >
+                    {ex}
+                  </button>
+                ))}
+              </div>
+              <p className={styles.wcNote}>
+                These are opinion markets about football debates, not predictions about match results. Markets do not resolve.
+              </p>
             </div>
           )}
 
