@@ -41,23 +41,51 @@ function loadConfig() {
     } catch {}
   }
 
-  rpcUrl = rpcUrl || "https://mainnet.base.org";
+  rpcUrl = rpcUrl || "https://rpc.ankr.com/base";
   return { factoryAddress, usdcAddress, rpcUrl };
 }
 
 const config = loadConfig();
 console.log("Config:", config);
 
-// ---------- Provider ----------
-// Detect chain from config
+// ---------- Provider with fallback ----------
+const PRIMARY_RPC = config.rpcUrl;
+const FALLBACK_RPC = PRIMARY_RPC === "https://mainnet.base.org"
+  ? "https://rpc.ankr.com/base"
+  : "https://mainnet.base.org";
+
 const chainId = config.rpcUrl.includes('sepolia') ? 84532 : 8453;
 const chainName = chainId === 8453 ? 'base' : 'base-sepolia';
-const provider = new ethers.JsonRpcProvider(
-  config.rpcUrl,
-  { chainId, name: chainName },
-  { staticNetwork: true }
-);
-console.log("Provider: chainId=%d name=%s rpc=%s", chainId, chainName, config.rpcUrl);
+const networkOpts = { chainId, name: chainName };
+const staticOpts = { staticNetwork: true };
+
+const primaryProvider = new ethers.JsonRpcProvider(PRIMARY_RPC, networkOpts, staticOpts);
+const fallbackProvider = new ethers.JsonRpcProvider(FALLBACK_RPC, networkOpts, staticOpts);
+
+// Proxy that tries primary, falls back on 429 or network errors
+const provider = new Proxy(primaryProvider, {
+  get(target, prop, receiver) {
+    const val = Reflect.get(target, prop, receiver);
+    if (typeof val !== 'function') return val;
+    return async function (...args) {
+      try {
+        return await val.apply(target, args);
+      } catch (err) {
+        const msg = (err.message || '').toLowerCase();
+        const is429 = msg.includes('429') || msg.includes('rate limit') || msg.includes('too many');
+        const isNetErr = msg.includes('network') || msg.includes('econnrefused') || msg.includes('timeout') || msg.includes('fetch');
+        if (is429 || isNetErr) {
+          console.warn(`Primary RPC failed (${err.message.slice(0, 80)}), falling back to ${FALLBACK_RPC}`);
+          return await fallbackProvider[prop](...args);
+        }
+        throw err;
+      }
+    };
+  },
+});
+
+console.log(`RPC provider: ${PRIMARY_RPC} (fallback enabled)`);
+console.log(`RPC fallback: ${FALLBACK_RPC}`);
 
 // ---------- ABIs ----------
 function loadAbi(name) {
@@ -195,7 +223,7 @@ async function fetchMarketWithRetry(addr, maxRetries = 5) {
 
 async function loadAllMarkets() {
   if (!factoryAddress) { console.log("No factoryAddress, skipping market load"); return []; }
-  console.log("Querying factory at", factoryAddress, "via", config.rpcUrl);
+  console.log("Querying factory at", factoryAddress, "via", PRIMARY_RPC);
   const factory = new ethers.Contract(factoryAddress, factoryAbi, provider);
   const total = Number(await factory.totalMarkets());
   console.log("Factory reports", total, "markets");
@@ -481,7 +509,8 @@ app.get("/api/health", async (req, res) => {
     status: cache.markets?.length > 0 ? "ok" : "no_markets",
     cachedMarkets: cache.markets?.length || 0,
     loading: cache.loading,
-    rpcUrl: config.rpcUrl,
+    rpcUrl: PRIMARY_RPC,
+    rpcFallback: FALLBACK_RPC,
     chainId,
     factoryAddress,
   };
@@ -516,7 +545,12 @@ const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
   console.log(`OPick backend on http://localhost:${PORT}`);
 
-  // Non-blocking preload with 60s safety timeout
+  // Clear all caches on startup to force fresh fetch with new provider
+  cache.markets = null;
+  staticCache.clear();
+  priceHistory.clear();
+  tradeLogs.clear();
+  prevVolumes.clear();
   cache.loading = true;
 
   const preload = async () => {
