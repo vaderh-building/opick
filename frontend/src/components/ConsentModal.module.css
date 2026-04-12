@@ -1,0 +1,132 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 10, 8, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+.modal {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  margin: 16px;
+  background: var(--bg);
+  border: 0.5px solid var(--border);
+  border-radius: 4px;
+  padding: 32px;
+}
+
+.closeBtn {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+  font-size: 18px;
+}
+.closeBtn:hover { color: var(--text); }
+
+.title {
+  font-family: var(--font-serif);
+  font-size: 24px;
+  font-weight: 400;
+  font-style: italic;
+  color: var(--text);
+  margin: 0 0 16px;
+}
+
+.body {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--dim);
+  margin: 0 0 20px;
+}
+
+.checks {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0 0 20px;
+}
+
+.checkLabel {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+.checkLabel input[type="checkbox"] {
+  margin-top: 3px;
+  flex-shrink: 0;
+  accent-color: var(--green);
+}
+
+.note {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-style: italic;
+  color: #888;
+  margin: 0 0 24px;
+  line-height: 1.5;
+}
+
+.noteLink {
+  color: #888;
+  text-decoration: underline;
+}
+.noteLink:hover { color: var(--dim); }
+
+.buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.continueBtn {
+  flex: 1;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--green);
+  border: none;
+  border-radius: 4px;
+  padding: 12px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.continueBtn:hover { opacity: 0.9; }
+.continueBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.cancelBtn {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--dim);
+  background: none;
+  border: 0.5px solid var(--border);
+  border-radius: 4px;
+  padding: 12px 20px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.cancelBtn:hover { border-color: var(--dim); color: var(--text); }
+
+@media (max-width: 480px) {
+  .modal { padding: 24px 16px; }
+  .buttons { flex-direction: column-reverse; }
+  .cancelBtn { text-align: center; }
+}

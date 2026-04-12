@@ -9,6 +9,7 @@ import Navbar from './components/Navbar.jsx';
 import Footer from './components/Footer.jsx';
 import WelcomeBonusToast from './components/WelcomeBonusToast.jsx';
 import InviteEarnModal from './components/InviteEarnModal.jsx';
+import ConsentModal, { hasConsented } from './components/ConsentModal.jsx';
 import LandingPage from './pages/LandingPage.jsx';
 import HomePage from './pages/HomePage.jsx';
 import MarketPage from './pages/MarketPage.jsx';
@@ -35,17 +36,33 @@ function App() {
   useReferralCapture(account);
 
   const [inviteOpen, setInviteOpen] = useState(false);
-  const pageProps = { account, provider, signer, onConnect: connect, authenticated, walletReady, displayName };
+  const [consentOpen, setConsentOpen] = useState(false);
+
+  const gatedConnect = useCallback(() => {
+    if (hasConsented()) {
+      connect();
+    } else {
+      setConsentOpen(true);
+    }
+  }, [connect]);
+
+  const handleConsent = useCallback(() => {
+    setConsentOpen(false);
+    connect();
+  }, [connect]);
+
+  const pageProps = { account, provider, signer, onConnect: gatedConnect, authenticated, walletReady, displayName };
 
   return (
     <BrowserRouter>
       <WelcomeBonusToast status={bonus.status} amount={bonus.amount} />
       <InviteEarnModal isOpen={inviteOpen} onClose={() => setInviteOpen(false)} account={account} />
+      <ConsentModal isOpen={consentOpen} onClose={() => setConsentOpen(false)} onConsent={handleConsent} />
       <Navbar
         account={account}
         authenticated={authenticated}
         displayName={displayName}
-        onConnect={connect}
+        onConnect={gatedConnect}
         onConnectLocal={connectLocal}
         onDisconnect={disconnect}
         onFundWallet={onFundWallet}
