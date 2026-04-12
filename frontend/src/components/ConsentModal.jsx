@@ -2,14 +2,14 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import styles from './ConsentModal.module.css';
 
-const CONSENT_KEY = 'opick_consent_v1';
+const CONSENT_KEY = 'opick_consent_v2';
 
 export function hasConsented() {
   try {
     const raw = localStorage.getItem(CONSENT_KEY);
     if (!raw) return false;
     const data = JSON.parse(raw);
-    return data && data.version === 'v1';
+    return data && data.version === 'v2';
   } catch {
     return false;
   }
@@ -18,7 +18,7 @@ export function hasConsented() {
 function saveConsent() {
   localStorage.setItem(CONSENT_KEY, JSON.stringify({
     consentedAt: new Date().toISOString(),
-    version: 'v1',
+    version: 'v2',
   }));
 }
 
@@ -64,7 +64,7 @@ export default function ConsentModal({ isOpen, onClose, onConsent }) {
           </label>
           <label className={styles.checkLabel}>
             <input type="checkbox" checked={checks[1]} onChange={() => toggle(1)} />
-            I am not located in Nevada, Arizona, New York, Texas, or Washington.
+            I am not located in any jurisdiction where access to or use of OPick would violate applicable laws or regulations. I am responsible for determining whether OPick is permitted in my jurisdiction.
           </label>
           <label className={styles.checkLabel}>
             <input type="checkbox" checked={checks[2]} onChange={() => toggle(2)} />
