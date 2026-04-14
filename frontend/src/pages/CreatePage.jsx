@@ -420,7 +420,7 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
                   <input
                     type="text"
                     className={styles.fieldInput}
-                    placeholder={wyrFormat === 'sacrifice' ? 'e.g., sex for a year' : 'e.g., live in NYC'}
+                    placeholder={wyrFormat === 'sacrifice' ? 'e.g., your favorite food' : 'e.g., live in NYC'}
                     value={wyrInputA}
                     onChange={(e) => setWyrInputA(e.target.value)}
                   />
@@ -432,37 +432,39 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
                   <input
                     type="text"
                     className={styles.fieldInput}
-                    placeholder={wyrFormat === 'sacrifice' ? 'e.g., a guaranteed Knicks championship' : 'e.g., live in LA'}
+                    placeholder={wyrFormat === 'sacrifice' ? 'e.g., a superpower' : 'e.g., live in LA'}
                     value={wyrInputB}
                     onChange={(e) => setWyrInputB(e.target.value)}
                   />
                 </div>
               </div>
 
-              <div className={styles.choiceRow}>
-                <div className={styles.fieldGroup}>
-                  <label className={styles.fieldLabel}>Side A</label>
-                  <input
-                    type="text"
-                    className={styles.fieldInput}
-                    value={sideA}
-                    readOnly={wyrFormat === 'sacrifice'}
-                    style={wyrFormat === 'sacrifice' ? { opacity: 0.6 } : undefined}
-                    onChange={() => {}}
-                  />
+              {wyrFormat === 'thisorthat' && (
+                <div className={styles.choiceRow}>
+                  <div className={styles.fieldGroup}>
+                    <label className={styles.fieldLabel}>Side A</label>
+                    <input
+                      type="text"
+                      className={styles.fieldInput}
+                      value={sideA}
+                      readOnly
+                      style={{ opacity: 0.6 }}
+                      onChange={() => {}}
+                    />
+                  </div>
+                  <div className={styles.fieldGroup}>
+                    <label className={styles.fieldLabel}>Side B</label>
+                    <input
+                      type="text"
+                      className={styles.fieldInput}
+                      value={sideB}
+                      readOnly
+                      style={{ opacity: 0.6 }}
+                      onChange={() => {}}
+                    />
+                  </div>
                 </div>
-                <div className={styles.fieldGroup}>
-                  <label className={styles.fieldLabel}>Side B</label>
-                  <input
-                    type="text"
-                    className={styles.fieldInput}
-                    value={sideB}
-                    readOnly={wyrFormat === 'sacrifice'}
-                    style={wyrFormat === 'sacrifice' ? { opacity: 0.6 } : undefined}
-                    onChange={() => {}}
-                  />
-                </div>
-              </div>
+              )}
 
               <div className={styles.fieldGroup}>
                 <label className={styles.fieldLabel}>Category</label>
