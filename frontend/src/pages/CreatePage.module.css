@@ -420,6 +420,15 @@
   .templateCard { min-height: 44px; }
 }
 
+/* Would You Rather format description */
+.wyrFormatDesc {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-style: italic;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
 /* World Cup 2026 template */
 .wcSection {
   margin-top: 4px;

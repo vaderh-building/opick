@@ -14,6 +14,7 @@ const TEMPLATES = [
   { id: 'h2h', icon: '\u{1F94A}', name: 'Head to Head', desc: 'Two rivals, one winner' },
   { id: 'bull-bear', icon: '\u{1F4C8}', name: 'Bull or Bear', desc: 'Overhyped or underhyped?' },
   { id: 'hot-take', icon: '\u{1F525}', name: 'Hot Take', desc: 'A spicy opinion for the crowd' },
+  { id: 'wyr', icon: '\u{1F914}', name: 'Would You Rather', desc: 'Hypothetical trade, pick your side' },
   { id: 'best-of', icon: '\u{2B50}', name: 'Best of', desc: "What's the best in a category?" },
   { id: 'custom', icon: '\u{270F}\u{FE0F}', name: 'Custom', desc: 'Create your own format' },
   { id: 'worldcup', icon: '\u{26BD}', name: 'World Cup 2026', desc: 'Football debates, no resolution' },
@@ -56,6 +57,9 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [wyrFormat, setWyrFormat] = useState('sacrifice'); // 'sacrifice' | 'thisorthat'
+  const [wyrInputA, setWyrInputA] = useState('');
+  const [wyrInputB, setWyrInputB] = useState('');
 
   // Smart routing
   const [existingMarket, setExistingMarket] = useState(null);
@@ -73,16 +77,30 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
   const isHotTake = selectedTemplate === 'hot-take';
   const isCustom = selectedTemplate === 'custom';
   const isWorldCup = selectedTemplate === 'worldcup';
+  const isWYR = selectedTemplate === 'wyr';
 
   // Compute actual sideA/sideB for contract
-  const sideA = isBullBear ? 'Overhyped' : choiceA;
-  const sideB = isBullBear ? 'Underhyped' : choiceB;
+  const sideA = isBullBear ? 'Overhyped'
+    : isWYR && wyrFormat === 'sacrifice' ? 'Yes, worth it'
+    : isWYR && wyrFormat === 'thisorthat' ? wyrInputA
+    : choiceA;
+  const sideB = isBullBear ? 'Underhyped'
+    : isWYR && wyrFormat === 'sacrifice' ? 'No, not worth it'
+    : isWYR && wyrFormat === 'thisorthat' ? wyrInputB
+    : choiceB;
 
   // Auto-generate topic
   const generatedTopic = useMemo(() => {
     if (isCustom || isWorldCup) return customTopic;
+    if (isWYR) {
+      if (!wyrInputA) return '';
+      if (wyrFormat === 'sacrifice') {
+        return wyrInputB ? `Would you give up ${wyrInputA} for ${wyrInputB}?` : '';
+      }
+      return wyrInputB ? `Would you rather ${wyrInputA} or ${wyrInputB}?` : '';
+    }
     return generateTopic(selectedTemplate, choiceA, choiceB);
-  }, [selectedTemplate, choiceA, choiceB, customTopic, isCustom, isWorldCup]);
+  }, [selectedTemplate, choiceA, choiceB, customTopic, isCustom, isWorldCup, isWYR, wyrFormat, wyrInputA, wyrInputB]);
 
   // Labels based on template
   const labelA = isBullBear ? 'Topic' : isHotTake ? 'Your hot take' : 'Choice A';
@@ -94,6 +112,13 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
     "USA Men's team, finally serious or still a joke",
     'Did VAR ruin the World Cup',
     'Best World Cup jersey of all time',
+  ];
+
+  const WYR_EXAMPLES = [
+    { text: 'Give up sex for a year for a guaranteed Knicks championship', format: 'sacrifice', a: 'sex for a year', b: 'a guaranteed Knicks championship' },
+    { text: 'Give up coffee forever for Messi to win another World Cup', format: 'sacrifice', a: 'coffee forever', b: 'Messi to win another World Cup' },
+    { text: 'Would you rather have unlimited money or unlimited time', format: 'thisorthat', a: 'have unlimited money', b: 'have unlimited time' },
+    { text: 'Would you rather be always 10 minutes late or always 20 minutes early', format: 'thisorthat', a: 'be always 10 minutes late', b: 'be always 20 minutes early' },
   ];
   const placeholderA = isBullBear ? 'e.g., AI' : isHotTake ? 'e.g., Pineapple belongs on pizza' : 'e.g., Messi';
   const placeholderB = isHotTake ? 'e.g., It does not' : 'e.g., Ronaldo';
@@ -108,7 +133,12 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
     const b = (isBullBear ? 'Underhyped' : choiceB).trim().toLowerCase();
     const t = customTopic.trim().toLowerCase();
 
-    if (!a || !b || a.length < 2 || b.length < 2) return;
+    if (isWYR) {
+      // WYR uses auto-generated sides, search only when both inputs filled
+      if (!wyrInputA.trim() || !wyrInputB.trim()) return;
+    } else {
+      if (!a || !b || a.length < 2 || b.length < 2) return;
+    }
     // World Cup and Custom require a topic before searching
     if ((isWorldCup || isCustom) && (!t || t.length < 3)) return;
 
@@ -134,16 +164,20 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
     }, 500);
 
     return () => { if (searchTimer.current) clearTimeout(searchTimer.current); };
-  }, [choiceA, choiceB, customTopic, isBullBear, isWorldCup, isCustom]);
+  }, [choiceA, choiceB, customTopic, isBullBear, isWorldCup, isCustom, isWYR, wyrInputA, wyrInputB]);
 
   const handleTemplateClick = (t) => {
     setSelectedTemplate(t.id);
     setChoiceA('');
     setChoiceB('');
     setCustomTopic('');
+    setWyrInputA('');
+    setWyrInputB('');
+    setWyrFormat('sacrifice');
     setExistingMarket(null);
     setForceCreate(false);
     if ((t.id === 'goat' || t.id === 'worldcup') && !category) setCategory('Sports');
+    if (t.id === 'wyr' && !category) setCategory('Lifestyle');
   };
 
   const handleCreate = async () => {
@@ -299,7 +333,7 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
           </div>
 
           {/* Form fields */}
-          {selectedTemplate && (
+          {selectedTemplate && !isWYR && (
             <div className={styles.formFields}>
               {/* Topic field for Custom and World Cup */}
               {(isCustom || isWorldCup) && (
@@ -355,6 +389,120 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
                   ))}
                 </select>
               </div>
+            </div>
+          )}
+
+          {/* Would You Rather form */}
+          {isWYR && (
+            <div className={styles.formFields}>
+              <div className={styles.fieldGroup}>
+                <label className={styles.fieldLabel}>Format</label>
+                <select
+                  className={styles.fieldSelect}
+                  value={wyrFormat}
+                  onChange={(e) => { setWyrFormat(e.target.value); setWyrInputA(''); setWyrInputB(''); }}
+                >
+                  <option value="sacrifice">Sacrifice trade</option>
+                  <option value="thisorthat">This or that</option>
+                </select>
+                <span className={styles.wyrFormatDesc}>
+                  {wyrFormat === 'sacrifice'
+                    ? 'Would you give up X for Y?'
+                    : 'Would you rather A or B?'}
+                </span>
+              </div>
+
+              <div className={styles.choiceRow}>
+                <div className={styles.fieldGroup}>
+                  <label className={styles.fieldLabel}>
+                    {wyrFormat === 'sacrifice' ? 'What would you give up' : 'First option'}
+                  </label>
+                  <input
+                    type="text"
+                    className={styles.fieldInput}
+                    placeholder={wyrFormat === 'sacrifice' ? 'e.g., sex for a year' : 'e.g., live in NYC'}
+                    value={wyrInputA}
+                    onChange={(e) => setWyrInputA(e.target.value)}
+                  />
+                </div>
+                <div className={styles.fieldGroup}>
+                  <label className={styles.fieldLabel}>
+                    {wyrFormat === 'sacrifice' ? 'To get what' : 'Second option'}
+                  </label>
+                  <input
+                    type="text"
+                    className={styles.fieldInput}
+                    placeholder={wyrFormat === 'sacrifice' ? 'e.g., a guaranteed Knicks championship' : 'e.g., live in LA'}
+                    value={wyrInputB}
+                    onChange={(e) => setWyrInputB(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className={styles.choiceRow}>
+                <div className={styles.fieldGroup}>
+                  <label className={styles.fieldLabel}>Side A</label>
+                  <input
+                    type="text"
+                    className={styles.fieldInput}
+                    value={sideA}
+                    readOnly={wyrFormat === 'sacrifice'}
+                    style={wyrFormat === 'sacrifice' ? { opacity: 0.6 } : undefined}
+                    onChange={() => {}}
+                  />
+                </div>
+                <div className={styles.fieldGroup}>
+                  <label className={styles.fieldLabel}>Side B</label>
+                  <input
+                    type="text"
+                    className={styles.fieldInput}
+                    value={sideB}
+                    readOnly={wyrFormat === 'sacrifice'}
+                    style={wyrFormat === 'sacrifice' ? { opacity: 0.6 } : undefined}
+                    onChange={() => {}}
+                  />
+                </div>
+              </div>
+
+              <div className={styles.fieldGroup}>
+                <label className={styles.fieldLabel}>Category</label>
+                <select
+                  className={styles.fieldSelect}
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                >
+                  <option value="">Select a category</option>
+                  {CATEGORIES.map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
+
+          {/* WYR suggestions */}
+          {isWYR && (
+            <div className={styles.wcSection}>
+              <p className={styles.wcSugLabel}>Examples:</p>
+              <div className={styles.wcSuggestions}>
+                {WYR_EXAMPLES.map((ex) => (
+                  <button
+                    key={ex.text}
+                    type="button"
+                    className={styles.wcSugBtn}
+                    onClick={() => {
+                      setWyrFormat(ex.format);
+                      setWyrInputA(ex.a);
+                      setWyrInputB(ex.b);
+                    }}
+                  >
+                    {ex.text}
+                  </button>
+                ))}
+              </div>
+              <p className={styles.wcNote}>
+                A hypothetical trade is still just an opinion. Markets do not resolve.
+              </p>
             </div>
           )}
 
