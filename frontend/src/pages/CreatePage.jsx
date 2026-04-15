@@ -57,6 +57,7 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const createInitiated = useRef(false);
   const [wyrFormat, setWyrFormat] = useState('sacrifice'); // 'sacrifice' | 'thisorthat'
   const [wyrInputA, setWyrInputA] = useState('');
   const [wyrInputB, setWyrInputB] = useState('');
@@ -198,6 +199,7 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
       return;
     }
 
+    createInitiated.current = true;
     setCreating(true);
     setError('');
     setSuccess('');
@@ -255,8 +257,11 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
       }
     } catch (err) {
       setCreating(false);
-      const msg = err?.reason || err?.message || 'Transaction failed. Please try again.';
-      setError(msg.length > 120 ? msg.slice(0, 120) + '...' : msg);
+      if (createInitiated.current) {
+        const msg = err?.reason || err?.message || 'Transaction failed. Please try again.';
+        setError(msg.length > 120 ? msg.slice(0, 120) + '...' : msg);
+      }
+      createInitiated.current = false;
     }
   };
 
