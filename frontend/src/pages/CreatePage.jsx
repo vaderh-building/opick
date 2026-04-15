@@ -56,12 +56,7 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
   const [category, setCategory] = useState('');
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState('');
-  const _setError = (val) => {
-    console.error("[setError CALLED]", JSON.stringify(val), "stack:", new Error().stack);
-    setError(val);
-  };
   const [success, setSuccess] = useState('');
-  const createInitiated = useRef(false);
   const [wyrFormat, setWyrFormat] = useState('sacrifice'); // 'sacrifice' | 'thisorthat'
   const [wyrInputA, setWyrInputA] = useState('');
   const [wyrInputB, setWyrInputB] = useState('');
@@ -129,11 +124,8 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
   const placeholderB = isHotTake ? 'e.g., It does not' : 'e.g., Ronaldo';
   const showChoiceB = !isBullBear;
 
-  useEffect(() => { console.log("[mount effect] no deps"); }, []);
-
   // Debounced search for existing markets
   useEffect(() => {
-    console.log("[useEffect line 133] debounced search deps changed");
     setExistingMarket(null);
     setForceCreate(false);
 
@@ -189,8 +181,7 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
   };
 
   const handleCreate = async () => {
-    console.error("[handleCreate ENTERED]", "stack:", new Error().stack);
-    _setError('');
+    setError('');
     setSuccess('');
 
     const topic = generatedTopic.trim();
@@ -198,18 +189,17 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
     const b = sideB.trim();
 
     if (!topic || !a || !b || !category) {
-      _setError('Please fill in all fields.');
+      setError('Please fill in all fields.');
       return;
     }
 
     if (!factory || !usdc) {
-      _setError('Contracts not loaded. Check your connection.');
+      setError('Contracts not loaded. Check your connection.');
       return;
     }
 
-    createInitiated.current = true;
     setCreating(true);
-    _setError('');
+    setError('');
     setSuccess('');
     try {
       // Encode and send sponsored tx
@@ -265,11 +255,8 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
       }
     } catch (err) {
       setCreating(false);
-      if (createInitiated.current) {
-        const msg = err?.reason || err?.message || 'Transaction failed. Please try again.';
-        _setError(msg.length > 120 ? msg.slice(0, 120) + '...' : msg);
-      }
-      createInitiated.current = false;
+      const msg = err?.reason || err?.message || 'Transaction failed. Please try again.';
+      setError(msg.length > 120 ? msg.slice(0, 120) + '...' : msg);
     }
   };
 
@@ -596,8 +583,12 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
                 </p>
               )}
               <button
+                type="button"
                 className={styles.createBtn}
-                onClick={handleCreate}
+                onClick={(e) => {
+                  if (!e.isTrusted) return;
+                  handleCreate();
+                }}
                 disabled={creating || !generatedTopic || !sideA || !sideB || !category}
               >
                 {creating && <span className={styles.btnSpinner} />}
