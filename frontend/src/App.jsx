@@ -28,6 +28,10 @@ import './index.css';
 const IS_DEV = import.meta.env.VITE_DEV_MODE === 'true' ||
   (typeof window !== 'undefined' && window.location.hostname === 'localhost');
 
+const FOUNDER_WALLETS = new Set([
+  '0xbc50b0c4c72928c7ae4702d39452be4af82e533d',
+]);
+
 function App() {
   const wallet = useWallet();
   const { account, provider, signer, connect, connectLocal, disconnect, authenticated, walletReady, displayName } = wallet;
@@ -103,7 +107,7 @@ function App() {
         </Routes>
       </main>
       <Footer />
-      {IS_DEV && authenticated && (
+      {authenticated && (IS_DEV || (account && FOUNDER_WALLETS.has(account.toLowerCase()))) && (
         <button
           onClick={() => setProfileModalOpen(true)}
           style={{
