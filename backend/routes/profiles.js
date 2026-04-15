@@ -28,6 +28,19 @@ function validateImageBytes(buf) {
 
 const ALLOWED_MIMES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
+// ---------- GET /api/profiles/by-username/:username ----------
+// Must be before /:wallet so Express doesn't match "by-username" as a wallet param
+router.get("/by-username/:username", (req, res) => {
+  const username = req.params.username.toLowerCase();
+  const profile = db.prepare(
+    "SELECT wallet_address, username, display_name, bio, avatar_url, created_at, updated_at FROM profiles WHERE username = ?"
+  ).get(username);
+  if (!profile) {
+    return res.status(404).json({ error: "Profile not found", code: "NOT_FOUND" });
+  }
+  res.json(profile);
+});
+
 // ---------- GET /api/profiles/:wallet ----------
 router.get("/:wallet", (req, res) => {
   const wallet = req.params.wallet.toLowerCase();

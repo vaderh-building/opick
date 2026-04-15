@@ -22,7 +22,88 @@
 }
 .primaryBtn:hover { opacity: 0.9; }
 
-/* Profile card */
+/* User profile section */
+.userProfileCard {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border: 0.5px solid var(--border);
+  border-radius: 4px;
+  padding: 16px 20px;
+  margin-bottom: 16px;
+  text-decoration: none;
+  transition: border-color 0.15s;
+}
+.userProfileCard:hover { border-color: var(--dim); }
+
+.userAvatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 4px;
+  object-fit: cover;
+  border: 0.5px solid var(--border);
+  flex-shrink: 0;
+}
+
+.userInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.userDisplayName {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  font-weight: 500;
+  font-style: italic;
+  color: var(--text);
+}
+
+.userUsername {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--dim);
+}
+
+.userBio {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.editLink {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--green);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  flex-shrink: 0;
+}
+
+.setupCard {
+  border: 0.5px solid var(--border);
+  border-radius: 4px;
+  padding: 20px;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.setupText {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--dim);
+  margin: 0 0 12px;
+}
+
+/* Wallet card */
 .profileCard {
   border: 0.5px solid var(--border);
   border-radius: 4px;

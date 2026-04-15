@@ -1,0 +1,154 @@
+.page {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 48px 48px 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.avatar {
+  width: 96px;
+  height: 96px;
+  border-radius: 4px;
+  object-fit: cover;
+  border: 0.5px solid var(--border);
+  margin: 0 0 16px;
+}
+
+.displayName {
+  font-family: var(--font-serif);
+  font-size: 32px;
+  font-weight: 400;
+  font-style: italic;
+  color: var(--text);
+  margin: 0 0 4px;
+  text-align: center;
+}
+
+.username {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--dim);
+  margin: 0 0 8px;
+}
+
+.walletRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 16px;
+}
+
+.walletAddr {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.copyBtn {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--green);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.bio {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--text);
+  line-height: 1.6;
+  text-align: center;
+  margin: 0 0 8px;
+  max-width: 480px;
+}
+
+.bioEmpty {
+  composes: bio;
+  font-style: italic;
+  color: var(--muted);
+}
+
+.joined {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--dim);
+  margin: 0 0 20px;
+}
+
+.editBtn {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--green);
+  border: none;
+  border-radius: 4px;
+  padding: 10px 24px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.editBtn:hover { opacity: 0.9; }
+
+/* States */
+.center { text-align: center; padding: 80px 0; }
+
+.notFound {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  color: var(--dim);
+  margin: 0 0 12px;
+}
+
+.homeLink {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--green);
+  text-decoration: none;
+}
+.homeLink:hover { text-decoration: underline; }
+
+.errorText {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--dim);
+  margin: 0 0 12px;
+}
+
+.retryBtn {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--green);
+  background: none;
+  border: 0.5px solid var(--green);
+  border-radius: 4px;
+  padding: 6px 16px;
+  cursor: pointer;
+}
+.retryBtn:hover { background: var(--green-bg); }
+
+/* Skeletons */
+.skeletonAvatar {
+  width: 96px; height: 96px; border-radius: 4px;
+  background: var(--surface2); margin: 0 auto 16px;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+.skeletonLine1 { width: 200px; height: 24px; border-radius: 2px; background: var(--surface2); margin: 0 auto 8px; animation: pulse 1.5s ease-in-out infinite; }
+.skeletonLine2 { width: 120px; height: 14px; border-radius: 2px; background: var(--surface2); margin: 0 auto 8px; animation: pulse 1.5s ease-in-out infinite; animation-delay: 0.1s; }
+.skeletonLine3 { width: 300px; height: 14px; border-radius: 2px; background: var(--surface2); margin: 0 auto; animation: pulse 1.5s ease-in-out infinite; animation-delay: 0.2s; }
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+
+@media (max-width: 600px) {
+  .page { padding: 32px 16px 60px; }
+  .displayName { font-size: 26px; }
+}

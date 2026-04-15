@@ -2,13 +2,17 @@ import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Contract, formatUnits } from 'ethers';
 import { useFundWallet } from '@privy-io/react-auth';
+import { minidenticon } from 'minidenticons';
 import { useSponsoredTx } from '../hooks/useSponsoredTx.js';
+import { useProfile } from '../hooks/useProfile.js';
 import { base } from 'viem/chains';
 import { USDC_ADDRESS, FACTORY_ADDRESS } from '../config.js';
 import USDCAbi from '../abi/MockUSDC.json';
 import OPickFactoryAbi from '../abi/OPickFactory.json';
 import OPickMarketAbi from '../abi/OPickMarket.json';
 import { useMarkets } from '../hooks/useMarkets.js';
+import ProfileSetupModal from '../components/ProfileSetupModal.jsx';
+import EditProfileModal from '../components/EditProfileModal.jsx';
 import styles from './AccountPage.module.css';
 
 function truncAddr(a) { return a ? `${a.slice(0, 6)}...${a.slice(-4)}` : ''; }
@@ -23,6 +27,9 @@ export default function AccountPage({ account, provider, signer, onConnect, auth
   const { fundWallet } = useFundWallet();
   const { sponsoredCall } = useSponsoredTx();
   const { markets } = useMarkets();
+  const { profile, refresh: refreshProfile } = useProfile();
+  const [setupModalOpen, setSetupModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
 
   const refreshBalance = useCallback(async () => {
     if (!provider || !account || !account.startsWith('0x')) return;
@@ -149,7 +156,37 @@ export default function AccountPage({ account, provider, signer, onConnect, auth
     <div className={styles.page}>
       <h1 className={styles.title}>Account</h1>
 
-      {/* Profile card */}
+      {/* User profile section */}
+      {profile && (
+        <Link to={`/u/${profile.username}`} className={styles.userProfileCard}>
+          <img
+            src={profile.avatar_url || `data:image/svg+xml;utf8,${encodeURIComponent(minidenticon(account?.toLowerCase() || ''))}`}
+            alt="" className={styles.userAvatar}
+            onError={(e) => { e.target.src = `data:image/svg+xml;utf8,${encodeURIComponent(minidenticon(account?.toLowerCase() || ''))}`; }}
+          />
+          <div className={styles.userInfo}>
+            <span className={styles.userDisplayName}>{profile.display_name || `@${profile.username}`}</span>
+            {profile.display_name && <span className={styles.userUsername}>@{profile.username}</span>}
+            {profile.bio && <span className={styles.userBio}>{profile.bio}</span>}
+          </div>
+          <button className={styles.editLink} onClick={(e) => { e.preventDefault(); e.stopPropagation(); setEditModalOpen(true); }}>
+            Edit
+          </button>
+        </Link>
+      )}
+      {profile === false && (
+        <div className={styles.setupCard}>
+          <p className={styles.setupText}>Set up your profile to comment on markets</p>
+          <button className={styles.primaryBtn} onClick={() => setSetupModalOpen(true)}>Create profile</button>
+        </div>
+      )}
+
+      <ProfileSetupModal isOpen={setupModalOpen} onClose={() => setSetupModalOpen(false)}
+        onComplete={() => { refreshProfile(); setSetupModalOpen(false); }} />
+      <EditProfileModal isOpen={editModalOpen} onClose={() => setEditModalOpen(false)}
+        profile={profile || undefined} onComplete={(p) => { refreshProfile(); setEditModalOpen(false); }} />
+
+      {/* Wallet card */}
       <div className={styles.profileCard}>
         <div className={styles.profileTop}>
           <div>

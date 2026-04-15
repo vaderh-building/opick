@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { minidenticon } from 'minidenticons';
 import { useWallet } from '../hooks/useWallet.js';
 import { useProfile } from '../hooks/useProfile.js';
@@ -132,14 +133,30 @@ function Comment({ comment, sideAName, sideBName, currentWallet, onReply, onDele
   return (
     <div className={depth > 0 ? styles.replyWrap : styles.commentWrap}>
       <div className={styles.commentRow}>
-        <Avatar url={comment.author?.avatar_url} wallet={comment.author?.wallet_address} size={depth > 0 ? 32 : 40} />
+        {comment.author?.username ? (
+          <Link to={`/u/${comment.author.username}`}>
+            <Avatar url={comment.author?.avatar_url} wallet={comment.author?.wallet_address} size={depth > 0 ? 32 : 40} />
+          </Link>
+        ) : (
+          <Avatar url={comment.author?.avatar_url} wallet={comment.author?.wallet_address} size={depth > 0 ? 32 : 40} />
+        )}
         <div className={styles.commentBody}>
           <div className={styles.authorRow}>
-            <span className={styles.displayName}>
-              {comment.author?.display_name || truncAddr(comment.author?.wallet_address)}
-            </span>
+            {comment.author?.username ? (
+              <Link to={`/u/${comment.author.username}`} className={styles.authorLink}>
+                <span className={styles.displayName}>
+                  {comment.author?.display_name || truncAddr(comment.author?.wallet_address)}
+                </span>
+              </Link>
+            ) : (
+              <span className={styles.displayName}>
+                {comment.author?.display_name || truncAddr(comment.author?.wallet_address)}
+              </span>
+            )}
             {comment.author?.username && (
-              <span className={styles.username}>@{comment.author.username}</span>
+              <Link to={`/u/${comment.author.username}`} className={styles.authorLink}>
+                <span className={styles.username}>@{comment.author.username}</span>
+              </Link>
             )}
             <PositionTag position={comment.author_position} sideAName={sideAName} sideBName={sideBName} />
             <span className={styles.time}>{formatRelative(comment.created_at)}</span>

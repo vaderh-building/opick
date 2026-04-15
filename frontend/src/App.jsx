@@ -6,7 +6,6 @@ import { useWallet } from './hooks/useWallet.js';
 import { useWelcomeBonus } from './hooks/useWelcomeBonus.js';
 import { useReferralCapture } from './hooks/useReferralCapture.js';
 import { configureAuth } from './lib/api.js';
-import ProfileSetupModal from './components/ProfileSetupModal.jsx';
 import Navbar from './components/Navbar.jsx';
 import Footer from './components/Footer.jsx';
 import WelcomeBonusToast from './components/WelcomeBonusToast.jsx';
@@ -18,19 +17,13 @@ import MarketPage from './pages/MarketPage.jsx';
 import PortfolioPage from './pages/PortfolioPage.jsx';
 import CreatePage from './pages/CreatePage.jsx';
 import AccountPage from './pages/AccountPage.jsx';
+import ProfilePage from './pages/ProfilePage.jsx';
 import DevelopersPage from './pages/DevelopersPage.jsx';
 import DocsPage from './pages/DocsPage.jsx';
 import TermsPage from './pages/TermsPage.jsx';
 import PrivacyPage from './pages/PrivacyPage.jsx';
 import RiskPage from './pages/RiskPage.jsx';
 import './index.css';
-
-const IS_DEV = import.meta.env.VITE_DEV_MODE === 'true' ||
-  (typeof window !== 'undefined' && window.location.hostname === 'localhost');
-
-const FOUNDER_WALLETS = new Set([
-  '0xbc50b0c4c72928c7ae4702d39452be4af82e533d',
-]);
 
 function App() {
   const wallet = useWallet();
@@ -60,7 +53,6 @@ function App() {
 
   const [inviteOpen, setInviteOpen] = useState(false);
   const [consentOpen, setConsentOpen] = useState(false);
-  const [profileModalOpen, setProfileModalOpen] = useState(false);
 
   const gatedConnect = useCallback(() => {
     if (hasConsented()) {
@@ -82,11 +74,6 @@ function App() {
       <WelcomeBonusToast status={bonus.status} amount={bonus.amount} />
       <InviteEarnModal isOpen={inviteOpen} onClose={() => setInviteOpen(false)} account={account} />
       <ConsentModal isOpen={consentOpen} onClose={() => setConsentOpen(false)} onConsent={handleConsent} />
-      <ProfileSetupModal
-        isOpen={profileModalOpen}
-        onClose={() => setProfileModalOpen(false)}
-        onComplete={(profile) => { console.log('Profile created:', profile); setProfileModalOpen(false); }}
-      />
       <Navbar
         account={account}
         authenticated={authenticated}
@@ -102,6 +89,7 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/markets" element={<HomePage />} />
           <Route path="/market/:address" element={<MarketPage {...pageProps} />} />
+          <Route path="/u/:username" element={<ProfilePage />} />
           <Route path="/opinions" element={<AccountPage {...pageProps} />} />
           <Route path="/portfolio" element={<AccountPage {...pageProps} />} />
           <Route path="/create" element={<CreatePage {...pageProps} />} />
@@ -115,19 +103,6 @@ function App() {
         </Routes>
       </main>
       <Footer />
-      {authenticated && (IS_DEV || (account && FOUNDER_WALLETS.has(account.toLowerCase()))) && (
-        <button
-          onClick={() => setProfileModalOpen(true)}
-          style={{
-            position: 'fixed', bottom: 16, right: 16, zIndex: 999,
-            fontSize: 11, fontFamily: 'var(--font-mono)', padding: '6px 12px',
-            background: '#fff', border: '0.5px solid #E8E7E2', borderRadius: 4,
-            color: '#6e6d69', cursor: 'pointer',
-          }}
-        >
-          DEV: profile modal
-        </button>
-      )}
     </BrowserRouter>
   );
 }
