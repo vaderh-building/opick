@@ -9,8 +9,10 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 import createMarketsRouter from "./routes/markets.js";
-import commentsRouter from "./routes/comments.js";
 import usersRouter from "./routes/users.js";
+import profilesRouter from "./routes/profiles.js";
+import createCommentsRouter from "./routes/comments.js";
+import adminRouter from "./routes/admin.js";
 import db from "./db.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -307,9 +309,12 @@ app.use(cors({ origin: process.env.FRONTEND_URL || "*" }));
 app.use(express.json());
 
 const marketsRouter = createMarketsRouter({ provider, factoryAddress, factoryAbi, marketAbi, cache, priceHistory, tradeLogs });
+const commentsRouter = createCommentsRouter({ provider, marketAbi });
 app.use("/api/markets", marketsRouter);
-app.use("/api/comments", commentsRouter);
 app.use("/api/users", usersRouter);
+app.use("/api/profiles", profilesRouter);
+app.use("/api", commentsRouter);  // mounts /api/markets/:address/comments + /api/comments/:id/*
+app.use("/api/admin", adminRouter);
 
 // ---------- Public Developer API v1 (read-only aliases) ----------
 import { Router } from "express";

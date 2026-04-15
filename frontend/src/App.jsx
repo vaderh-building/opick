@@ -1,10 +1,12 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { useFundWallet } from '@privy-io/react-auth';
+import { useFundWallet, usePrivy } from '@privy-io/react-auth';
 import { base } from 'viem/chains';
 import { useWallet } from './hooks/useWallet.js';
 import { useWelcomeBonus } from './hooks/useWelcomeBonus.js';
 import { useReferralCapture } from './hooks/useReferralCapture.js';
+import { configureAuth } from './lib/api.js';
+import ProfileSetupModal from './components/ProfileSetupModal.jsx';
 import Navbar from './components/Navbar.jsx';
 import Footer from './components/Footer.jsx';
 import WelcomeBonusToast from './components/WelcomeBonusToast.jsx';
@@ -23,9 +25,18 @@ import PrivacyPage from './pages/PrivacyPage.jsx';
 import RiskPage from './pages/RiskPage.jsx';
 import './index.css';
 
+const IS_DEV = import.meta.env.VITE_DEV_MODE === 'true' ||
+  (typeof window !== 'undefined' && window.location.hostname === 'localhost');
+
 function App() {
   const wallet = useWallet();
   const { account, provider, signer, connect, connectLocal, disconnect, authenticated, walletReady, displayName } = wallet;
+
+  // Wire Privy token into API client
+  const { getAccessToken } = usePrivy();
+  useEffect(() => {
+    configureAuth(getAccessToken);
+  }, [getAccessToken]);
 
   const { fundWallet } = useFundWallet();
   const onFundWallet = useCallback(() => {
@@ -37,6 +48,7 @@ function App() {
 
   const [inviteOpen, setInviteOpen] = useState(false);
   const [consentOpen, setConsentOpen] = useState(false);
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
 
   const gatedConnect = useCallback(() => {
     if (hasConsented()) {
@@ -58,6 +70,11 @@ function App() {
       <WelcomeBonusToast status={bonus.status} amount={bonus.amount} />
       <InviteEarnModal isOpen={inviteOpen} onClose={() => setInviteOpen(false)} account={account} />
       <ConsentModal isOpen={consentOpen} onClose={() => setConsentOpen(false)} onConsent={handleConsent} />
+      <ProfileSetupModal
+        isOpen={profileModalOpen}
+        onClose={() => setProfileModalOpen(false)}
+        onComplete={(profile) => { console.log('Profile created:', profile); setProfileModalOpen(false); }}
+      />
       <Navbar
         account={account}
         authenticated={authenticated}
@@ -86,6 +103,19 @@ function App() {
         </Routes>
       </main>
       <Footer />
+      {IS_DEV && authenticated && (
+        <button
+          onClick={() => setProfileModalOpen(true)}
+          style={{
+            position: 'fixed', bottom: 16, right: 16, zIndex: 999,
+            fontSize: 11, fontFamily: 'var(--font-mono)', padding: '6px 12px',
+            background: '#fff', border: '0.5px solid #E8E7E2', borderRadius: 4,
+            color: '#6e6d69', cursor: 'pointer',
+          }}
+        >
+          DEV: profile modal
+        </button>
+      )}
     </BrowserRouter>
   );
 }

@@ -13,6 +13,7 @@
     "@privy-io/react-auth": "^3.19.0",
     "buffer": "^6.0.3",
     "ethers": "^6.16.0",
+    "minidenticons": "^4.2.1",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-router-dom": "^7.14.0",
