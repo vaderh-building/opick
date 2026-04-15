@@ -193,6 +193,11 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
       return;
     }
 
+    if (!walletReady) {
+      setError('Wallet is still loading. Please wait a moment and try again.');
+      return;
+    }
+
     if (!factory || !usdc) {
       setError('Contracts not loaded. Check your connection.');
       return;
@@ -585,7 +590,7 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
               <button
                 className={styles.createBtn}
                 onClick={handleCreate}
-                disabled={creating || !generatedTopic || !sideA || !sideB || !category}
+                disabled={creating || !walletReady || !generatedTopic || !sideA || !sideB || !category}
               >
                 {creating && <span className={styles.btnSpinner} />}
                 {creating ? 'Creating...' : 'Create Market'}
