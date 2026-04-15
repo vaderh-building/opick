@@ -1,0 +1,459 @@
+.section {
+  padding: 0;
+}
+
+.header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0 0 20px;
+}
+
+.heading {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  font-weight: 400;
+  font-style: italic;
+  color: var(--text);
+  margin: 0;
+}
+
+.count {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--dim);
+}
+
+/* Composer */
+.composer {
+  margin: 0 0 24px;
+}
+
+.composerError {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--red);
+  background: var(--red-bg);
+  border-radius: 4px;
+  padding: 8px 12px;
+  margin: 0 0 8px;
+}
+
+.textarea {
+  width: 100%;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--text);
+  background: var(--surface);
+  border: 0.5px solid var(--border);
+  border-radius: 4px;
+  padding: 10px 12px;
+  outline: none;
+  resize: none;
+  min-height: 48px;
+  transition: border-color 0.15s;
+}
+.textarea:focus { border-color: var(--dim); }
+.textarea::placeholder { color: var(--muted); }
+.textarea:disabled { opacity: 0.5; }
+
+.composerFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.counter {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.counterRed {
+  composes: counter;
+  color: var(--red);
+}
+
+.postBtn {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--green);
+  border: none;
+  border-radius: 4px;
+  padding: 8px 20px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.postBtn:hover { opacity: 0.9; }
+.postBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Comment list */
+.list {
+  display: flex;
+  flex-direction: column;
+}
+
+.commentWrap {
+  padding: 16px 0;
+  border-top: 0.5px solid var(--border);
+}
+
+.commentWrap:first-child { border-top: none; }
+
+.replyWrap {
+  padding: 12px 0 0 32px;
+}
+
+.commentRow {
+  display: flex;
+  gap: 12px;
+}
+
+.identicon {
+  width: 40px;
+  height: 40px;
+  border-radius: 4px;
+  background: var(--surface);
+  border: 0.5px solid var(--border);
+  flex-shrink: 0;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 4px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.commentBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.authorRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 0 0 4px;
+}
+
+.displayName {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.username {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--dim);
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.posTagA {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #fff;
+  background: var(--green);
+  padding: 2px 6px;
+  border-radius: 2px;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.posTagB {
+  composes: posTagA;
+  background: #2a2a2a;
+}
+
+.time {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.bodyText {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--text);
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 0 0 6px;
+}
+
+.link {
+  color: var(--green);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.link:hover { opacity: 0.8; }
+
+.actions {
+  display: flex;
+  gap: 12px;
+}
+
+.actionBtn {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: var(--muted);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.actionBtn:hover { color: var(--dim); }
+
+.actionDim {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* Report box */
+.reportBox {
+  margin-top: 8px;
+  padding: 10px 12px;
+  border: 0.5px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface);
+}
+
+.reportLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--text);
+  padding: 3px 0;
+  cursor: pointer;
+}
+
+.reportLabel input[type="radio"] {
+  accent-color: var(--green);
+}
+
+.reportError {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: var(--red);
+  margin: 4px 0 0;
+}
+
+.reportActions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.reportSubmit {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--green);
+  border: none;
+  border-radius: 4px;
+  padding: 5px 12px;
+  cursor: pointer;
+}
+.reportSubmit:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.reportCancel {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: var(--dim);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+/* Deleted / hidden placeholder */
+.deletedText {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-style: italic;
+  color: var(--muted);
+  margin: 0;
+  padding: 4px 0;
+}
+
+.moreReplies {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--dim);
+  background: none;
+  border: none;
+  padding: 4px 0 0 32px;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.moreReplies:hover { color: var(--text); }
+
+/* Reply composer */
+.replyComposer {
+  padding: 8px 0 0 52px;
+}
+
+.replyTextarea {
+  width: 100%;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--text);
+  background: var(--surface);
+  border: 0.5px solid var(--border);
+  border-radius: 4px;
+  padding: 8px 10px;
+  outline: none;
+  resize: none;
+  min-height: 40px;
+}
+.replyTextarea:focus { border-color: var(--dim); }
+.replyTextarea::placeholder { color: var(--muted); }
+
+.replyActions {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.replySubmitBtn {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--green);
+  border: none;
+  border-radius: 4px;
+  padding: 6px 14px;
+  cursor: pointer;
+}
+.replySubmitBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.replyCancelBtn {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--dim);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+/* Empty state */
+.empty {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-style: italic;
+  color: var(--muted);
+  text-align: center;
+  padding: 40px 0;
+  margin: 0;
+}
+
+/* Load error */
+.loadError {
+  text-align: center;
+  padding: 32px 0;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.retryBtn {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--green);
+  background: none;
+  border: 0.5px solid var(--green);
+  border-radius: 4px;
+  padding: 6px 16px;
+  cursor: pointer;
+  margin-top: 8px;
+}
+.retryBtn:hover { background: var(--green-bg); }
+
+/* Skeletons */
+.skeletons {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 8px 0;
+}
+
+.skeletonWrap {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.skeletonAvatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 4px;
+  background: var(--surface2);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.skeletonBody {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+.skeletonLine1 {
+  width: 40%;
+  height: 10px;
+  border-radius: 2px;
+  background: var(--surface2);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.skeletonLine2 {
+  width: 70%;
+  height: 10px;
+  border-radius: 2px;
+  background: var(--surface2);
+  animation: pulse 1.5s ease-in-out infinite;
+  animation-delay: 0.15s;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+
+@media (max-width: 600px) {
+  .replyWrap { padding-left: 20px; }
+  .replyComposer { padding-left: 32px; }
+  .authorRow { gap: 4px; }
+  .displayName { max-width: 120px; }
+  .username { max-width: 100px; }
+  .textarea { font-size: 16px; }
+}

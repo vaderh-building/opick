@@ -15,6 +15,9 @@ import { triggerReferralCheck } from '../hooks/useReferralPayoutTrigger.js';
 import { USDC_ADDRESS } from '../config.js';
 import USDCAbi from '../abi/MockUSDC.json';
 import OPickMarketAbi from '../abi/OPickMarket.json';
+import CommentSection from '../components/CommentSection.jsx';
+import ProfileSetupModal from '../components/ProfileSetupModal.jsx';
+import { useProfile } from '../hooks/useProfile.js';
 import s from './MarketPage.module.css';
 
 const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001') + '/api';
@@ -140,10 +143,9 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
   const [chainVolume, setChainVolume] = useState(null);
   const [txCount, setTxCount] = useState(0); // trigger for re-fetching position
 
-  // Comments
-  const [comments, setComments] = useState([]);
-  const [commentText, setCommentText] = useState('');
-  const [commentLoading, setCommentLoading] = useState(false);
+  // Profile modal for comment system
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const { profile, refresh: refreshProfile } = useProfile();
 
   // Position
   const [position, setPosition] = useState(null);
@@ -263,46 +265,6 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
       }
     })();
   }, [account, marketAddress, getMarket, signer, priceA, priceB, txCount]);
-
-  // Fetch comments
-  const fetchComments = useCallback(async () => {
-    try {
-      const res = await fetch(`${API_URL}/comments/${marketAddress}`);
-      if (res.ok) {
-        const data = await res.json();
-        setComments(data);
-      }
-    } catch (e) {
-      console.error('Failed to fetch comments:', e);
-    }
-  }, [marketAddress]);
-
-  useEffect(() => {
-    fetchComments();
-  }, [fetchComments]);
-
-  // Post comment
-  const handlePostComment = async () => {
-    if (!commentText.trim() || !account) return;
-    setCommentLoading(true);
-    try {
-      await fetch(`${API_URL}/comments`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          marketAddress,
-          userAddress: account,
-          text: commentText.trim(),
-        }),
-      });
-      setCommentText('');
-      fetchComments();
-    } catch (e) {
-      console.error('Failed to post comment:', e);
-    } finally {
-      setCommentLoading(false);
-    }
-  };
 
   // Refresh prices/volume directly from chain, log trade, flash price
   const refreshFromChain = async (tradeSide, tradeAmount) => {
@@ -624,59 +586,13 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
           </div>
 
           <div className={s.tabContent}>
-            {activeTab === 'comments' && (
-              <>
-                {account ? (
-                  <div className={s.commentForm}>
-                    <input
-                      type="text"
-                      className={s.commentInput}
-                      placeholder="Add a comment..."
-                      value={commentText}
-                      onChange={(e) => setCommentText(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && handlePostComment()}
-                    />
-                    <button
-                      className={s.commentPostBtn}
-                      onClick={handlePostComment}
-                      disabled={commentLoading || !commentText.trim()}
-                    >
-                      Post
-                    </button>
-                  </div>
-                ) : (
-                  <div className={s.connectPrompt}>
-                    <p style={{ color: 'var(--text-muted)', fontSize: 14, marginBottom: 8 }}>
-                      Connect your wallet to comment
-                    </p>
-                  </div>
-                )}
-
-                {comments.length > 0 ? (
-                  <div className={s.commentList}>
-                    {comments.map((c, i) => (
-                      <div key={c.id || i} className={s.comment}>
-                        <div className={s.commentHeader}>
-                          <span className={s.commentUser}>
-                            {truncateAddress(c.userAddress)}
-                          </span>
-                          <span className={s.commentTime}>
-                            {timeAgo(c.createdAt)}
-                          </span>
-                        </div>
-                        <p className={s.commentText}>{c.text}</p>
-                        <div className={s.commentFooter}>
-                          <button className={s.likeBtn}>
-                            &#9825; {c.likes || 0}
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className={s.noComments}>No comments yet. Be the first!</div>
-                )}
-              </>
+            {activeTab === 'comments' && market && (
+              <CommentSection
+                marketAddress={market.address || marketAddress}
+                sideAName={market.sideAName}
+                sideBName={market.sideBName}
+                onNeedProfile={() => setProfileModalOpen(true)}
+              />
             )}
 
             {activeTab === 'holders' && (
@@ -687,6 +603,12 @@ export default function MarketPage({ account, provider, signer, onConnect, authe
               <div className={s.placeholder}>Coming soon</div>
             )}
           </div>
+
+          <ProfileSetupModal
+            isOpen={profileModalOpen}
+            onClose={() => setProfileModalOpen(false)}
+            onComplete={(newProfile) => { refreshProfile(); setProfileModalOpen(false); }}
+          />
         </div>
 
         {/* RIGHT COLUMN - Trade Panel */}
