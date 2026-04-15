@@ -75,15 +75,74 @@ function PositionTag({ position, sideAName, sideBName }) {
   );
 }
 
-function Comment({ comment, sideAName, sideBName, currentWallet, onReply, onDelete, depth = 0 }) {
+function HeartIcon({ filled }) {
+  if (filled) {
+    return (
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="#e0245e" xmlns="http://www.w3.org/2000/svg">
+        <path d="M8 14s-5.5-3.5-5.5-7A3.5 3.5 0 0 1 8 4a3.5 3.5 0 0 1 5.5 3c0 3.5-5.5 7-5.5 7z"/>
+      </svg>
+    );
+  }
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.2" xmlns="http://www.w3.org/2000/svg">
+      <path d="M8 14s-5.5-3.5-5.5-7A3.5 3.5 0 0 1 8 4a3.5 3.5 0 0 1 5.5 3c0 3.5-5.5 7-5.5 7z"/>
+    </svg>
+  );
+}
+
+function DotsIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="8" cy="3" r="1.2"/>
+      <circle cx="8" cy="8" r="1.2"/>
+      <circle cx="8" cy="13" r="1.2"/>
+    </svg>
+  );
+}
+
+function Comment({ comment, sideAName, sideBName, currentWallet, authenticated, onReply, onDelete, onNeedLogin, onNeedProfile, marketAddress, depth = 0 }) {
   const [reportOpen, setReportOpen] = useState(false);
   const [reportReason, setReportReason] = useState('spam');
-  const [reportStatus, setReportStatus] = useState(null); // 'sending' | 'sent' | 'error'
+  const [reportStatus, setReportStatus] = useState(null);
   const [reportError, setReportError] = useState('');
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
+  const [liked, setLiked] = useState(comment.liked_by_me || false);
+  const [likeCount, setLikeCount] = useState(comment.like_count || 0);
+  const menuRef = useRef(null);
 
   const isDeleted = comment.deleted_at !== null && comment.body === null;
   const isHidden = comment.hidden === true;
   const isOwn = currentWallet && comment.author?.wallet_address === currentWallet.toLowerCase();
+
+  // Close menu on outside click
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handler = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false);
+    };
+    const escHandler = (e) => { if (e.key === 'Escape') setMenuOpen(false); };
+    document.addEventListener('mousedown', handler);
+    document.addEventListener('keydown', escHandler);
+    return () => { document.removeEventListener('mousedown', handler); document.removeEventListener('keydown', escHandler); };
+  }, [menuOpen]);
+
+  const handleLike = async () => {
+    if (!authenticated) { if (onNeedLogin) onNeedLogin(); return; }
+    // Optimistic update
+    const wasLiked = liked;
+    setLiked(!wasLiked);
+    setLikeCount((c) => wasLiked ? Math.max(0, c - 1) : c + 1);
+    try {
+      const res = await apiPost(`/comments/${comment.id}/like`, {});
+      setLiked(res.liked);
+      setLikeCount(res.like_count);
+    } catch {
+      // Revert
+      setLiked(wasLiked);
+      setLikeCount((c) => wasLiked ? c + 1 : Math.max(0, c - 1));
+    }
+  };
 
   const handleReport = async () => {
     setReportStatus('sending');
@@ -104,10 +163,19 @@ function Comment({ comment, sideAName, sideBName, currentWallet, onReply, onDele
   };
 
   const handleDelete = async () => {
+    setMenuOpen(false);
     try {
       await apiDelete(`/comments/${comment.id}`);
       if (onDelete) onDelete();
     } catch {}
+  };
+
+  const handleCopyLink = () => {
+    const url = `${window.location.origin}/market/${marketAddress}#comment-${comment.id}`;
+    navigator.clipboard.writeText(url).catch(() => {});
+    setLinkCopied(true);
+    setMenuOpen(false);
+    setTimeout(() => setLinkCopied(false), 2000);
   };
 
   if (isDeleted) {
@@ -116,7 +184,8 @@ function Comment({ comment, sideAName, sideBName, currentWallet, onReply, onDele
         <p className={styles.deletedText}>[Comment deleted]</p>
         {comment.replies?.map((r) => (
           <Comment key={r.id} comment={r} sideAName={sideAName} sideBName={sideBName}
-            currentWallet={currentWallet} onDelete={onDelete} depth={1} />
+            currentWallet={currentWallet} authenticated={authenticated} onDelete={onDelete}
+            onNeedLogin={onNeedLogin} onNeedProfile={onNeedProfile} marketAddress={marketAddress} depth={1} />
         ))}
       </div>
     );
@@ -162,19 +231,31 @@ function Comment({ comment, sideAName, sideBName, currentWallet, onReply, onDele
             <span className={styles.time}>{formatRelative(comment.created_at)}</span>
           </div>
 
-          <p className={styles.bodyText}>{linkify(comment.body)}</p>
+          <div className={styles.bodyRow}>
+            <p className={styles.bodyText}>{linkify(comment.body)}</p>
+            <button className={liked ? styles.heartFilled : styles.heartBtn} onClick={handleLike} title={liked ? 'Unlike' : 'Like'}>
+              <HeartIcon filled={liked} />
+              {likeCount > 0 && <span className={styles.heartCount}>{likeCount}</span>}
+            </button>
+          </div>
 
           <div className={styles.actions}>
             {depth === 0 && onReply && (
               <button className={styles.actionBtn} onClick={() => onReply(comment.id)}>Reply</button>
             )}
-            {!reportStatus && (
-              <button className={styles.actionBtn} onClick={() => setReportOpen(!reportOpen)}>Report</button>
-            )}
-            {reportStatus === 'sent' && <span className={styles.actionDim}>Reported</span>}
-            {isOwn && (
-              <button className={styles.actionBtn} onClick={handleDelete}>Delete</button>
-            )}
+            {linkCopied && <span className={styles.actionDim}>Link copied</span>}
+            <div className={styles.menuWrap} ref={menuRef}>
+              <button className={styles.dotsBtn} onClick={() => setMenuOpen(!menuOpen)}>
+                <DotsIcon />
+              </button>
+              {menuOpen && (
+                <div className={styles.popover}>
+                  <button className={styles.popoverItem} onClick={() => { setMenuOpen(false); setReportOpen(true); }}>Report</button>
+                  {isOwn && <button className={styles.popoverItem} onClick={handleDelete}>Delete</button>}
+                  <button className={styles.popoverItem} onClick={handleCopyLink}>Copy link</button>
+                </div>
+              )}
+            </div>
           </div>
 
           {reportOpen && (
@@ -202,7 +283,8 @@ function Comment({ comment, sideAName, sideBName, currentWallet, onReply, onDele
       {/* Replies */}
       {comment.replies?.map((r) => (
         <Comment key={r.id} comment={r} sideAName={sideAName} sideBName={sideBName}
-          currentWallet={currentWallet} onDelete={onDelete} depth={1} />
+          currentWallet={currentWallet} authenticated={authenticated} onDelete={onDelete}
+          onNeedLogin={onNeedLogin} onNeedProfile={onNeedProfile} marketAddress={marketAddress} depth={1} />
       ))}
       {comment.replies_has_more && (
         // TODO Phase 2: fetch full reply thread via GET /api/comments/:id/replies
@@ -416,8 +498,12 @@ export default function CommentSection({ marketAddress, sideAName, sideBName, on
                 sideAName={sideAName}
                 sideBName={sideBName}
                 currentWallet={account}
+                authenticated={authenticated}
                 onReply={(id) => { setReplyTo(replyTo === id ? null : id); setReplyBody(''); }}
                 onDelete={fetchComments}
+                onNeedLogin={connect}
+                onNeedProfile={onNeedProfile}
+                marketAddress={addr}
               />
               {/* Inline reply composer */}
               {replyTo === c.id && (

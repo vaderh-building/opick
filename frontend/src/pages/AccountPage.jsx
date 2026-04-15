@@ -187,19 +187,20 @@ export default function AccountPage({ account, provider, signer, onConnect, auth
         profile={profile || undefined} onComplete={(p) => { refreshProfile(); setEditModalOpen(false); }} />
 
       {/* Wallet card */}
-      <div className={styles.profileCard}>
-        <div className={styles.profileTop}>
-          <div>
-            {displayName && <p className={styles.displayName}>{displayName}</p>}
-            {account && (
-              <div className={styles.addrRow}>
-                <span className={styles.addr}>{truncAddr(account)}</span>
-                <button className={styles.copyBtn} onClick={handleCopy}>{copied ? 'Copied' : 'Copy'}</button>
-              </div>
-            )}
-          </div>
+      <div className={styles.walletCard}>
+        <div className={styles.walletTop}>
+          {account && (
+            <div className={styles.addrRow}>
+              <span className={styles.walletAddr}>{truncAddr(account)}</span>
+              <button className={styles.copyBtn} onClick={handleCopy}>{copied ? 'Copied' : 'Copy'}</button>
+            </div>
+          )}
+          <span className={styles.balLabel}>USDC Balance</span>
+        </div>
+        <div className={styles.walletDivider} />
+        <div className={styles.walletBottom}>
+          <div />
           <div className={styles.balBlock}>
-            <span className={styles.balLabel}>USDC Balance</span>
             <span className={styles.balValue}>{balStr}</span>
             <button className={styles.addBtn} onClick={handleFund}>Add USDC</button>
           </div>

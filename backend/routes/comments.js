@@ -87,7 +87,7 @@ function getBannedWallets() {
   );
 }
 
-function formatComment(row, positionMap) {
+function formatComment(row, positionMap, likeCounts, myLikes) {
   const isDeleted = !!row.deleted_at;
   const isHidden = !!row.auto_hidden_at;
 
@@ -100,6 +100,8 @@ function formatComment(row, positionMap) {
       hidden: false,
       author: null,
       author_position: null,
+      like_count: 0,
+      liked_by_me: false,
     };
   }
 
@@ -112,6 +114,8 @@ function formatComment(row, positionMap) {
       hidden: true,
       author: null,
       author_position: null,
+      like_count: 0,
+      liked_by_me: false,
     };
   }
 
@@ -128,7 +132,30 @@ function formatComment(row, positionMap) {
       avatar_url: row.avatar_url,
     },
     author_position: positionMap.get(row.author_wallet) || null,
+    like_count: likeCounts.get(row.id) || 0,
+    liked_by_me: myLikes.has(row.id),
   };
+}
+
+function batchLikeData(commentIds, viewerWallet) {
+  const likeCounts = new Map();
+  const myLikes = new Set();
+  if (commentIds.length === 0) return { likeCounts, myLikes };
+
+  const placeholders = commentIds.map(() => "?").join(",");
+  const counts = db.prepare(
+    `SELECT comment_id, COUNT(*) as c FROM comment_likes WHERE comment_id IN (${placeholders}) GROUP BY comment_id`
+  ).all(...commentIds);
+  for (const r of counts) likeCounts.set(r.comment_id, r.c);
+
+  if (viewerWallet) {
+    const liked = db.prepare(
+      `SELECT comment_id FROM comment_likes WHERE comment_id IN (${placeholders}) AND wallet_address = ?`
+    ).all(...commentIds, viewerWallet);
+    for (const r of liked) myLikes.add(r.comment_id);
+  }
+
+  return { likeCounts, myLikes };
 }
 
 function checkRateLimit(wallet, action, maxPerMinute, maxPerHour) {
@@ -255,10 +282,17 @@ export default function createCommentsRouter({ provider, marketAbi }) {
 
       const positionMap = await resolvePositions(marketAddress, uniqueWallets, provider, marketAbi);
 
+      // Batch like data for all comment IDs
+      const allCommentIds = [...visibleTop.map((r) => r.id)];
+      for (const arr of Object.values(repliesByParent)) {
+        for (const r of arr) allCommentIds.push(r.id);
+      }
+      const { likeCounts, myLikes } = batchLikeData(allCommentIds, viewerWallet);
+
       // Format response
       const comments = visibleTop.map((row) => {
-        const formatted = formatComment(row, positionMap);
-        const replies = (repliesByParent[row.id] || []).map((r) => formatComment(r, positionMap));
+        const formatted = formatComment(row, positionMap, likeCounts, myLikes);
+        const replies = (repliesByParent[row.id] || []).map((r) => formatComment(r, positionMap, likeCounts, myLikes));
         return {
           ...formatted,
           replies,
@@ -341,7 +375,7 @@ export default function createCommentsRouter({ provider, marketAbi }) {
       `).get(id);
 
       const positionMap = await resolvePositions(marketAddress, [req.wallet], provider, marketAbi);
-      const formatted = formatComment(row, positionMap);
+      const formatted = formatComment(row, positionMap, new Map(), new Set());
 
       res.status(201).json(formatted);
     } catch (err) {
@@ -422,6 +456,41 @@ export default function createCommentsRouter({ provider, marketAbi }) {
       console.error("Report error:", err.message);
       res.status(500).json({ error: "Failed to report comment" });
     }
+  });
+
+  // ---------- POST /api/comments/:id/like ----------
+  router.post("/comments/:id/like", requireAuth, (req, res) => {
+    const comment = db.prepare("SELECT id, deleted_at FROM comments WHERE id = ?").get(req.params.id);
+    if (!comment || comment.deleted_at) {
+      return res.status(404).json({ error: "Comment not found", code: "NOT_FOUND" });
+    }
+
+    // Rate limit: 30 per minute
+    const rl = checkRateLimit(req.wallet, "comment_like", 30, 1000);
+    if (rl.limited) {
+      return res.status(429).json({ error: "Slow down", code: "RATE_LIMITED", retry_after_seconds: rl.retry_after_seconds });
+    }
+
+    const existing = db.prepare(
+      "SELECT comment_id FROM comment_likes WHERE comment_id = ? AND wallet_address = ?"
+    ).get(req.params.id, req.wallet);
+
+    if (existing) {
+      db.prepare("DELETE FROM comment_likes WHERE comment_id = ? AND wallet_address = ?")
+        .run(req.params.id, req.wallet);
+    } else {
+      db.prepare("INSERT INTO comment_likes (comment_id, wallet_address) VALUES (?, ?)")
+        .run(req.params.id, req.wallet);
+    }
+
+    db.prepare("INSERT INTO rate_limits (wallet_address, action) VALUES (?, 'comment_like')")
+      .run(req.wallet);
+
+    const likeCount = db.prepare(
+      "SELECT COUNT(*) as c FROM comment_likes WHERE comment_id = ?"
+    ).get(req.params.id).c;
+
+    res.json({ liked: !existing, like_count: likeCount });
   });
 
   return router;

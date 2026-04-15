@@ -138,9 +138,19 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS rate_limits (
     wallet_address TEXT NOT NULL,
     action TEXT NOT NULL
-      CHECK(action IN ('comment_create', 'profile_update', 'comment_report')),
+      CHECK(action IN ('comment_create', 'profile_update', 'comment_report', 'comment_like')),
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
+
+  -- Comment likes
+  CREATE TABLE IF NOT EXISTS comment_likes (
+    comment_id TEXT NOT NULL REFERENCES comments(id) ON DELETE CASCADE,
+    wallet_address TEXT NOT NULL CHECK(wallet_address = lower(wallet_address)),
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (comment_id, wallet_address)
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_comment_likes_comment ON comment_likes(comment_id);
 
   CREATE INDEX IF NOT EXISTS idx_rate_limits_lookup
     ON rate_limits(wallet_address, action, created_at);
@@ -166,16 +176,16 @@ if (!hasAutoHidden) {
   console.log("Migration: added auto_hidden_at to comments");
 }
 
-// Widen rate_limits CHECK constraint if it lacks comment_report
+// Widen rate_limits CHECK constraint if it lacks comment_like
 // SQLite can't alter CHECK constraints, so recreate if needed
 const rlDDL = db.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='rate_limits'").get();
-if (rlDDL && rlDDL.sql && !rlDDL.sql.includes('comment_report')) {
+if (rlDDL && rlDDL.sql && !rlDDL.sql.includes('comment_like')) {
   db.pragma("foreign_keys = OFF");
   db.exec(`
     CREATE TABLE rate_limits_new (
       wallet_address TEXT NOT NULL,
       action TEXT NOT NULL
-        CHECK(action IN ('comment_create', 'profile_update', 'comment_report')),
+        CHECK(action IN ('comment_create', 'profile_update', 'comment_report', 'comment_like')),
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
     INSERT INTO rate_limits_new SELECT * FROM rate_limits;
@@ -185,7 +195,7 @@ if (rlDDL && rlDDL.sql && !rlDDL.sql.includes('comment_report')) {
       ON rate_limits(wallet_address, action, created_at);
   `);
   db.pragma("foreign_keys = ON");
-  console.log("Migration: widened rate_limits CHECK to include comment_report");
+  console.log("Migration: widened rate_limits CHECK to include comment_like");
 }
 
 export default db;

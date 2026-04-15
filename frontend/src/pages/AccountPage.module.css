@@ -103,37 +103,28 @@
 }
 
 /* Wallet card */
-.profileCard {
+.walletCard {
   border: 0.5px solid var(--border);
   border-radius: 4px;
   margin-bottom: 24px;
 }
 
-.profileTop {
+.walletTop {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  padding: 20px;
-  gap: 16px;
-}
-
-.displayName {
-  font-family: var(--font-sans);
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text);
-  margin: 0 0 4px;
+  align-items: center;
+  padding: 14px 20px;
 }
 
 .addrRow {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
-.addr {
-  font-family: var(--font-sans);
-  font-size: 13px;
+.walletAddr {
+  font-family: var(--font-mono);
+  font-size: 12px;
   color: var(--dim);
 }
 
@@ -148,25 +139,34 @@
   padding: 0;
 }
 
-.balBlock {
-  text-align: right;
-}
-
 .balLabel {
-  display: block;
-  font-family: var(--font-sans);
-  font-size: 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
   color: var(--muted);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  margin-bottom: 2px;
+  letter-spacing: 0.5px;
+}
+
+.walletDivider {
+  border-top: 0.5px solid var(--border);
+}
+
+.walletBottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 14px 20px;
+}
+
+.balBlock {
+  text-align: right;
 }
 
 .balValue {
   display: block;
   font-family: var(--font-sans);
-  font-size: 22px;
-  font-weight: 600;
+  font-size: 32px;
+  font-weight: 500;
   color: var(--text);
   margin-bottom: 6px;
 }
@@ -193,7 +193,7 @@
 
 .stat {
   flex: 1;
-  padding: 14px 20px;
+  padding: 10px 20px;
   border-right: 0.5px solid var(--border);
   text-align: center;
 }
@@ -362,12 +362,14 @@
 
 @media (max-width: 768px) {
   .page { padding: 32px 16px 60px; }
-  .profileTop { flex-direction: column; }
+  .walletTop { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .walletBottom { flex-direction: column; align-items: flex-start; }
   .balBlock { text-align: left; }
   .stats { flex-direction: column; }
-  .stat { border-right: none; border-bottom: 0.5px solid var(--border); text-align: left; padding: 10px 20px; }
+  .stat { border-right: none; border-bottom: 0.5px solid var(--border); text-align: left; padding: 8px 20px; }
   .stat:last-child { border-bottom: none; }
   .posRow { flex-direction: column; align-items: flex-start; }
   .posNumbers { width: 100%; justify-content: space-between; flex-wrap: wrap; }
   .sellBtn { min-height: 36px; }
+  .userProfileCard { flex-direction: column; align-items: flex-start; }
 }
