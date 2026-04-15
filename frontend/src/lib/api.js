@@ -22,20 +22,13 @@ export function apiUrl(path) {
   return BASE + path;
 }
 
-async function getAuthHeaders() {
-  if (!_getToken) return {};
-  try {
-    const token = await _getToken();
-    if (token) return { Authorization: `Bearer ${token}` };
-  } catch {}
-  return {};
-}
-
 async function request(method, path, { body, auth = false, multipart = false } = {}) {
   const headers = {};
 
   if (auth) {
-    Object.assign(headers, await getAuthHeaders());
+    const token = _getToken ? await _getToken() : null;
+    console.log('[api] auth token:', token ? 'present (' + token.length + ' chars)' : 'MISSING');
+    if (token) headers['Authorization'] = 'Bearer ' + token;
   }
 
   const opts = { method, headers };
