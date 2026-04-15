@@ -180,10 +180,12 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
   };
 
   const handleCreate = async () => {
+    console.error("[handleCreate] CLICKED at", new Date().toISOString());
     setError('');
     setSuccess('');
 
     if (!account) {
+      console.error("[handleCreate] no account, returning early");
       setError('Wallet not ready. Please wait a moment.');
       return;
     }
@@ -193,6 +195,7 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
     const b = sideB.trim();
 
     if (!topic || !a || !b || !category) {
+      console.error("[handleCreate] missing fields, returning early");
       setError('Please fill in all fields.');
       return;
     }
@@ -202,7 +205,9 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
     setSuccess('');
     try {
       // Create market via sponsored tx (same pattern as MarketPage's sponsoredCall)
+      console.error("[handleCreate] about to call sponsoredCall with:", FACTORY_ADDRESS, [topic, a, b, category]);
       const hash = await sponsoredCall(FACTORY_ADDRESS, OPickFactoryAbi, 'createMarket', [topic, a, b, category]);
+      console.error("[handleCreate] sponsoredCall returned:", hash);
 
       // Get market address from factory (latest market)
       let marketAddress = null;
@@ -248,6 +253,7 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
         navigate('/markets');
       }
     } catch (err) {
+      console.error("[handleCreate] CAUGHT:", err, "message:", err?.message, "reason:", err?.reason);
       setCreating(false);
       const msg = err?.reason || err?.message || 'Transaction failed. Please try again.';
       setError(msg.length > 120 ? msg.slice(0, 120) + '...' : msg);
