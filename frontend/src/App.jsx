@@ -29,10 +29,11 @@ function App() {
   const wallet = useWallet();
   const { account, provider, signer, connect, connectLocal, disconnect, authenticated, walletReady, displayName } = wallet;
 
-  // Wire Privy token into API client (must call getAccessToken live, not capture a stale ref)
-  const { getAccessToken } = usePrivy();
+  // Wire Privy token into API client (only call getAccessToken when authenticated)
+  const { authenticated: privyAuthed, getAccessToken } = usePrivy();
   useEffect(() => {
     configureAuth(async () => {
+      if (!privyAuthed) return null;
       try {
         const token = await getAccessToken();
         return token;
@@ -41,7 +42,7 @@ function App() {
         return null;
       }
     });
-  }, [getAccessToken]);
+  }, [privyAuthed, getAccessToken]);
 
   const { fundWallet } = useFundWallet();
   const onFundWallet = useCallback(() => {
