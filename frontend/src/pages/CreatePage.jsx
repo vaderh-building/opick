@@ -56,6 +56,10 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
   const [category, setCategory] = useState('');
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState('');
+  const _setError = (val) => {
+    console.error("[setError CALLED]", JSON.stringify(val), "stack:", new Error().stack);
+    setError(val);
+  };
   const [success, setSuccess] = useState('');
   const createInitiated = useRef(false);
   const [wyrFormat, setWyrFormat] = useState('sacrifice'); // 'sacrifice' | 'thisorthat'
@@ -125,8 +129,11 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
   const placeholderB = isHotTake ? 'e.g., It does not' : 'e.g., Ronaldo';
   const showChoiceB = !isBullBear;
 
+  useEffect(() => { console.log("[mount effect] no deps"); }, []);
+
   // Debounced search for existing markets
   useEffect(() => {
+    console.log("[useEffect line 133] debounced search deps changed");
     setExistingMarket(null);
     setForceCreate(false);
 
@@ -182,7 +189,7 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
   };
 
   const handleCreate = async () => {
-    setError('');
+    _setError('');
     setSuccess('');
 
     const topic = generatedTopic.trim();
@@ -190,18 +197,18 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
     const b = sideB.trim();
 
     if (!topic || !a || !b || !category) {
-      setError('Please fill in all fields.');
+      _setError('Please fill in all fields.');
       return;
     }
 
     if (!factory || !usdc) {
-      setError('Contracts not loaded. Check your connection.');
+      _setError('Contracts not loaded. Check your connection.');
       return;
     }
 
     createInitiated.current = true;
     setCreating(true);
-    setError('');
+    _setError('');
     setSuccess('');
     try {
       // Encode and send sponsored tx
@@ -259,7 +266,7 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
       setCreating(false);
       if (createInitiated.current) {
         const msg = err?.reason || err?.message || 'Transaction failed. Please try again.';
-        setError(msg.length > 120 ? msg.slice(0, 120) + '...' : msg);
+        _setError(msg.length > 120 ? msg.slice(0, 120) + '...' : msg);
       }
       createInitiated.current = false;
     }
