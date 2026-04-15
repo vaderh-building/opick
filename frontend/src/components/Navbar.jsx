@@ -95,7 +95,7 @@ export default function Navbar({ account, authenticated, displayName, onConnect,
                     </div>
                   )}
                   <Link to="/account" className={styles.dropdownLink} onClick={() => setDropdownOpen(false)}>
-                    Account
+                    Profile
                   </Link>
                   {onFundWallet && (
                     <button className={styles.dropdownItem} onClick={() => { onFundWallet(); setDropdownOpen(false); }}>
@@ -119,8 +119,11 @@ export default function Navbar({ account, authenticated, displayName, onConnect,
                 <span className={styles.freeBtnFull}>Get $2 free</span>
                 <span className={styles.freeBtnShort}>$2 free</span>
               </button>
+              <button className={styles.signInBtn} onClick={() => { if (onConnect) onConnect(); }}>
+                Sign in
+              </button>
               <button className={styles.connectBtn} onClick={() => { if (onConnect) onConnect(); }}>
-                Connect
+                Sign up
               </button>
             </div>
           )}
@@ -152,7 +155,7 @@ export default function Navbar({ account, authenticated, displayName, onConnect,
           {(authenticated || account) ? (
             <>
               <Link to="/account" className={styles.mobileLink} onClick={() => setMenuOpen(false)}>
-                Account
+                Profile
               </Link>
               <button
                 className={styles.disconnectBtnMobile}
@@ -162,12 +165,20 @@ export default function Navbar({ account, authenticated, displayName, onConnect,
               </button>
             </>
           ) : (
-            <button
-              className={styles.connectBtnMobile}
-              onClick={() => { onConnect(); setMenuOpen(false); }}
-            >
-              Connect
-            </button>
+            <>
+              <button
+                className={styles.signInBtnMobile}
+                onClick={() => { onConnect(); setMenuOpen(false); }}
+              >
+                Sign in
+              </button>
+              <button
+                className={styles.connectBtnMobile}
+                onClick={() => { onConnect(); setMenuOpen(false); }}
+              >
+                Sign up
+              </button>
+            </>
           )}
         </div>
       )}
