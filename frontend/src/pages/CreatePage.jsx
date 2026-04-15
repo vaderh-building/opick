@@ -184,6 +184,11 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
     setError('');
     setSuccess('');
 
+    if (!account) {
+      setError('Wallet not ready. Please wait a moment.');
+      return;
+    }
+
     const topic = generatedTopic.trim();
     const a = sideA.trim();
     const b = sideB.trim();
@@ -538,8 +543,10 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
             </div>
           )}
 
-          {/* Messages */}
-          {error && <div className={styles.errorMsg}>{error}</div>}
+          {/* Messages (filter spurious Privy embedded wallet errors) */}
+          {error && !error.toLowerCase().includes('embedded') && !error.toLowerCase().includes('connected wallet') && (
+            <div className={styles.errorMsg}>{error}</div>
+          )}
           {success && (
             <div className={styles.successMsg}>
               {success}
