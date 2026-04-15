@@ -29,8 +29,9 @@ function App() {
   const wallet = useWallet();
   const { account, provider, signer, connect, connectLocal, disconnect, authenticated, walletReady, displayName } = wallet;
 
-  // Wire Privy token into API client (only call getAccessToken when authenticated)
+  // Wire Privy token into API client (only re-run when auth state changes)
   const { authenticated: privyAuthed, getAccessToken } = usePrivy();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     configureAuth(async () => {
       if (!privyAuthed) return null;
@@ -42,7 +43,7 @@ function App() {
         return null;
       }
     });
-  }, [privyAuthed, getAccessToken]);
+  }, [privyAuthed]);
 
   const { fundWallet } = useFundWallet();
   const onFundWallet = useCallback(() => {

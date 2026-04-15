@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useSponsoredTx } from '../hooks/useSponsoredTx.js';
+import { parseUnits, Interface } from 'ethers';
+import { useSendTransaction } from '@privy-io/react-auth';
 import { useContracts } from '../hooks/useContracts';
 import { FACTORY_ADDRESS } from '../config.js';
 import OPickFactoryAbi from '../abi/OPickFactory.json';
@@ -46,7 +47,7 @@ function smartParsePrice(val) {
 export default function CreatePage({ account, provider, signer, onConnect, authenticated, walletReady }) {
   const navigate = useNavigate();
   const { usdc, factory } = useContracts(signer || provider);
-  const { sponsoredCall } = useSponsoredTx();
+  const { sendTransaction } = useSendTransaction();
 
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [choiceA, setChoiceA] = useState('');
@@ -180,23 +181,20 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
   };
 
   const handleCreate = async () => {
-    console.error("[handleCreate] CLICKED at", new Date().toISOString());
     setError('');
     setSuccess('');
-
-    if (!account) {
-      console.error("[handleCreate] no account, returning early");
-      setError('Wallet not ready. Please wait a moment.');
-      return;
-    }
 
     const topic = generatedTopic.trim();
     const a = sideA.trim();
     const b = sideB.trim();
 
     if (!topic || !a || !b || !category) {
-      console.error("[handleCreate] missing fields, returning early");
       setError('Please fill in all fields.');
+      return;
+    }
+
+    if (!factory || !usdc) {
+      setError('Contracts not loaded. Check your connection.');
       return;
     }
 
@@ -204,10 +202,13 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
     setError('');
     setSuccess('');
     try {
-      // Create market via sponsored tx (same pattern as MarketPage's sponsoredCall)
-      console.error("[handleCreate] about to call sponsoredCall with:", FACTORY_ADDRESS, [topic, a, b, category]);
-      const hash = await sponsoredCall(FACTORY_ADDRESS, OPickFactoryAbi, 'createMarket', [topic, a, b, category]);
-      console.error("[handleCreate] sponsoredCall returned:", hash);
+      // Encode and send sponsored tx
+      const iface = new Interface(OPickFactoryAbi);
+      const data = iface.encodeFunctionData('createMarket', [topic, a, b, category]);
+      const { hash } = await sendTransaction(
+        { to: FACTORY_ADDRESS, data },
+        { sponsor: true }
+      );
 
       // Get market address from factory (latest market)
       let marketAddress = null;
@@ -253,7 +254,6 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
         navigate('/markets');
       }
     } catch (err) {
-      console.error("[handleCreate] CAUGHT:", err, "message:", err?.message, "reason:", err?.reason);
       setCreating(false);
       const msg = err?.reason || err?.message || 'Transaction failed. Please try again.';
       setError(msg.length > 120 ? msg.slice(0, 120) + '...' : msg);
@@ -538,10 +538,8 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
             </div>
           )}
 
-          {/* Messages (filter spurious Privy embedded wallet errors) */}
-          {error && !error.toLowerCase().includes('embedded') && !error.toLowerCase().includes('connected wallet') && (
-            <div className={styles.errorMsg}>{error}</div>
-          )}
+          {/* Messages */}
+          {error && <div className={styles.errorMsg}>{error}</div>}
           {success && (
             <div className={styles.successMsg}>
               {success}
