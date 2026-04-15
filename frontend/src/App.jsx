@@ -29,20 +29,21 @@ function App() {
   const wallet = useWallet();
   const { account, provider, signer, connect, connectLocal, disconnect, authenticated, walletReady, displayName } = wallet;
 
-  // Wire Privy token into API client (only call getAccessToken when authenticated)
+  // TEMPORARILY DISABLED to test if Privy "no embedded wallet"
+  // error on /create is caused by this effect. Re-enable after diagnosis.
   const { authenticated: privyAuthed, getAccessToken } = usePrivy();
-  useEffect(() => {
-    configureAuth(async () => {
-      if (!privyAuthed) return null;
-      try {
-        const token = await getAccessToken();
-        return token;
-      } catch (e) {
-        console.error('getAccessToken failed:', e);
-        return null;
-      }
-    });
-  }, [privyAuthed, getAccessToken]);
+  // useEffect(() => {
+  //   configureAuth(async () => {
+  //     if (!privyAuthed) return null;
+  //     try {
+  //       const token = await getAccessToken();
+  //       return token;
+  //     } catch (e) {
+  //       console.error('getAccessToken failed:', e);
+  //       return null;
+  //     }
+  //   });
+  // }, [privyAuthed, getAccessToken]);
 
   const { fundWallet } = useFundWallet();
   const onFundWallet = useCallback(() => {
