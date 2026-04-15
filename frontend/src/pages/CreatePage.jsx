@@ -45,6 +45,7 @@ function smartParsePrice(val) {
 }
 
 export default function CreatePage({ account, provider, signer, onConnect, authenticated, walletReady }) {
+  console.log("[CreatePage MOUNT/RENDER]", new Date().toISOString());
   const navigate = useNavigate();
   const { usdc, factory } = useContracts(signer || provider);
   const { sendTransaction } = useSendTransaction();
@@ -56,6 +57,11 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
   const [category, setCategory] = useState('');
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState('');
+  const _setError = (val) => {
+    console.log("[setError CALLED]", JSON.stringify(val));
+    console.trace();
+    setError(val);
+  };
   const [success, setSuccess] = useState('');
   const createInitiated = useRef(false);
   const [wyrFormat, setWyrFormat] = useState('sacrifice'); // 'sacrifice' | 'thisorthat'
@@ -182,7 +188,7 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
   };
 
   const handleCreate = async () => {
-    setError('');
+    _setError('');
     setSuccess('');
 
     const topic = generatedTopic.trim();
@@ -190,18 +196,18 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
     const b = sideB.trim();
 
     if (!topic || !a || !b || !category) {
-      setError('Please fill in all fields.');
+      _setError('Please fill in all fields.');
       return;
     }
 
     if (!factory || !usdc) {
-      setError('Contracts not loaded. Check your connection.');
+      _setError('Contracts not loaded. Check your connection.');
       return;
     }
 
     createInitiated.current = true;
     setCreating(true);
-    setError('');
+    _setError('');
     setSuccess('');
     try {
       // Encode and send sponsored tx
@@ -259,7 +265,7 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
       setCreating(false);
       if (createInitiated.current) {
         const msg = err?.reason || err?.message || 'Transaction failed. Please try again.';
-        setError(msg.length > 120 ? msg.slice(0, 120) + '...' : msg);
+        _setError(msg.length > 120 ? msg.slice(0, 120) + '...' : msg);
       }
       createInitiated.current = false;
     }
@@ -544,6 +550,7 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
           )}
 
           {/* Messages */}
+          {console.log("[CreatePage RENDER] error =", JSON.stringify(error), "type:", typeof error)}
           {error && <div className={styles.errorMsg}>{error}</div>}
           {success && (
             <div className={styles.successMsg}>
