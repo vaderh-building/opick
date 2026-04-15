@@ -215,34 +215,45 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
       // Encode and send sponsored tx
       const iface = new Interface(OPickFactoryAbi);
       const data = iface.encodeFunctionData('createMarket', [topic, a, b, category]);
+      console.log("[handleCreate] encoded tx data, calling sendTransaction to:", FACTORY_ADDRESS);
       const { hash } = await sendTransaction(
         { to: FACTORY_ADDRESS, data },
         { sponsor: true }
       );
+      console.log("[handleCreate] sendTransaction returned hash:", hash);
 
       // Get market address from factory (latest market)
       let marketAddress = null;
       try {
         if (factory) {
+          console.log("[handleCreate] querying factory for new market address");
           const total = await factory.totalMarkets();
           const markets = await factory.getMarkets(Number(total) - 1, 1);
           if (markets.length > 0) marketAddress = markets[0];
+          console.log("[handleCreate] factory returned marketAddress:", marketAddress);
         }
-      } catch {}
+      } catch (factoryErr) {
+        console.error("[handleCreate] factory query failed:", factoryErr.message);
+      }
 
       setCreating(false);
       setSuccess('Market created!');
+      console.log("[handleCreate] success set, refreshing backend cache");
 
       // Refresh backend cache (wait up to 10s)
       const controller = new AbortController();
       const refreshTimeout = setTimeout(() => controller.abort(), 10000);
       try {
         await fetch(`${API_URL}/markets/refresh`, { method: 'POST', signal: controller.signal });
-      } catch {}
+        console.log("[handleCreate] backend cache refreshed");
+      } catch (refreshErr) {
+        console.log("[handleCreate] backend refresh failed/timed out:", refreshErr.message);
+      }
       clearTimeout(refreshTimeout);
 
       // Poll until the new market appears in the backend (up to 5 polls, 2s apart)
       if (marketAddress) {
+        console.log("[handleCreate] polling for market:", marketAddress);
         let found = false;
         for (let i = 0; i < 5; i++) {
           try {
@@ -256,16 +267,24 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
         }
 
         if (found) {
+          console.log("[handleCreate] market found, navigating to:", `/market/${marketAddress}`);
           navigate(`/market/${marketAddress}`);
         } else {
+          console.log("[handleCreate] market not found after polling, showing fallback message");
           setSuccess('Market created successfully! It may take a moment to appear.');
         }
       } else {
+        console.log("[handleCreate] no marketAddress, navigating to /markets");
         navigate('/markets');
       }
     } catch (err) {
+      console.error("[handleCreate] CAUGHT ERROR:", err);
+      console.error("[handleCreate] error.message:", err?.message);
+      console.error("[handleCreate] error.reason:", err?.reason);
+      console.error("[handleCreate] error.stack:", err?.stack);
       setCreating(false);
       const msg = err?.reason || err?.message || 'Transaction failed. Please try again.';
+      console.log("[handleCreate] setting error msg:", msg);
       setError(msg.length > 120 ? msg.slice(0, 120) + '...' : msg);
     }
   };
