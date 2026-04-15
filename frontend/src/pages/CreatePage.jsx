@@ -181,10 +181,12 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
   };
 
   const handleCreate = async () => {
+    console.log("[handleCreate] entered. account:", account, "walletReady:", walletReady, "factory:", !!factory, "usdc:", !!usdc, "creating:", creating);
     setError('');
     setSuccess('');
 
     if (!account) {
+      console.log("[handleCreate] returning early: no account");
       setError('Wallet not ready. Please wait a moment.');
       return;
     }
@@ -194,15 +196,18 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
     const b = sideB.trim();
 
     if (!topic || !a || !b || !category) {
+      console.log("[handleCreate] returning early: missing fields. topic:", !!topic, "a:", !!a, "b:", !!b, "category:", !!category);
       setError('Please fill in all fields.');
       return;
     }
 
     if (!factory || !usdc) {
+      console.log("[handleCreate] returning early: contracts not loaded. factory:", !!factory, "usdc:", !!usdc);
       setError('Contracts not loaded. Check your connection.');
       return;
     }
 
+    console.log("[handleCreate] all guards passed, calling sendTransaction");
     setCreating(true);
     setError('');
     setSuccess('');
@@ -592,10 +597,7 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
               <button
                 type="button"
                 className={styles.createBtn}
-                onClick={(e) => {
-                  if (!e.isTrusted) return;
-                  handleCreate();
-                }}
+                onClick={handleCreate}
                 disabled={creating || !generatedTopic || !sideA || !sideB || !category}
               >
                 {creating && <span className={styles.btnSpinner} />}
