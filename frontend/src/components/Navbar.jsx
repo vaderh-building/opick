@@ -119,11 +119,8 @@ export default function Navbar({ account, authenticated, displayName, onConnect,
                 <span className={styles.freeBtnFull}>Get $2 free</span>
                 <span className={styles.freeBtnShort}>$2 free</span>
               </button>
-              <button className={styles.signInBtn} onClick={() => { if (onConnect) onConnect(); }}>
-                Sign in
-              </button>
               <button className={styles.connectBtn} onClick={() => { if (onConnect) onConnect(); }}>
-                Sign up
+                Log in
               </button>
             </div>
           )}
@@ -165,20 +162,12 @@ export default function Navbar({ account, authenticated, displayName, onConnect,
               </button>
             </>
           ) : (
-            <>
-              <button
-                className={styles.signInBtnMobile}
-                onClick={() => { onConnect(); setMenuOpen(false); }}
-              >
-                Sign in
-              </button>
-              <button
-                className={styles.connectBtnMobile}
-                onClick={() => { onConnect(); setMenuOpen(false); }}
-              >
-                Sign up
-              </button>
-            </>
+            <button
+              className={styles.connectBtnMobile}
+              onClick={() => { onConnect(); setMenuOpen(false); }}
+            >
+              Log in
+            </button>
           )}
         </div>
       )}
