@@ -2,10 +2,11 @@ import Database from "better-sqlite3";
 import fs from "fs";
 import path from "path";
 
-const dataDir = path.join(process.cwd(), "data");
-if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
+const dbPath = process.env.DB_PATH || path.join(process.cwd(), "data", "opick.db");
+const dbDir = path.dirname(dbPath);
+if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
+console.log("DB path:", dbPath, "exists:", fs.existsSync(dbPath));
 
-const dbPath = path.join(dataDir, "opick.db");
 const db = new Database(dbPath);
 
 // Enable WAL mode for better concurrent read performance
