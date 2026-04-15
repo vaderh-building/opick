@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { parseUnits, Interface } from 'ethers';
-import { useSendTransaction } from '@privy-io/react-auth';
+import { useSponsoredTx } from '../hooks/useSponsoredTx.js';
 import { useContracts } from '../hooks/useContracts';
 import { FACTORY_ADDRESS } from '../config.js';
 import OPickFactoryAbi from '../abi/OPickFactory.json';
@@ -47,7 +46,7 @@ function smartParsePrice(val) {
 export default function CreatePage({ account, provider, signer, onConnect, authenticated, walletReady }) {
   const navigate = useNavigate();
   const { usdc, factory } = useContracts(signer || provider);
-  const { sendTransaction } = useSendTransaction();
+  const { sponsoredCall } = useSponsoredTx();
 
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [choiceA, setChoiceA] = useState('');
@@ -181,12 +180,10 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
   };
 
   const handleCreate = async () => {
-    console.log("[handleCreate] entered. account:", account, "walletReady:", walletReady, "factory:", !!factory, "usdc:", !!usdc, "creating:", creating);
     setError('');
     setSuccess('');
 
     if (!account) {
-      console.log("[handleCreate] returning early: no account");
       setError('Wallet not ready. Please wait a moment.');
       return;
     }
@@ -196,64 +193,40 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
     const b = sideB.trim();
 
     if (!topic || !a || !b || !category) {
-      console.log("[handleCreate] returning early: missing fields. topic:", !!topic, "a:", !!a, "b:", !!b, "category:", !!category);
       setError('Please fill in all fields.');
       return;
     }
 
-    if (!factory || !usdc) {
-      console.log("[handleCreate] returning early: contracts not loaded. factory:", !!factory, "usdc:", !!usdc);
-      setError('Contracts not loaded. Check your connection.');
-      return;
-    }
-
-    console.log("[handleCreate] all guards passed, calling sendTransaction");
     setCreating(true);
     setError('');
     setSuccess('');
     try {
-      // Encode and send sponsored tx
-      const iface = new Interface(OPickFactoryAbi);
-      const data = iface.encodeFunctionData('createMarket', [topic, a, b, category]);
-      console.log("[handleCreate] encoded tx data, calling sendTransaction to:", FACTORY_ADDRESS);
-      const { hash } = await sendTransaction(
-        { to: FACTORY_ADDRESS, data },
-        { sponsor: true }
-      );
-      console.log("[handleCreate] sendTransaction returned hash:", hash);
+      // Create market via sponsored tx (same pattern as MarketPage's sponsoredCall)
+      const hash = await sponsoredCall(FACTORY_ADDRESS, OPickFactoryAbi, 'createMarket', [topic, a, b, category]);
 
       // Get market address from factory (latest market)
       let marketAddress = null;
       try {
         if (factory) {
-          console.log("[handleCreate] querying factory for new market address");
           const total = await factory.totalMarkets();
           const markets = await factory.getMarkets(Number(total) - 1, 1);
           if (markets.length > 0) marketAddress = markets[0];
-          console.log("[handleCreate] factory returned marketAddress:", marketAddress);
         }
-      } catch (factoryErr) {
-        console.error("[handleCreate] factory query failed:", factoryErr.message);
-      }
+      } catch {}
 
       setCreating(false);
       setSuccess('Market created!');
-      console.log("[handleCreate] success set, refreshing backend cache");
 
       // Refresh backend cache (wait up to 10s)
       const controller = new AbortController();
       const refreshTimeout = setTimeout(() => controller.abort(), 10000);
       try {
         await fetch(`${API_URL}/markets/refresh`, { method: 'POST', signal: controller.signal });
-        console.log("[handleCreate] backend cache refreshed");
-      } catch (refreshErr) {
-        console.log("[handleCreate] backend refresh failed/timed out:", refreshErr.message);
-      }
+      } catch {}
       clearTimeout(refreshTimeout);
 
       // Poll until the new market appears in the backend (up to 5 polls, 2s apart)
       if (marketAddress) {
-        console.log("[handleCreate] polling for market:", marketAddress);
         let found = false;
         for (let i = 0; i < 5; i++) {
           try {
@@ -267,24 +240,16 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
         }
 
         if (found) {
-          console.log("[handleCreate] market found, navigating to:", `/market/${marketAddress}`);
           navigate(`/market/${marketAddress}`);
         } else {
-          console.log("[handleCreate] market not found after polling, showing fallback message");
           setSuccess('Market created successfully! It may take a moment to appear.');
         }
       } else {
-        console.log("[handleCreate] no marketAddress, navigating to /markets");
         navigate('/markets');
       }
     } catch (err) {
-      console.error("[handleCreate] CAUGHT ERROR:", err);
-      console.error("[handleCreate] error.message:", err?.message);
-      console.error("[handleCreate] error.reason:", err?.reason);
-      console.error("[handleCreate] error.stack:", err?.stack);
       setCreating(false);
       const msg = err?.reason || err?.message || 'Transaction failed. Please try again.';
-      console.log("[handleCreate] setting error msg:", msg);
       setError(msg.length > 120 ? msg.slice(0, 120) + '...' : msg);
     }
   };
