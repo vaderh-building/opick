@@ -189,6 +189,7 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
   };
 
   const handleCreate = async () => {
+    console.error("[handleCreate ENTERED]", "stack:", new Error().stack);
     _setError('');
     setSuccess('');
 
