@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { parseUnits, Interface } from 'ethers';
-import { useSendTransaction } from '@privy-io/react-auth';
+import { useSponsoredTx } from '../hooks/useSponsoredTx.js';
 import { useContracts } from '../hooks/useContracts';
 import { FACTORY_ADDRESS } from '../config.js';
 import OPickFactoryAbi from '../abi/OPickFactory.json';
@@ -47,7 +46,7 @@ function smartParsePrice(val) {
 export default function CreatePage({ account, provider, signer, onConnect, authenticated, walletReady }) {
   const navigate = useNavigate();
   const { usdc, factory } = useContracts(signer || provider);
-  const { sendTransaction } = useSendTransaction();
+  const { sponsoredCall } = useSponsoredTx();
 
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [choiceA, setChoiceA] = useState('');
@@ -202,13 +201,8 @@ export default function CreatePage({ account, provider, signer, onConnect, authe
     setError('');
     setSuccess('');
     try {
-      // Encode and send sponsored tx
-      const iface = new Interface(OPickFactoryAbi);
-      const data = iface.encodeFunctionData('createMarket', [topic, a, b, category]);
-      const { hash } = await sendTransaction(
-        { to: FACTORY_ADDRESS, data },
-        { sponsor: true }
-      );
+      // Create market (sponsored for embedded wallets, signer-based for external)
+      const hash = await sponsoredCall(FACTORY_ADDRESS, OPickFactoryAbi, 'createMarket', [topic, a, b, category]);
 
       // Get market address from factory (latest market)
       let marketAddress = null;

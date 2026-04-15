@@ -126,6 +126,12 @@ export function useWallet() {
   const isReady = localMode ? !!localSigner : walletReady;
   const displayName = !localMode && authenticated && !account ? getUserDisplay(user) : null;
 
+  const activeWallet = !localMode && wallets.length > 0
+    ? (wallets.find(w => w.walletClientType === 'privy') || wallets[0])
+    : null;
+  const walletClientType = localMode ? 'local' : (activeWallet?.walletClientType ?? null);
+  const isEmbedded = walletClientType === 'privy';
+
   const connect = useCallback(() => {
     if (authenticated) return;
     privyLogin();
@@ -171,5 +177,7 @@ export function useWallet() {
     walletReady: isReady,
     displayName,
     user,
+    walletClientType,
+    isEmbedded,
   };
 }
