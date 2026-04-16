@@ -1,12 +1,21 @@
 import { useSendTransaction } from '@privy-io/react-auth';
-import { Contract, Interface } from 'ethers';
+import { BrowserProvider, Contract, Interface } from 'ethers';
 import { useWallet } from './useWallet.js';
 
 export function useSponsoredTx() {
   const { sendTransaction } = useSendTransaction();
-  const { isEmbedded, signer } = useWallet();
+  const { isEmbedded } = useWallet();
 
-  // Low-level raw tx: embedded -> sponsored, external -> signer.sendTransaction
+  // Build a fresh signer from window.ethereum (bypasses Privy's RPC proxy)
+  const getExternalSigner = async () => {
+    if (typeof window === 'undefined' || !window.ethereum) {
+      throw new Error('No injected wallet provider found');
+    }
+    const provider = new BrowserProvider(window.ethereum);
+    return provider.getSigner();
+  };
+
+  // Low-level raw tx: embedded -> sponsored, external -> window.ethereum
   const sponsoredTx = async ({ to, data, value }) => {
     console.log('[tx]', { isEmbedded, fn: 'sponsoredTx', to });
     if (isEmbedded) {
@@ -16,8 +25,8 @@ export function useSponsoredTx() {
       );
       return hash;
     }
-    // External wallet: use ethers signer
-    if (!signer) throw new Error('Wallet not ready. Please wait a moment and try again.');
+    console.log('[tx-external] sending via window.ethereum', { to, fn: 'raw' });
+    const signer = await getExternalSigner();
     const tx = await signer.sendTransaction({ to, data, value: value ?? 0n });
     return tx.hash;
   };
@@ -30,8 +39,8 @@ export function useSponsoredTx() {
       const data = iface.encodeFunctionData(fnName, args);
       return sponsoredTx({ to: address, data });
     }
-    // External wallet: native contract call (MetaMask estimates gas)
-    if (!signer) throw new Error('Wallet not ready. Please wait a moment and try again.');
+    console.log('[tx-external] sending via window.ethereum', { to: address, fn: fnName });
+    const signer = await getExternalSigner();
     const contract = new Contract(address, abi, signer);
     const tx = await contract[fnName](...args, opts);
     return tx.hash;
