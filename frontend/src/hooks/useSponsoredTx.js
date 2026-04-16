@@ -26,6 +26,7 @@ export function useSponsoredTx() {
     }
     const signer = await getExternalSigner();
     const tx = await signer.sendTransaction({ to, data, value: value ?? 0n });
+    await tx.wait(1);
     return tx.hash;
   };
 
@@ -42,6 +43,7 @@ export function useSponsoredTx() {
     const tx = hasOpts
       ? await contract[fnName](...args, opts)
       : await contract[fnName](...args);
+    await tx.wait(1);
     return tx.hash;
   };
 
