@@ -28,6 +28,7 @@ export function useSponsoredTx() {
     console.log('[tx-external] sending via window.ethereum', { to, fn: 'raw' });
     const signer = await getExternalSigner();
     const tx = await signer.sendTransaction({ to, data, value: value ?? 0n });
+    console.log('[tx-external] raw tx response', { hash: tx?.hash, type: typeof tx });
     return tx.hash;
   };
 
@@ -42,7 +43,11 @@ export function useSponsoredTx() {
     console.log('[tx-external] sending via window.ethereum', { to: address, fn: fnName });
     const signer = await getExternalSigner();
     const contract = new Contract(address, abi, signer);
-    const tx = await contract[fnName](...args, opts);
+    const hasOpts = opts && Object.keys(opts).length > 0;
+    const tx = hasOpts
+      ? await contract[fnName](...args, opts)
+      : await contract[fnName](...args);
+    console.log('[tx-external] tx response', { hash: tx?.hash, type: typeof tx });
     return tx.hash;
   };
 
