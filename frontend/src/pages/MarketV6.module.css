@@ -1,0 +1,92 @@
+.page { max-width: 720px; margin: 0 auto; padding: 40px 48px 80px; }
+.backLink { font-family: var(--font-sans); font-size: 13px; color: var(--dim); text-decoration: none; display: inline-block; margin: 0 0 16px; }
+.backLink:hover { color: var(--text); }
+.loading { text-align: center; padding: 80px 0; font-family: var(--font-sans); font-size: 14px; color: var(--muted); }
+
+.header { margin: 0 0 24px; }
+.topic { font-family: var(--font-serif); font-size: 28px; font-weight: 400; font-style: italic; color: var(--text); margin: 0 0 8px; line-height: 1.3; }
+.meta { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.metaItem { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+.categoryBadge { font-family: var(--font-sans); font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--dim); background: var(--surface2); padding: 2px 8px; border-radius: 2px; }
+.timeLabel { font-family: var(--font-mono); font-size: 12px; color: var(--dim); }
+.stateLabel { font-family: var(--font-sans); font-size: 12px; font-weight: 500; color: var(--muted); }
+
+/* Progress */
+.progressSection { margin: 0 0 28px; }
+.progressTrack { width: 100%; height: 12px; background: var(--border); border-radius: 4px; overflow: hidden; margin: 0 0 8px; }
+.progressFill { height: 100%; background: var(--green); border-radius: 4px; transition: width 0.3s ease; }
+.progressInfo { display: flex; align-items: baseline; gap: 12px; }
+.pctLabel { font-family: var(--font-sans); font-size: 18px; font-weight: 600; color: var(--text); }
+.dollarLabel { font-family: var(--font-mono); font-size: 14px; color: var(--muted); }
+.progressNote { font-family: var(--font-sans); font-size: 12px; color: var(--muted); margin: 4px 0 0; }
+
+/* Side cards */
+.sidesRow { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 0 0 12px; }
+.sideCardA { border: 1px solid var(--green); border-radius: 4px; padding: 24px; background: var(--bg); text-align: center; }
+.sideCardB { border: 1px solid var(--red); border-radius: 4px; padding: 24px; background: var(--bg); text-align: center; }
+.sideName { font-family: var(--font-serif); font-size: 22px; font-weight: 400; font-style: italic; color: var(--text); margin: 0 0 8px; }
+.sidePct { font-family: var(--font-mono); font-size: 28px; font-weight: 500; color: var(--text); margin: 0 0 4px; }
+.sideDollar { font-family: var(--font-mono); font-size: 12px; color: var(--muted); margin: 0 0 16px; }
+.pickBtnA { width: 100%; font-family: var(--font-sans); font-size: 14px; font-weight: 600; color: #fff; background: var(--green); border: none; border-radius: 4px; padding: 12px; cursor: pointer; transition: opacity 0.15s; }
+.pickBtnA:hover { opacity: 0.9; }
+.pickBtnB { composes: pickBtnA; background: var(--red); }
+.lockNotice { font-family: var(--font-sans); font-size: 12px; color: var(--muted); text-align: center; margin: 0 0 24px; }
+
+/* Resolved */
+.resolvedSection { text-align: center; margin: 0 0 24px; }
+.winnerCardA { border: 2px solid var(--green); border-radius: 4px; padding: 24px; margin: 0 0 16px; }
+.winnerCardB { border: 2px solid var(--red); border-radius: 4px; padding: 24px; margin: 0 0 16px; }
+.winnerBadge { font-family: var(--font-mono); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--green); margin: 0 0 8px; display: block; }
+.claimBtn { font-family: var(--font-sans); font-size: 14px; font-weight: 600; color: #fff; background: var(--green); border: none; border-radius: 4px; padding: 14px 32px; cursor: pointer; transition: opacity 0.15s; }
+.claimBtn:hover { opacity: 0.9; }
+.claimBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Refunded */
+.refundSection { text-align: center; margin: 0 0 24px; }
+.refundText { font-family: var(--font-sans); font-size: 14px; color: var(--dim); margin: 0 0 16px; }
+
+/* Modal */
+.modalOverlay { position: fixed; inset: 0; z-index: 200; display: flex; align-items: center; justify-content: center; background: rgba(10, 10, 8, 0.5); backdrop-filter: blur(4px); }
+.modal { position: relative; width: 100%; max-width: 400px; margin: 16px; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 32px; }
+.modalTitle { font-family: var(--font-serif); font-size: 20px; font-weight: 400; font-style: italic; color: var(--text); margin: 0 0 20px; }
+.modalField { margin: 0 0 12px; }
+.modalLabel { font-family: var(--font-sans); font-size: 11px; font-weight: 600; color: var(--dim); display: block; margin: 0 0 4px; }
+.modalInput { font-family: var(--font-mono); font-size: 16px; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 10px 14px; outline: none; width: 100%; }
+.modalInput:focus { border-color: var(--dim); }
+.modalHelper { font-family: var(--font-sans); font-size: 11px; color: var(--muted); margin: 4px 0 0; }
+.modalInfo { font-family: var(--font-sans); font-size: 13px; color: var(--dim); margin: 0 0 4px; }
+.modalButtons { display: flex; gap: 10px; margin-top: 20px; }
+.cancelBtn { font-family: var(--font-sans); font-size: 13px; font-weight: 500; color: var(--dim); background: none; border: 1px solid var(--border); border-radius: 4px; padding: 12px 20px; cursor: pointer; }
+.cancelBtn:hover { border-color: var(--dim); color: var(--text); }
+.lockBtnA { flex: 1; font-family: var(--font-sans); font-size: 14px; font-weight: 600; color: #fff; background: var(--green); border: none; border-radius: 4px; padding: 12px; cursor: pointer; transition: opacity 0.15s; }
+.lockBtnA:hover { opacity: 0.9; }
+.lockBtnA:disabled { opacity: 0.4; cursor: not-allowed; }
+.lockBtnB { composes: lockBtnA; background: var(--red); }
+
+/* Messages */
+.errorMsg { background: var(--red-bg); border-radius: 4px; padding: 12px 16px; font-size: 13px; font-weight: 600; color: var(--red); text-align: center; margin: 16px 0; }
+.successMsg { background: var(--green-bg); border-radius: 4px; padding: 12px 16px; font-size: 13px; font-weight: 600; color: var(--green); text-align: center; margin: 16px 0; }
+
+/* Referral */
+.refSection { border: 1px solid var(--border); border-radius: 4px; padding: 16px; margin: 0 0 16px; }
+.refTitle { font-family: var(--font-sans); font-size: 13px; font-weight: 600; color: var(--text); margin: 0 0 8px; }
+.refRow { display: flex; align-items: center; gap: 8px; }
+.refUrl { font-family: var(--font-mono); font-size: 12px; color: var(--dim); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.refCopyBtn { font-family: var(--font-sans); font-size: 12px; font-weight: 600; color: var(--green); background: none; border: 1px solid var(--green); border-radius: 4px; padding: 4px 12px; cursor: pointer; white-space: nowrap; }
+.refCopyBtn:hover { background: var(--green-bg); }
+
+/* Creator controls */
+.creatorControls { border: 1px solid var(--red); border-radius: 4px; padding: 16px; margin: 0 0 16px; }
+.creatorTitle { font-family: var(--font-sans); font-size: 13px; font-weight: 600; color: var(--text); margin: 0 0 12px; }
+.closeBtn { font-family: var(--font-sans); font-size: 13px; font-weight: 600; color: #fff; background: var(--red); border: none; border-radius: 4px; padding: 10px 20px; cursor: pointer; }
+.closeWarning { font-family: var(--font-sans); font-size: 13px; color: var(--red); margin: 0 0 8px; }
+.closeActions { display: flex; gap: 8px; }
+.closeConfirmBtn { font-family: var(--font-sans); font-size: 13px; font-weight: 600; color: #fff; background: var(--red); border: none; border-radius: 4px; padding: 8px 16px; cursor: pointer; }
+.closeConfirmBtn:disabled { opacity: 0.4; }
+.closeNote { font-family: var(--font-sans); font-size: 11px; color: var(--muted); margin: 8px 0 0; }
+
+@media (max-width: 600px) {
+  .page { padding: 32px 16px 60px; }
+  .sidesRow { grid-template-columns: 1fr; }
+  .topic { font-size: 22px; }
+}

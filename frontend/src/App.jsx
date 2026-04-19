@@ -18,6 +18,9 @@ import PortfolioPage from './pages/PortfolioPage.jsx';
 import CreatePage from './pages/CreatePage.jsx';
 import AccountPage from './pages/AccountPage.jsx';
 import ProfilePage from './pages/ProfilePage.jsx';
+import CreateMarketV6 from './pages/CreateMarketV6.jsx';
+import MarketV6 from './pages/MarketV6.jsx';
+import AmplifierDashboard from './pages/AmplifierDashboard.jsx';
 import DevelopersPage from './pages/DevelopersPage.jsx';
 import DocsPage from './pages/DocsPage.jsx';
 import TermsPage from './pages/TermsPage.jsx';
@@ -92,6 +95,9 @@ function App() {
           <Route path="/markets" element={<HomePage />} />
           <Route path="/market/:address" element={<MarketPage {...pageProps} />} />
           <Route path="/u/:username" element={<ProfilePage />} />
+          <Route path="/create/v6" element={<CreateMarketV6 {...pageProps} />} />
+          <Route path="/v6/m/:address" element={<MarketV6 {...pageProps} />} />
+          <Route path="/amplifier" element={<AmplifierDashboard {...pageProps} />} />
           <Route path="/opinions" element={<AccountPage {...pageProps} />} />
           <Route path="/portfolio" element={<AccountPage {...pageProps} />} />
           <Route path="/create" element={<CreatePage {...pageProps} />} />
