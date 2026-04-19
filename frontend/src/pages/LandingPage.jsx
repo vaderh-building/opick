@@ -37,11 +37,10 @@ export default function LandingPage() {
           A market for every <em>opinion.</em>
         </h1>
         <p className={styles.heroSub}>
-          See what the world thinks. Pick a side,<br />
-          profit when others agree.
+          A dollar says what a thousand comments can't.
         </p>
         <p className={styles.heroSub2}>
-          No resolution, no expiry. Profit comes from being early to a side that gets popular.
+          Pick a side, lock it in, majority wins when the pool fills.
         </p>
         <Link to="/markets" className={styles.cta}>Browse Markets</Link>
         <p className={styles.tosLine}>
@@ -71,22 +70,22 @@ export default function LandingPage() {
           <div className={styles.step}>
             <span className={styles.stepNum}>1</span>
             <div>
-              <p className={styles.stepLabel}>Create a market</p>
-              <p className={styles.stepBody}>Pick any debate, name both sides, go live instantly.</p>
+              <p className={styles.stepLabel}>Pick a debate</p>
+              <p className={styles.stepBody}>Any question, two sides. Streamers, podcasters, anyone can launch one.</p>
             </div>
           </div>
           <div className={styles.step}>
             <span className={styles.stepNum}>2</span>
             <div>
-              <p className={styles.stepLabel}>Pick a side</p>
-              <p className={styles.stepBody}>Put money behind your opinion. Price reflects consensus.</p>
+              <p className={styles.stepLabel}>Lock in a side</p>
+              <p className={styles.stepBody}>$1 minimum. Your position is locked until the pool fills.</p>
             </div>
           </div>
           <div className={styles.step}>
             <span className={styles.stepNum}>3</span>
             <div>
-              <p className={styles.stepLabel}>Profit when others agree</p>
-              <p className={styles.stepBody}>Sell anytime. If more people join your side, you profit.</p>
+              <p className={styles.stepLabel}>Majority wins</p>
+              <p className={styles.stepBody}>When the volume cap is reached, the majority side splits the minority's pool. Refunds if the pool doesn't fill in 30 days.</p>
             </div>
           </div>
         </div>
@@ -95,7 +94,7 @@ export default function LandingPage() {
       {/* Bottom CTA */}
       <section className={styles.bottomCta}>
         <p className={styles.bottomText}>Have a debate the world should weigh in on?</p>
-        <Link to="/create" className={styles.ctaOutline}>Create a Market</Link>
+        <Link to="/create/v6" className={styles.ctaOutline}>Create a Market</Link>
       </section>
     </div>
   );
