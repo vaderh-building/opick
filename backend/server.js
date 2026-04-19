@@ -257,7 +257,7 @@ async function loadAllMarkets() {
     const m = await fetchMarketWithRetry(addresses[i]);
     if (m) results.push(m);
     console.log(`  ${i + 1}/${addresses.length} ${m ? "ok" : "FAILED"}`);
-    if (i < addresses.length - 1) await sleep(500);
+    if (i < addresses.length - 1) await sleep(200);
   }
   return results;
 }
@@ -356,11 +356,11 @@ cache.refresh = async () => {
     }
   })();
 
-  // 30s timeout: return whatever we have if it takes too long
+  // 90s timeout: return whatever we have if it takes too long
   const timeout = new Promise(resolve => setTimeout(() => {
-    console.log("Refresh timeout after 30s");
+    console.log("Refresh timeout after 90s");
     resolve();
-  }, 30000));
+  }, 90000));
 
   await Promise.race([refreshInProgress, timeout]);
 };
@@ -625,11 +625,12 @@ server.listen(PORT, () => {
 
   const preload = async () => {
     try {
+      console.log("[PRELOAD] Starting V5 market load...");
       const markets = await loadAllMarkets();
       cache.markets = markets;
-      console.log(`Ready: ${markets.length} V5 markets cached`);
+      console.log(`[PRELOAD] Ready: ${markets.length} V5 markets cached`);
     } catch (e) {
-      console.error("Preload failed:", e.message);
+      console.error("[PRELOAD] Failed:", e.message);
       if (!cache.markets) cache.markets = [];
     } finally {
       cache.loading = false;
@@ -639,28 +640,29 @@ server.listen(PORT, () => {
       try {
         const v6markets = await loadAllV6Markets();
         v6Cache.markets = v6markets;
-        console.log(`Ready: ${v6markets.length} V6 markets cached`);
+        console.log(`[PRELOAD] Ready: ${v6markets.length} V6 markets cached`);
       } catch (e) {
-        console.error("V6 preload failed:", e.message);
+        console.error("[PRELOAD] V6 failed:", e.message);
         if (!v6Cache.markets) v6Cache.markets = [];
       }
     } else {
       v6Cache.markets = [];
     }
+
+    // Only start background refresh AFTER preload completes
+    console.log("[PRELOAD] Starting background refresh interval (60s)");
+    setInterval(backgroundRefresh, 60 * 1000);
   };
 
   // Start preload in background (server responds to requests immediately)
   preload();
 
-  // Safety: force loading=false after 60s no matter what
+  // Safety: force loading=false after 120s (was 60s, too short for 27 markets)
   setTimeout(() => {
     if (cache.loading) {
       console.log("Safety timeout: forcing loading=false");
       cache.loading = false;
       if (!cache.markets) cache.markets = [];
     }
-  }, 60000);
-
-  // Background refresh every 60 seconds
-  setInterval(backgroundRefresh, 60 * 1000);
+  }, 120000);
 });

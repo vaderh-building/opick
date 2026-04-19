@@ -21,10 +21,14 @@ export default function createMarketsRouter({
 
   // GET /api/markets — always instant from cache
   router.get("/", (req, res) => {
-    if (cache.markets && cache.markets.length > 0) {
+    const total = cache.markets?.length || 0;
+    const loading = cache.loading;
+    if (total > 0) {
       const visible = cache.markets.filter(m => !HIDDEN_MARKETS.has(m.address.toLowerCase()));
+      console.log(`[API] GET /markets returning ${visible.length} markets (cache: ${total}, loading: ${loading})`);
       return res.json(visible);
     }
+    console.log(`[API] GET /markets returning [] (cache: ${total}, loading: ${loading})`);
     res.json([]);
   });
 
