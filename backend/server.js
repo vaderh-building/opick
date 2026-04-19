@@ -44,7 +44,8 @@ function loadConfig() {
     } catch {}
   }
 
-  rpcUrl = rpcUrl || "https://rpc.ankr.com/base";
+  // Priority: ALCHEMY_BASE_URL > RPC_URL > public fallback
+  rpcUrl = process.env.ALCHEMY_BASE_URL || rpcUrl || "https://mainnet.base.org";
   return { factoryAddress, usdcAddress, rpcUrl };
 }
 
@@ -53,9 +54,7 @@ console.log("Config:", config);
 
 // ---------- Provider with fallback ----------
 const PRIMARY_RPC = config.rpcUrl;
-const FALLBACK_RPC = PRIMARY_RPC === "https://mainnet.base.org"
-  ? "https://rpc.ankr.com/base"
-  : "https://mainnet.base.org";
+const FALLBACK_RPC = "https://mainnet.base.org";
 
 const chainId = config.rpcUrl.includes('sepolia') ? 84532 : 8453;
 const chainName = chainId === 8453 ? 'base' : 'base-sepolia';
@@ -76,8 +75,9 @@ const provider = new Proxy(primaryProvider, {
       } catch (err) {
         const msg = (err.message || '').toLowerCase();
         const is429 = msg.includes('429') || msg.includes('rate limit') || msg.includes('too many');
-        const isNetErr = msg.includes('network') || msg.includes('econnrefused') || msg.includes('timeout') || msg.includes('fetch');
-        if (is429 || isNetErr) {
+        const isAuth = msg.includes('401') || msg.includes('403') || msg.includes('unauthorized') || msg.includes('api key');
+        const isNetErr = msg.includes('network') || msg.includes('econnrefused') || msg.includes('timeout') || msg.includes('fetch') || msg.includes('bad_data');
+        if (is429 || isAuth || isNetErr) {
           console.warn(`Primary RPC failed (${err.message.slice(0, 80)}), falling back to ${FALLBACK_RPC}`);
           return await fallbackProvider[prop](...args);
         }

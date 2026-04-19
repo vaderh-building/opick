@@ -1,9 +1,7 @@
 import { useState, useMemo, useRef } from 'react';
 import { useMarkets } from '../hooks/useMarkets.js';
-import { useV6Markets } from '../hooks/useV6Markets.js';
 import { usePriceWebSocket } from '../hooks/usePriceWebSocket.js';
 import MarketCard from '../components/MarketCard.jsx';
-import V6MarketCard from '../components/V6MarketCard.jsx';
 import styles from './HomePage.module.css';
 
 const CATEGORIES = ['All', 'Sports', 'Music', 'Tech', 'Culture', 'Finance', 'Lifestyle'];
@@ -32,14 +30,12 @@ function formatUSD(value) {
 }
 
 export default function HomePage() {
-  const [activeTab, setActiveTab] = useState('v6');
   const [activeCategory, setActiveCategory] = useState('All');
   const [sortBy, setSortBy] = useState('volume');
   const [search, setSearch] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
   const searchRef = useRef(null);
   const { markets, loading } = useMarkets();
-  const { markets: v6Markets, loading: v6Loading } = useV6Markets();
   const wsPrices = usePriceWebSocket();
 
   // Merge WS prices into market data and parse numeric values
@@ -122,28 +118,6 @@ export default function HomePage() {
         </div>
       </div>
 
-      <div className={styles.versionTabs}>
-        <button className={activeTab === 'v6' ? styles.vTabActive : styles.vTab} onClick={() => setActiveTab('v6')}>
-          Live Markets (V6)
-        </button>
-        <button className={activeTab === 'v5' ? styles.vTabActive : styles.vTab} onClick={() => setActiveTab('v5')}>
-          Legacy Markets (V5)
-        </button>
-      </div>
-
-      {activeTab === 'v6' && (
-        <>
-          <div className={styles.grid}>
-            {v6Markets.map((m) => <V6MarketCard key={m.address} market={m} />)}
-          </div>
-          {!v6Loading && v6Markets.length === 0 && (
-            <p className={styles.empty}>No V6 markets yet. <a href="/create/v6" className={styles.createLink}>Create one</a></p>
-          )}
-          {v6Loading && <p className={styles.empty}>Loading V6 markets...</p>}
-        </>
-      )}
-
-      {activeTab === 'v5' && <>
       <div className={styles.filterRow}>
         <div className={styles.categories}>
           {CATEGORIES.map((cat) => (
@@ -214,7 +188,6 @@ export default function HomePage() {
       {loading && (
         <p className={styles.empty}>Loading markets...</p>
       )}
-      </>}
     </div>
   );
 }
