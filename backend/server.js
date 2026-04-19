@@ -640,6 +640,9 @@ server.listen(PORT, () => {
       console.log(`[CACHE] Writing ${markets.length} markets to cache...`);
       cache.markets = markets;
       console.log(`[CACHE] Cache now has ${cache.markets.length} markets`);
+      // Seed price history so charts show a data point immediately
+      recordPrices(markets);
+      console.log(`[PRELOAD] Seeded price history for ${markets.length} markets`);
       console.log(`[PRELOAD] Ready: ${markets.length} V5 markets cached`);
     } catch (e) {
       console.error("[PRELOAD] Failed:", e.message);
@@ -714,6 +717,7 @@ server.listen(PORT, () => {
         }
         if (results.length > 0) {
           cache.markets = results;
+          recordPrices(results);
           console.log(`[EMERGENCY] Populated cache with ${results.length} markets`);
         }
       } catch (e) {
