@@ -64,21 +64,29 @@ const staticOpts = { staticNetwork: true };
 const primaryProvider = new ethers.JsonRpcProvider(PRIMARY_RPC, networkOpts, staticOpts);
 const fallbackProvider = new ethers.JsonRpcProvider(FALLBACK_RPC, networkOpts, staticOpts);
 
-// Proxy that tries primary, falls back on 429 or network errors
+// Sticky fallback: once primary fails, use fallback for the rest of the session
+// (avoids retrying a dead RPC on every single call)
+let useFallback = false;
+
 const provider = new Proxy(primaryProvider, {
   get(target, prop, receiver) {
     const val = Reflect.get(target, prop, receiver);
     if (typeof val !== 'function') return val;
     return async function (...args) {
+      // If primary already failed, go straight to fallback
+      if (useFallback) {
+        return await fallbackProvider[prop](...args);
+      }
       try {
         return await val.apply(target, args);
       } catch (err) {
         const msg = (err.message || '').toLowerCase();
         const is429 = msg.includes('429') || msg.includes('rate limit') || msg.includes('too many');
         const isAuth = msg.includes('401') || msg.includes('403') || msg.includes('unauthorized') || msg.includes('api key');
-        const isNetErr = msg.includes('network') || msg.includes('econnrefused') || msg.includes('timeout') || msg.includes('fetch') || msg.includes('bad_data');
+        const isNetErr = msg.includes('network') || msg.includes('econnrefused') || msg.includes('timeout') || msg.includes('fetch') || msg.includes('bad_data') || msg.includes('retry');
         if (is429 || isAuth || isNetErr) {
-          console.warn(`Primary RPC failed (${err.message.slice(0, 80)}), falling back to ${FALLBACK_RPC}`);
+          console.warn(`Primary RPC failed (${err.message.slice(0, 80)}), switching to ${FALLBACK_RPC} for this session`);
+          useFallback = true;
           return await fallbackProvider[prop](...args);
         }
         throw err;
@@ -254,11 +262,13 @@ async function loadAllMarkets() {
 
   const results = [];
   for (let i = 0; i < addresses.length; i++) {
+    console.log(`  [LOAD] ${i + 1}/${addresses.length} fetching ${addresses[i].slice(0, 10)}...`);
     const m = await fetchMarketWithRetry(addresses[i]);
     if (m) results.push(m);
-    console.log(`  ${i + 1}/${addresses.length} ${m ? "ok" : "FAILED"}`);
+    console.log(`  [LOAD] ${i + 1}/${addresses.length} ${m ? "ok" : "FAILED"}`);
     if (i < addresses.length - 1) await sleep(200);
   }
+  console.log(`[LOAD] Completed: ${results.length}/${addresses.length} markets loaded`);
   return results;
 }
 
@@ -627,7 +637,9 @@ server.listen(PORT, () => {
     try {
       console.log("[PRELOAD] Starting V5 market load...");
       const markets = await loadAllMarkets();
+      console.log(`[CACHE] Writing ${markets.length} markets to cache...`);
       cache.markets = markets;
+      console.log(`[CACHE] Cache now has ${cache.markets.length} markets`);
       console.log(`[PRELOAD] Ready: ${markets.length} V5 markets cached`);
     } catch (e) {
       console.error("[PRELOAD] Failed:", e.message);
@@ -665,4 +677,48 @@ server.listen(PORT, () => {
       if (!cache.markets) cache.markets = [];
     }
   }, 120000);
+
+  // Emergency fallback: if cache is still empty after 180s, try minimal load
+  setTimeout(async () => {
+    if (!cache.markets || cache.markets.length === 0) {
+      console.log("[EMERGENCY] Cache still empty after 180s. Attempting minimal load via fallback RPC...");
+      useFallback = true; // force fallback
+      try {
+        const factory = new ethers.Contract(factoryAddress, factoryAbi, fallbackProvider);
+        const total = Number(await factory.totalMarkets());
+        const addresses = Array.from(await factory.getMarkets(0, total));
+        console.log(`[EMERGENCY] Factory has ${addresses.length} markets. Loading...`);
+        const results = [];
+        for (const addr of addresses) {
+          try {
+            const c = new ethers.Contract(addr, marketAbi, fallbackProvider);
+            const topic = await c.topic();
+            const sideAName = await c.sideAName();
+            const sideBName = await c.sideBName();
+            const category = await c.category();
+            const creator = await c.creator();
+            const priceA = await c.priceA();
+            const priceB = await c.priceB();
+            const totalVolume = await c.totalVolume();
+            results.push({
+              address: addr, topic, sideAName, sideBName, category, creator,
+              createdAt: "0",
+              priceA: priceA.toString(), priceB: priceB.toString(),
+              totalVolume: totalVolume.toString(), creatorEarnings: "0",
+              reserveA: "0", reserveB: "0", totalSharesA: "0", totalSharesB: "0",
+            });
+          } catch (e) {
+            console.log(`[EMERGENCY] Failed ${addr.slice(0,10)}: ${e.message.slice(0,60)}`);
+          }
+          await sleep(300);
+        }
+        if (results.length > 0) {
+          cache.markets = results;
+          console.log(`[EMERGENCY] Populated cache with ${results.length} markets`);
+        }
+      } catch (e) {
+        console.log(`[EMERGENCY] Minimal load failed: ${e.message.slice(0,80)}`);
+      }
+    }
+  }, 180000);
 });
