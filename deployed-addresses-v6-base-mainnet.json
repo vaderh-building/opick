@@ -1,0 +1,8 @@
+{
+  "chainId": 8453,
+  "network": "base-mainnet",
+  "deployer": "0xBc50b0C4c72928c7AE4702D39452BE4aF82e533d",
+  "treasury": "0xBc50b0C4c72928c7AE4702D39452BE4aF82e533d",
+  "USDC": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+  "OPickV6Factory": "0x3747A7ADD724EF3d28AB716F4Df3fd6bb96613D3"
+}
