@@ -80,3 +80,35 @@ npx hardhat test test/OPickV6.test.mjs
 3. Creator clicks "Close market and refund all"
 4. User A claims $100, User B claims $50
 5. No fees collected
+
+## Production Verification
+
+After V6 factory is deployed to mainnet, verify the deployment:
+
+1. Check factory on Basescan:
+   https://basescan.org/address/0x3747A7ADD724EF3d28AB716F4Df3fd6bb96613D3
+
+2. Run end-to-end script from terminal:
+   ```
+   npx hardhat run scripts/verify-v6-e2e.mjs --network base
+   ```
+
+3. Visit the created test market in browser:
+   https://opick.io/v6/m/<market_address from script output>
+
+4. Verify backend picks up the V6 factory:
+   ```
+   curl https://opick-production.up.railway.app/api/v6/markets
+   ```
+   (should return the test market)
+
+5. Create a real V6 market via UI:
+   https://opick.io/create/v6
+   Fill in a topic, pick cap = $100, submit. Should redirect to the market page.
+
+## V6 Factory Address
+
+- Network: Base Mainnet (chainId 8453)
+- Factory: 0x3747A7ADD724EF3d28AB716F4Df3fd6bb96613D3
+- USDC: 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913
+- Treasury: 0xBc50b0C4c72928c7AE4702D39452BE4aF82e533d
