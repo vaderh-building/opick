@@ -9,6 +9,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 import createMarketsRouter from "./routes/markets.js";
+import createMarketsV6Router, { fetchV6MarketData } from "./routes/marketsV6.js";
 import usersRouter from "./routes/users.js";
 import profilesRouter from "./routes/profiles.js";
 import createCommentsRouter from "./routes/comments.js";
@@ -107,6 +108,23 @@ function loadAbi(name) {
 const factoryAbi = loadAbi("OPickFactory");
 const marketAbi = loadAbi("OPickMarket");
 const factoryAddress = config.factoryAddress;
+
+// V6
+const v6FactoryAbi = loadAbi("OPickV6Factory");
+const v6MarketAbi = loadAbi("OPickV6Market");
+const v6FactoryAddress = process.env.V6_FACTORY_ADDRESS || "";
+if (v6FactoryAddress) {
+  console.log("V6 factory:", v6FactoryAddress);
+} else {
+  console.log("V6 factory: not configured (set V6_FACTORY_ADDRESS to enable)");
+}
+
+// V6 cache (separate from V5)
+const v6Cache = {
+  markets: null,
+  loading: false,
+};
+const v6StaticCache = new Map();
 
 // ==========================================================================
 // Market Cache — permanent, background-refreshed
@@ -244,6 +262,30 @@ async function loadAllMarkets() {
   return results;
 }
 
+// Load all V6 markets from V6 factory
+async function loadAllV6Markets() {
+  if (!v6FactoryAddress) return [];
+  console.log("Querying V6 factory at", v6FactoryAddress);
+  const factory = new ethers.Contract(v6FactoryAddress, v6FactoryAbi, provider);
+  const total = Number(await factory.totalMarkets());
+  console.log("V6 factory reports", total, "markets");
+  if (total === 0) return [];
+
+  const addresses = Array.from(await factory.getMarkets(0, total));
+  const results = [];
+  for (let i = 0; i < addresses.length; i++) {
+    try {
+      const m = await fetchV6MarketData(addresses[i], provider, v6MarketAbi);
+      if (m) results.push(m);
+      console.log(`  V6 ${i + 1}/${addresses.length} ${m ? "ok" : "FAILED"}`);
+    } catch (err) {
+      console.error(`  V6 ${i + 1}/${addresses.length} FAILED: ${err.message.slice(0, 80)}`);
+    }
+    if (i < addresses.length - 1) await sleep(500);
+  }
+  return results;
+}
+
 // Background refresh
 async function backgroundRefresh() {
   if (!cache.markets || cache.markets.length === 0) {
@@ -267,6 +309,26 @@ async function backgroundRefresh() {
     console.log(`Background refresh done: ${updated.length} markets`);
   } catch (e) {
     console.error("Background refresh failed:", e.message);
+  }
+
+  // V6 background refresh
+  if (v6FactoryAddress && v6Cache.markets) {
+    try {
+      const v6updated = [];
+      for (const m of v6Cache.markets) {
+        try {
+          const fresh = await fetchV6MarketData(m.address, provider, v6MarketAbi);
+          v6updated.push(fresh);
+        } catch {
+          v6updated.push(m);
+        }
+        await sleep(500);
+      }
+      v6Cache.markets = v6updated;
+      console.log(`V6 background refresh done: ${v6updated.length} markets`);
+    } catch (e) {
+      console.error("V6 background refresh failed:", e.message);
+    }
   }
 }
 
@@ -310,10 +372,13 @@ app.use(express.json());
 
 const marketsRouter = createMarketsRouter({ provider, factoryAddress, factoryAbi, marketAbi, cache, priceHistory, tradeLogs });
 const commentsRouter = createCommentsRouter({ provider, marketAbi });
+const marketsV6Router = createMarketsV6Router({ provider, v6FactoryAddress, v6FactoryAbi, v6MarketAbi, v6Cache });
 app.use("/api/markets", marketsRouter);
+app.use("/api/v6/markets", marketsV6Router);
+app.use("/api/v6", marketsV6Router); // also mount amplifier endpoints under /api/v6/
 app.use("/api/users", usersRouter);
 app.use("/api/profiles", profilesRouter);
-app.use("/api", commentsRouter);  // mounts /api/markets/:address/comments + /api/comments/:id/*
+app.use("/api", commentsRouter);
 app.use("/api/admin", adminRouter);
 
 // ---------- Public Developer API v1 (read-only aliases) ----------
@@ -562,12 +627,25 @@ server.listen(PORT, () => {
     try {
       const markets = await loadAllMarkets();
       cache.markets = markets;
-      console.log(`Ready: ${markets.length} markets cached`);
+      console.log(`Ready: ${markets.length} V5 markets cached`);
     } catch (e) {
       console.error("Preload failed:", e.message);
       if (!cache.markets) cache.markets = [];
     } finally {
       cache.loading = false;
+    }
+    // V6 preload (non-blocking, separate from V5)
+    if (v6FactoryAddress) {
+      try {
+        const v6markets = await loadAllV6Markets();
+        v6Cache.markets = v6markets;
+        console.log(`Ready: ${v6markets.length} V6 markets cached`);
+      } catch (e) {
+        console.error("V6 preload failed:", e.message);
+        if (!v6Cache.markets) v6Cache.markets = [];
+      }
+    } else {
+      v6Cache.markets = [];
     }
   };
 
