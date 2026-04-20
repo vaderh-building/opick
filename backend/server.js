@@ -145,8 +145,43 @@ const staticCache = new Map(); // address -> { topic, sideAName, sideBName, cate
 const cache = {
   markets: null,
   loading: true,
+  isStale: false,
   refresh: null, // set below
 };
+
+// ---------- Disk cache for fast cold starts ----------
+const CACHE_FILE = path.join(
+  path.dirname(process.env.DB_PATH || path.join(process.cwd(), "data", "opick.db")),
+  "markets-cache.json"
+);
+
+function loadCacheFromDisk() {
+  try {
+    if (fs.existsSync(CACHE_FILE)) {
+      const raw = fs.readFileSync(CACHE_FILE, "utf-8");
+      const data = JSON.parse(raw);
+      if (Array.isArray(data) && data.length > 0) {
+        console.log(`[CACHE] Loaded ${data.length} markets from disk cache`);
+        return data;
+      }
+    }
+  } catch (e) {
+    console.warn("[CACHE] Failed to read disk cache:", e.message);
+  }
+  return null;
+}
+
+function saveCacheToDisk(markets) {
+  if (!markets || markets.length === 0) return;
+  try {
+    const dir = path.dirname(CACHE_FILE);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(CACHE_FILE, JSON.stringify(markets));
+    console.log(`[CACHE] Saved ${markets.length} markets to disk cache`);
+  } catch (e) {
+    console.warn("[CACHE] Failed to write disk cache:", e.message);
+  }
+}
 
 // Price history: { [address]: [{ timestamp, priceA, priceB }] }
 const priceHistory = new Map();
@@ -296,7 +331,7 @@ async function loadAllV6Markets() {
   return results;
 }
 
-// Background refresh
+// Background refresh (also discovers new markets from factory)
 async function backgroundRefresh() {
   if (!cache.markets || cache.markets.length === 0) {
     try { await cache.refresh(); } catch {}
@@ -304,6 +339,29 @@ async function backgroundRefresh() {
   }
   console.log("Background refresh...");
   try {
+    // Check for new markets from factory
+    const cachedAddrs = new Set(cache.markets.map(m => m.address.toLowerCase()));
+    try {
+      const factory = new ethers.Contract(factoryAddress, factoryAbi, provider);
+      const total = Number(await factory.totalMarkets());
+      if (total > cache.markets.length) {
+        console.log(`[REFRESH] Factory has ${total} markets, cache has ${cache.markets.length}. Fetching new ones...`);
+        const addresses = Array.from(await factory.getMarkets(0, total));
+        for (const addr of addresses) {
+          if (!cachedAddrs.has(addr.toLowerCase())) {
+            const m = await fetchMarketWithRetry(addr);
+            if (m) {
+              cache.markets.push(m);
+              console.log(`[REFRESH] Discovered new market: ${addr.slice(0, 10)}...`);
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("[REFRESH] New market discovery failed:", e.message.slice(0, 60));
+    }
+
+    // Refresh existing market data
     const updated = [];
     for (const m of cache.markets) {
       try {
@@ -315,7 +373,9 @@ async function backgroundRefresh() {
       await sleep(500);
     }
     cache.markets = updated;
+    cache.isStale = false;
     recordPrices(updated);
+    saveCacheToDisk(updated);
     console.log(`Background refresh done: ${updated.length} markets`);
   } catch (e) {
     console.error("Background refresh failed:", e.message);
@@ -356,8 +416,10 @@ cache.refresh = async () => {
     try {
       const markets = await loadAllMarkets();
       cache.markets = markets;
+      cache.isStale = false;
       console.log("Cache refresh done:", markets.length, "markets");
       recordPrices(markets);
+      saveCacheToDisk(markets);
     } catch (e) {
       console.error("Cache refresh FAILED:", e.message);
       if (!cache.markets) cache.markets = [];
@@ -625,13 +687,23 @@ const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
   console.log(`OPick backend on http://localhost:${PORT}`);
 
-  // Clear all caches on startup to force fresh fetch with new provider
-  cache.markets = null;
+  // Load disk cache immediately for fast cold starts
   staticCache.clear();
   priceHistory.clear();
   tradeLogs.clear();
   prevVolumes.clear();
-  cache.loading = true;
+
+  const diskData = loadCacheFromDisk();
+  if (diskData) {
+    cache.markets = diskData;
+    cache.isStale = true;
+    cache.loading = false;
+    recordPrices(diskData);
+    console.log(`[STARTUP] Serving ${diskData.length} stale markets from disk while refreshing...`);
+  } else {
+    cache.markets = null;
+    cache.loading = true;
+  }
 
   const preload = async () => {
     try {
@@ -639,10 +711,10 @@ server.listen(PORT, () => {
       const markets = await loadAllMarkets();
       console.log(`[CACHE] Writing ${markets.length} markets to cache...`);
       cache.markets = markets;
+      cache.isStale = false;
       console.log(`[CACHE] Cache now has ${cache.markets.length} markets`);
-      // Seed price history so charts show a data point immediately
       recordPrices(markets);
-      console.log(`[PRELOAD] Seeded price history for ${markets.length} markets`);
+      saveCacheToDisk(markets);
       console.log(`[PRELOAD] Ready: ${markets.length} V5 markets cached`);
     } catch (e) {
       console.error("[PRELOAD] Failed:", e.message);
@@ -718,6 +790,7 @@ server.listen(PORT, () => {
         if (results.length > 0) {
           cache.markets = results;
           recordPrices(results);
+          saveCacheToDisk(results);
           console.log(`[EMERGENCY] Populated cache with ${results.length} markets`);
         }
       } catch (e) {

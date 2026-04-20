@@ -19,16 +19,18 @@ export default function createMarketsRouter({
     "0x1De15b5510B8D7Cdee42AA662949b85276663962",
   ].map(a => a.toLowerCase()));
 
-  // GET /api/markets — always instant from cache
+  // GET /api/markets — always instant from cache (stale data during cold start)
   router.get("/", (req, res) => {
     const total = cache.markets?.length || 0;
     const loading = cache.loading;
+    const stale = cache.isStale || false;
+    if (stale) res.set("X-Cache-Stale", "true");
     if (total > 0) {
       const visible = cache.markets.filter(m => !HIDDEN_MARKETS.has(m.address.toLowerCase()));
-      console.log(`[API] GET /markets returning ${visible.length} markets (cache: ${total}, loading: ${loading})`);
+      console.log(`[API] GET /markets returning ${visible.length} markets (stale: ${stale}, loading: ${loading})`);
       return res.json(visible);
     }
-    console.log(`[API] GET /markets returning [] (cache: ${total}, loading: ${loading})`);
+    console.log(`[API] GET /markets returning [] (stale: ${stale}, loading: ${loading})`);
     res.json([]);
   });
 
