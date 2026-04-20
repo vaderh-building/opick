@@ -81,6 +81,9 @@ export default function CreateMarketV6({ account, onConnect, authenticated }) {
 
   return (
     <div className={styles.page}>
+      <div className={styles.expBanner}>
+        V6 is experimental and not yet indexed on /markets. For public markets use <a href="/create" className={styles.expLink}>/create</a>.
+      </div>
       <h1 className={styles.title}>Create a V6 Market</h1>
       <p className={styles.subtitle}>Locked positions, volume cap resolution.</p>
 

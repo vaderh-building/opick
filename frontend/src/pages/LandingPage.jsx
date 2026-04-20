@@ -94,7 +94,7 @@ export default function LandingPage() {
       {/* Bottom CTA */}
       <section className={styles.bottomCta}>
         <p className={styles.bottomText}>Have a debate the world should weigh in on?</p>
-        <Link to="/create/v6" className={styles.ctaOutline}>Create a Market</Link>
+        <Link to="/create" className={styles.ctaOutline}>Create a Market</Link>
       </section>
     </div>
   );
