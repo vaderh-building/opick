@@ -76,10 +76,18 @@ export default function createMarketsRouter({
   router.post("/trades/:address", (req, res) => {
     const { side, amount, priceA, priceB } = req.body || {};
     if (!side || !amount) return res.json({ ok: false });
+    const ts = Date.now();
     const log = tradeLogs?.get(req.params.address) || [];
-    log.push({ timestamp: Date.now(), side, amount: Number(amount), priceA, priceB });
+    log.push({ timestamp: ts, side, amount: Number(amount), priceA, priceB });
     if (log.length > 100) log.shift();
     tradeLogs?.set(req.params.address, log);
+    // Also record price point for chart
+    if (priceA && priceB && priceHistory) {
+      const arr = priceHistory.get(req.params.address) || [];
+      arr.push({ timestamp: ts, priceA, priceB });
+      if (arr.length > 500) arr.shift();
+      priceHistory.set(req.params.address, arr);
+    }
     res.json({ ok: true });
   });
 
