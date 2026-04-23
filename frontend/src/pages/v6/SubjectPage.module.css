@@ -106,9 +106,16 @@
 .middleCol {
   min-width: 0;
   padding: 0 8px;
+  overflow: hidden;
 }
 
-.heroNumber { margin: 4px 0 6px; line-height: 0.95; }
+.heroNumber {
+  margin: 4px 0 6px;
+  line-height: 0.95;
+  max-width: 100%;
+  overflow: hidden;
+}
+.heroNumber > * { max-width: 100%; }
 
 .heroCaption {
   font-family: var(--font-sans);
@@ -205,9 +212,11 @@
 .mcTitle { line-height: 1.15; }
 
 .mcPrice {
-  font-size: 42px !important;
+  font-size: clamp(1.75rem, 3vw, 2.6rem) !important;
   line-height: 1;
   letter-spacing: -0.03em;
+  max-width: 100%;
+  word-break: break-word;
 }
 
 .mcSide {
@@ -301,7 +310,6 @@
 @media (max-width: 768px) {
   .page { padding: 16px 16px 60px; }
   .masthead { padding: 24px 0 16px; }
-  .mcPrice { font-size: 36px !important; }
   .miniGrid { grid-template-columns: 1fr; }
   .footerRow { grid-template-columns: 1fr; gap: 10px; text-align: center; }
   .footerLive, .footerLinks { justify-content: center; }

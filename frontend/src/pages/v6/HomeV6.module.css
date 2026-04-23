@@ -33,16 +33,18 @@
 /* Focus card */
 .focusCard {
   display: grid;
-  grid-template-columns: 3fr 4fr 3fr;
+  grid-template-columns: minmax(240px, 1fr) minmax(0, 1.4fr) minmax(260px, 1fr);
   gap: 0;
   border-top: 1px solid var(--rule);
   border-bottom: 1px solid var(--rule);
+  width: 100%;
 }
 
 .focusCol {
   padding: 36px 28px;
   border-right: 1px solid var(--border);
   min-width: 0;
+  overflow: hidden;
 }
 
 .focusCol:last-child {
@@ -100,7 +102,11 @@
 .numberBlock {
   margin: 6px 0 10px;
   line-height: 0.95;
+  max-width: 100%;
+  overflow: hidden;
 }
+
+.numberBlock > * { max-width: 100%; }
 
 .numberCaption {
   font-family: var(--font-sans);
@@ -370,10 +376,14 @@
 }
 
 .mcPrice {
-  font-size: 54px;
+  font-size: clamp(2.25rem, 4.5vw, 3.5rem);
   line-height: 1;
   letter-spacing: -0.03em;
+  max-width: 100%;
+  word-break: break-word;
 }
+
+.mcMid > * { max-width: 100%; }
 
 .mcMetric {
   font-family: var(--font-sans);

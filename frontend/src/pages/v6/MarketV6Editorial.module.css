@@ -102,6 +102,8 @@
   align-items: center;
   gap: 10px;
   padding: 12px 8px;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .priceDivider {
@@ -112,8 +114,15 @@
 
 .priceCaption { color: var(--dim); }
 
-.priceNumber { font-size: 80px !important; line-height: 0.95; letter-spacing: -0.03em; color: var(--ink); }
-.priceNumberNo { font-size: 80px !important; line-height: 0.95; letter-spacing: -0.03em; color: var(--ink); }
+.priceNumber,
+.priceNumberNo {
+  font-size: clamp(2.5rem, 5.5vw, 5rem) !important;
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+  max-width: 100%;
+  word-break: break-word;
+}
 
 .leadingYes .priceNumber { color: var(--green); }
 .leadingNo .priceNumberNo { color: var(--red); }
@@ -331,13 +340,11 @@
     padding: 24px 0;
     order: 0;
   }
-  .priceNumber, .priceNumberNo { font-size: 64px !important; }
 }
 
 @media (max-width: 768px) {
   .page { padding: 16px 16px 120px; }
   .masthead { padding: 20px 0 16px; }
-  .priceNumber, .priceNumberNo { font-size: 48px !important; }
   .tradeButtons { grid-template-columns: 1fr; }
   .footerRow { grid-template-columns: 1fr; gap: 10px; text-align: center; }
   .footerLive, .footerLinks { justify-content: center; }
