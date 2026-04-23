@@ -1,0 +1,308 @@
+.page {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 32px 32px 80px;
+  color: var(--ink);
+}
+
+.crumbs {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--dim);
+  margin-bottom: 24px;
+}
+
+.crumb { border-bottom: 1px solid transparent; }
+.crumb:hover { color: var(--ink); border-bottom-color: var(--ink); }
+.crumbDiv { color: var(--muted); }
+.crumbCurrent { color: var(--ink); }
+
+.masthead {
+  text-align: center;
+  padding: 40px 0 32px;
+}
+
+.kicker { margin-bottom: 18px; display: inline-block; }
+
+.name { letter-spacing: -0.02em; }
+
+.handle {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--dim);
+  margin-top: 16px;
+  letter-spacing: 0.04em;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 280px 1fr 280px;
+  gap: 40px;
+  align-items: start;
+}
+
+/* Left column */
+.leftCol {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+}
+
+.portraitFrame {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  background: var(--surface2);
+  border: 1px solid var(--rule);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--dim);
+}
+
+.portraitInitials {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 88px;
+  line-height: 1;
+  color: var(--ink-soft);
+  letter-spacing: -0.04em;
+}
+
+.colLabel { display: block; }
+
+.bio {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+.leftLinks {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.leftLink {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--ink);
+  border-bottom: 1px solid var(--ink);
+  padding-bottom: 2px;
+  align-self: flex-start;
+}
+
+/* Middle column */
+.middleCol {
+  min-width: 0;
+  padding: 0 8px;
+}
+
+.heroNumber { margin: 4px 0 6px; line-height: 0.95; }
+
+.heroCaption {
+  font-family: var(--font-sans);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 10px;
+  color: var(--dim);
+  margin-bottom: 32px;
+}
+
+.mainChart {
+  padding: 12px 0;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: 24px;
+}
+
+.mainChart svg { width: 100%; height: 140px; }
+
+.chartAxis {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-sans);
+  text-transform: uppercase;
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  color: var(--dim);
+  padding-top: 6px;
+}
+
+.miniGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px 28px;
+  padding-top: 8px;
+}
+
+.mini { display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--border); padding-top: 14px; }
+
+.miniLabel { color: var(--dim); }
+
+.miniValue { font-size: 22px; font-weight: 500; letter-spacing: -0.02em; }
+
+.miniChart svg { width: 100%; height: 32px; }
+
+/* Right column */
+.rightCol {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  min-width: 0;
+}
+
+.marketRefLink {
+  color: var(--ink);
+  border-bottom: 1px solid var(--ink);
+  padding-bottom: 1px;
+}
+
+/* Markets */
+.marketsSection { padding-top: 16px; }
+
+.sectionHeader {
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: 14px;
+  margin-bottom: 20px;
+}
+
+.marketsRow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  border-top: 1px solid var(--rule);
+}
+
+.marketCard {
+  padding: 20px 20px;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--rule);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--bg);
+  transition: background 120ms ease;
+}
+
+.marketCard:hover { background: var(--hover-bg); }
+
+.marketCard:nth-child(3n) { border-right: none; }
+.marketCard:first-child { padding-left: 0; }
+
+.mcLabel { color: var(--dim); }
+
+.mcTitle { line-height: 1.15; }
+
+.mcPrice {
+  font-size: 42px !important;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.mcSide {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--dim);
+}
+
+.mcLink {
+  margin-top: 8px;
+  font-family: var(--font-sans);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--ink);
+  border-bottom: 1px solid var(--ink);
+  padding-bottom: 2px;
+  align-self: flex-start;
+}
+
+.emptyMarkets {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 19px;
+  color: var(--dim);
+  max-width: 56ch;
+  line-height: 1.35;
+  padding: 24px 0;
+}
+
+.loading, .notFound {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 22px;
+  color: var(--dim);
+  padding: 80px 0 16px;
+}
+
+.backLink {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--ink);
+  border-bottom: 1px solid var(--ink);
+  padding-bottom: 2px;
+}
+
+.footer { margin-top: 72px; }
+
+.footerRow {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  padding: 18px 0;
+  gap: 18px;
+}
+
+.footerLive {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.footerLinks {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+}
+
+.footerDiv { color: var(--dim); }
+
+/* Responsive */
+@media (max-width: 1100px) {
+  .grid { grid-template-columns: 1fr; gap: 32px; }
+  .leftCol, .rightCol { padding: 0; }
+  .portraitFrame { max-width: 220px; }
+  .miniGrid { grid-template-columns: 1fr 1fr; }
+  .marketsRow { grid-template-columns: 1fr; }
+  .marketCard { border-right: none; }
+  .marketCard:first-child { padding-left: 20px; }
+}
+
+@media (max-width: 768px) {
+  .page { padding: 16px 16px 60px; }
+  .masthead { padding: 24px 0 16px; }
+  .mcPrice { font-size: 36px !important; }
+  .miniGrid { grid-template-columns: 1fr; }
+  .footerRow { grid-template-columns: 1fr; gap: 10px; text-align: center; }
+  .footerLive, .footerLinks { justify-content: center; }
+}
