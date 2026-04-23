@@ -1,4 +1,5 @@
 :root {
+  /* V5 brand preserved */
   --bg: #FAFAF7;
   --surface: #fff;
   --surface2: #F5F4F0;
@@ -11,6 +12,14 @@
   --red-bg: #f5edea;
   --border: #E8E7E2;
   --border-dim: #D1D0CB;
+
+  /* V6 additions */
+  --ink: #1a1a1a;
+  --ink-soft: #2a2a2a;
+  --hair: #1a1a1a;
+  --hover-bg: #F0EFE9;
+  --rule: #1a1a1a;
+
   --font-serif: 'Playfair Display', Georgia, serif;
   --font-sans: 'DM Sans', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
@@ -18,26 +27,61 @@
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+html, body {
+  background: var(--bg);
+}
+
 body {
   font-family: var(--font-sans);
   background: var(--bg);
-  color: var(--text);
+  color: var(--ink);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.5;
+  font-feature-settings: "kern" 1, "liga" 1;
 }
 
 a { color: inherit; text-decoration: none; }
-button { cursor: pointer; font-family: var(--font-sans); }
+button { cursor: pointer; font-family: var(--font-sans); background: none; border: none; color: inherit; }
 input, textarea, select { font-family: var(--font-sans); }
 
 h1, h2, h3, h4 {
   font-family: var(--font-serif);
-  font-weight: 600;
-  line-height: 1.2;
+  font-weight: 500;
+  line-height: 1.1;
+  color: var(--ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
 }
 
 ::selection {
-  background: var(--green-bg);
-  color: var(--green);
+  background: var(--ink);
+  color: var(--bg);
+}
+
+/* V6 utility — small caps label */
+.v6-smallcaps {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 10px;
+  color: var(--ink);
+}
+
+/* V6 utility — serif italic */
+.v6-serif-italic {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  color: var(--ink);
+}
+
+/* V6 utility — mono number */
+.v6-mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
 }

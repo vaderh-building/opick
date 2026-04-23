@@ -1,0 +1,13 @@
+.label {
+  font-family: var(--font-sans);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-weight: 500;
+  color: var(--ink);
+  display: inline-block;
+}
+
+.xs { font-size: 9px; letter-spacing: 0.16em; }
+.sm { font-size: 10px; }
+.md { font-size: 11px; letter-spacing: 0.18em; }
+.lg { font-size: 13px; letter-spacing: 0.2em; }

@@ -1,0 +1,15 @@
+.rule {
+  border: 0;
+  background: var(--rule);
+  width: 100%;
+}
+
+.hair { height: 1px; }
+.thick { height: 2px; }
+
+.none { margin: 0; }
+.xs { margin: 8px 0; }
+.sm { margin: 16px 0; }
+.md { margin: 24px 0; }
+.lg { margin: 40px 0; }
+.xl { margin: 64px 0; }

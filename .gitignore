@@ -4,5 +4,6 @@ artifacts/
 cache/
 typechain-types/
 frontend/dist/
+frontend/newsletter_signups.json
 backend/data/
 *.log
