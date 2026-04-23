@@ -76,7 +76,7 @@ export default function AboutPage() {
                 The ratio of the current 24-hour engagement to the trailing 7-day baseline. Values above 1.0 indicate acceleration.
               </p>
               <p className={styles.formula}>
-                V(s, t) = E(s, t, 24h) / &#x05CD;E(s, t, 7d)
+                V(s, t) = E(s, t, 24h) / &#x27E8;E(s, t, 7d)&#x27E9;
               </p>
             </li>
           </ol>
