@@ -7,9 +7,8 @@
 
 /* ---- Publication nameplate ---- */
 .nameplate {
-  padding: 32px 0 24px;
+  padding: 32px 0 48px;
   text-align: center;
-  margin-bottom: 24px;
 }
 
 .nameplateWord {
@@ -23,10 +22,22 @@
   color: var(--ink);
 }
 
+.tagline {
+  font-family: var(--font-sans);
+  font-weight: 400;
+  font-size: clamp(1.05rem, 1.4vw, 1.25rem);
+  line-height: 1.4;
+  color: var(--ink-soft);
+  margin-top: 16px;
+  max-width: 42ch;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 /* ---- Today's Focus hero ---- */
 .focusCard {
   display: grid;
-  grid-template-columns: 35% 35% 30%;
+  grid-template-columns: 28% 44% 28%;
   gap: 0;
   border-top: 1px solid var(--rule);
   border-bottom: 1px solid var(--rule);
@@ -43,12 +54,17 @@
 
 .focusCol:last-child { border-right: none; padding-right: 0; }
 .colLeft { padding: 32px 28px 32px 0; }
-.colMid { padding-top: 32px; text-align: left; display: flex; flex-direction: column; }
+.colMid {
+  padding: 32px 28px;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+}
 .colRight { padding-right: 0; display: flex; flex-direction: column; justify-content: space-between; gap: 16px; }
 
 .portraitLink {
   display: block;
-  margin-bottom: 20px;
+  margin: -32px -28px 20px;
   border-bottom: none;
 }
 
@@ -57,7 +73,6 @@
   aspect-ratio: 4 / 5;
   overflow: hidden;
   background: #F0EFE9;
-  border-radius: 2px;
 }
 
 .portraitPerson { background: var(--ink); }
@@ -136,6 +151,35 @@
   font-size: clamp(3rem, 6vw, 6rem) !important;
 }
 
+.tierLine {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 2px 0 14px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+}
+
+.tierLabel {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+
+.tierDivider { color: var(--dim); }
+
+.tierRank {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  color: var(--dim);
+  letter-spacing: 0.02em;
+}
+
 .numberCaption {
   font-family: var(--font-sans);
   text-transform: uppercase;
@@ -145,20 +189,19 @@
   margin-bottom: 20px;
 }
 
-.mentionLine {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
+.footnote {
+  font-family: var(--font-sans);
+  font-style: italic;
+  font-size: 12px;
+  color: var(--dim);
+  line-height: 1.45;
   padding-top: 12px;
+  margin-top: 12px;
   border-top: 1px solid var(--border);
 }
 
-.mentionValue {
-  font-size: 14px;
-}
-
 .sparkWrap {
-  margin-top: 20px;
+  margin-top: 4px;
   padding-top: 14px;
   border-top: 1px solid var(--border);
 }
@@ -312,6 +355,7 @@
 .thName { min-width: 200px; }
 .thNum { text-align: right; font-variant-numeric: tabular-nums; }
 .thAction { width: 120px; text-align: right; }
+.thTier { text-align: left; }
 
 .row {
   border-bottom: 1px solid var(--border);
@@ -356,6 +400,24 @@
 
 .deltaUpCell { color: var(--green); }
 .deltaDownCell { color: var(--red); }
+
+.ratingCell {
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.tierCell {
+  font-family: var(--font-sans);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 10px;
+  color: var(--ink);
+  text-align: left;
+  padding: 18px 14px;
+  vertical-align: middle;
+  white-space: nowrap;
+}
 
 .actionCell {
   text-align: right;
@@ -456,6 +518,15 @@
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   font-size: 13px;
+  color: var(--ink);
+  margin: 0;
+}
+
+.cardStatTier {
+  font-family: var(--font-sans);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 11px;
   color: var(--ink);
   margin: 0;
 }
@@ -608,6 +679,54 @@
   margin-top: auto;
 }
 
+/* ---- Methodology explainer ---- */
+.methodSection {
+  padding: 24px 0;
+}
+
+.methodKicker {
+  color: var(--dim);
+  margin-bottom: 12px;
+  display: block;
+}
+
+.methodTitle {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 500;
+  font-size: clamp(1.75rem, 3vw, 2.25rem);
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+  margin-bottom: 20px;
+  max-width: 24ch;
+}
+
+.methodBody {
+  max-width: 640px;
+}
+
+.methodBody p {
+  font-family: var(--font-sans);
+  font-weight: 400;
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--ink-soft);
+  margin-bottom: 14px;
+}
+
+.methodLink {
+  display: inline-block;
+  font-family: var(--font-sans);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 10px;
+  color: var(--ink);
+  border-bottom: 1px solid var(--ink);
+  padding-bottom: 2px;
+  margin-top: 12px;
+}
+
 /* ---- About ---- */
 .aboutSection { padding: 24px 0; }
 
@@ -687,14 +806,17 @@
   }
   .focusCol:last-child { border-bottom: none; }
   .colLeft { padding: 0 0 24px; }
+  .colMid { padding: 24px 0; }
+  .portraitLink { margin: -24px 0 20px; }
   .portraitFrame { aspect-ratio: 3 / 2; }
 }
 
 @media (max-width: 768px) {
   .page { padding: 16px 20px 60px; }
 
-  .nameplate { padding: 20px 0 16px; margin-bottom: 16px; }
+  .nameplate { padding: 20px 0 32px; }
   .nameplateWord { font-size: clamp(2.25rem, 10vw, 3rem); }
+  .tagline { font-size: 15px; margin-top: 12px; }
 
   .heroStrip {
     grid-template-columns: 1fr;

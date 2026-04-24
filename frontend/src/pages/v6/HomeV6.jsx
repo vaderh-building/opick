@@ -10,6 +10,7 @@ import Sparkline from '../../components/v6/Sparkline.jsx';
 import HairlineRule from '../../components/v6/HairlineRule.jsx';
 import PulsingDot from '../../components/v6/PulsingDot.jsx';
 import LiveTimestamp from '../../components/v6/LiveTimestamp.jsx';
+import { computeAttentionRating, getAttentionTier } from '../../lib/attentionRating.js';
 import styles from './HomeV6.module.css';
 
 const UPDATE_INTERVAL_MS = 12 * 60 * 60 * 1000;
@@ -61,14 +62,21 @@ export default function HomeV6() {
   const { markets } = useAttentionMarkets();
   const { hours, minutes } = useCountdown();
 
-  const sorted = useMemo(
-    () => [...subjects].sort(
-      (a, b) => (b.metrics?.mentionCount ?? 0) - (a.metrics?.mentionCount ?? 0),
-    ),
+  const rated = useMemo(
+    () => subjects.map((s) => ({
+      ...s,
+      rating: computeAttentionRating(s.metrics?.engagementWeighted, subjects),
+    })),
     [subjects],
   );
 
+  const sorted = useMemo(
+    () => [...rated].sort((a, b) => b.rating - a.rating),
+    [rated],
+  );
+
   const focus = sorted[0] || null;
+  const focusRank = 1;
 
   const totalMentions = useMemo(
     () => subjects.reduce((sum, s) => sum + (s.metrics?.mentionCount ?? 0), 0),
@@ -103,6 +111,9 @@ export default function HomeV6() {
       {/* Publication nameplate */}
       <section className={styles.nameplate} aria-label="OPick">
         <span className={styles.nameplateWord}>OPick</span>
+        <p className={styles.tagline}>
+          The index of what the world is paying attention to.
+        </p>
       </section>
 
       {/* Today's Focus hero */}
@@ -113,15 +124,16 @@ export default function HomeV6() {
             <div className={styles.numberBlock}>
               <IndexNumber
                 variant="display"
-                value={focus.metrics.engagementWeighted}
+                value={focus.rating}
               />
             </div>
-            <p className={styles.numberCaption}>
-              Engagement-Weighted Composite · 7-Day
+            <p className={styles.tierLine}>
+              <span className={styles.tierLabel}>{getAttentionTier(focus.rating)}</span>
+              <span className={styles.tierDivider}>·</span>
+              <span className={styles.tierRank}>#{focusRank} of {sorted.length}</span>
             </p>
-            <p className={styles.mentionLine}>
-              <SmallCapsLabel size="xs" className={styles.inlineCaps}>7-Day Mentions</SmallCapsLabel>
-              <IndexNumber value={focus.metrics.mentionCount} variant="inline" className={styles.mentionValue} />
+            <p className={styles.numberCaption}>
+              Attention Rating · 7-Day
             </p>
             <div className={styles.sparkWrap}>
               <Sparkline
@@ -140,6 +152,9 @@ export default function HomeV6() {
               <span className={focus.sevenDayDelta >= 0 ? styles.deltaUp : styles.deltaDown}>
                 {formatSignedPercent(focus.sevenDayDelta)}
               </span>
+            </p>
+            <p className={styles.footnote}>
+              Based on {formatCommas(focus.metrics.mentionCount)} mentions · engagement-weighted
             </p>
           </div>
 
@@ -229,7 +244,8 @@ export default function HomeV6() {
                   <tr>
                     <th className={`${styles.th} ${styles.thRank}`}>Rank</th>
                     <th className={`${styles.th} ${styles.thName}`}>Subject</th>
-                    <th className={`${styles.th} ${styles.thNum}`}>X Mentions</th>
+                    <th className={`${styles.th} ${styles.thNum}`}>Rating</th>
+                    <th className={`${styles.th} ${styles.thTier}`}>Tier</th>
                     <th className={`${styles.th} ${styles.thNum}`}>Share</th>
                     <th className={`${styles.th} ${styles.thNum}`}>7d Change</th>
                     <th className={`${styles.th} ${styles.thNum}`}>Markets</th>
@@ -255,7 +271,8 @@ export default function HomeV6() {
                             <SubjectName variant="small">{s.name}</SubjectName>
                           </Link>
                         </td>
-                        <td className={styles.numCell}>{formatCommas(mentions)}</td>
+                        <td className={`${styles.numCell} ${styles.ratingCell}`}>{s.rating}</td>
+                        <td className={styles.tierCell}>{getAttentionTier(s.rating)}</td>
                         <td className={styles.numCell}>{formatShare(share)}</td>
                         <td className={`${styles.numCell} ${deltaClass}`}>
                           {formatSignedPercent(s.sevenDayDelta)}
@@ -299,8 +316,12 @@ export default function HomeV6() {
                     </div>
                     <dl className={styles.cardGrid}>
                       <div className={styles.cardStat}>
-                        <dt className={styles.cardStatLabel}>X Mentions</dt>
-                        <dd className={styles.cardStatValue}>{formatCommas(mentions)}</dd>
+                        <dt className={styles.cardStatLabel}>Rating</dt>
+                        <dd className={styles.cardStatValue}>{s.rating}</dd>
+                      </div>
+                      <div className={styles.cardStat}>
+                        <dt className={styles.cardStatLabel}>Tier</dt>
+                        <dd className={styles.cardStatTier}>{getAttentionTier(s.rating)}</dd>
                       </div>
                       <div className={styles.cardStat}>
                         <dt className={styles.cardStatLabel}>Share</dt>
@@ -396,6 +417,26 @@ export default function HomeV6() {
             })}
           </div>
         )}
+      </section>
+
+      <HairlineRule margin="lg" />
+
+      {/* Methodology explainer */}
+      <section className={styles.methodSection}>
+        <SmallCapsLabel size="md" className={styles.methodKicker}>Understanding the Rating</SmallCapsLabel>
+        <h2 className={styles.methodTitle}>How the Attention Rating Works</h2>
+        <div className={styles.methodBody}>
+          <p>
+            The Attention Rating is a 0–100 score measuring how much attention a subject is receiving right now. It combines how often the subject is mentioned, how strongly people engage with those mentions, and how broadly the conversation is spread.
+          </p>
+          <p>
+            Ratings fall into six tiers. Phenomenon (95+) is reserved for moments that dominate the cultural conversation. Dominating (85–94) means global-scale attention. Trending (70–84) is sustained mainstream visibility. Active (55–69), Present (40–54), and Quiet (below 40) describe steadily narrower spheres of attention.
+          </p>
+          <p>
+            We use a logarithmic scale so the top end is hard to reach. A typical major public figure sits around 70–80 on most days. A score of 90 means something unusual is happening. This keeps the scale meaningful over time.
+          </p>
+          <Link to="/about" className={styles.methodLink}>Read the full methodology →</Link>
+        </div>
       </section>
 
       <HairlineRule margin="lg" />
