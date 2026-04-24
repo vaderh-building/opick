@@ -5,7 +5,6 @@ import { useAttentionMarkets } from '../../hooks/useAttentionMarkets.js';
 import SmallCapsLabel from '../../components/v6/SmallCapsLabel.jsx';
 import SubjectName from '../../components/v6/SubjectName.jsx';
 import IndexNumber from '../../components/v6/IndexNumber.jsx';
-import TombstoneTable from '../../components/v6/TombstoneTable.jsx';
 import Sparkline from '../../components/v6/Sparkline.jsx';
 import HairlineRule from '../../components/v6/HairlineRule.jsx';
 import PulsingDot from '../../components/v6/PulsingDot.jsx';
@@ -133,7 +132,7 @@ export default function HomeV6() {
               <span className={styles.tierRank}>#{focusRank} of {sorted.length}</span>
             </p>
             <p className={styles.numberCaption}>
-              Attention Rating · 7-Day
+              Attention rating · 7-day
             </p>
             <div className={styles.sparkWrap}>
               <Sparkline
@@ -148,7 +147,7 @@ export default function HomeV6() {
               </p>
             </div>
             <p className={styles.deltaLine}>
-              <SmallCapsLabel size="xs" className={styles.inlineCaps}>7-Day Change</SmallCapsLabel>
+              <span className={styles.fieldLabel}>7-day change</span>
               <span className={focus.sevenDayDelta >= 0 ? styles.deltaUp : styles.deltaDown}>
                 {formatSignedPercent(focus.sevenDayDelta)}
               </span>
@@ -173,7 +172,7 @@ export default function HomeV6() {
                 )}
               </div>
             </Link>
-            <SmallCapsLabel className={styles.colLabel}>Subject</SmallCapsLabel>
+            <p className={styles.subjectKicker}>Subject</p>
             <Link to={`/subjects/${focus.slug}`} className={styles.focusNameLink}>
               <SubjectName variant="large" as="h2" className={styles.focusName}>
                 {focus.name}
@@ -182,29 +181,53 @@ export default function HomeV6() {
             <p className={styles.focusHandle}>{focus.handle}</p>
             <p className={styles.focusBio}>{focus.bio}</p>
             <p className={styles.trackedSince}>
-              <SmallCapsLabel size="xs" className={styles.inlineCaps}>Tracked since</SmallCapsLabel>
+              <span className={styles.fieldLabel}>Tracked since</span>
               <span className={styles.trackedValue}>{formatDate(focus.trackedSince)}</span>
             </p>
           </div>
 
           <div className={`${styles.focusCol} ${styles.colRight}`}>
-            <TombstoneTable
-              title="Metadata"
-              rows={[
-                { label: 'Metric', value: 'Engagement-Weighted' },
-                { label: 'Sample Size', value: <IndexNumber value={focus.metrics.mentionCount} variant="inline" /> },
-                { label: 'Last Update', value: <LiveTimestamp compact /> },
-                { label: 'Active Markets', value: focusMarkets.length || '–' },
-                { label: 'Most Active Market', value: focusMarkets[0]?.title || '–' },
-              ]}
-            />
+            <SmallCapsLabel className={styles.colLabel}>Metadata</SmallCapsLabel>
+
+            {focusMarkets[0] ? (
+              <Link to={`/markets/${focusMarkets[0].id}`} className={styles.metaFocal}>
+                <p className={styles.metaFocalName}>
+                  {(focusMarkets[0].title.split(',')[0] || focusMarkets[0].title).trim()}
+                </p>
+                <p className={styles.metaFocalMeta}>
+                  {focusMarkets[0].metric} · Live
+                </p>
+              </Link>
+            ) : null}
+
+            <dl className={styles.metaList}>
+              <div className={styles.metaRow}>
+                <dt className={styles.metaLabel}>Metric</dt>
+                <dd className={styles.metaValue}>Engagement-weighted</dd>
+              </div>
+              <div className={styles.metaRow}>
+                <dt className={styles.metaLabel}>Sample size</dt>
+                <dd className={styles.metaValue}>
+                  <IndexNumber value={focus.metrics.mentionCount} variant="inline" />
+                </dd>
+              </div>
+              <div className={styles.metaRow}>
+                <dt className={styles.metaLabel}>Last update</dt>
+                <dd className={styles.metaValue}><LiveTimestamp compact /></dd>
+              </div>
+              <div className={styles.metaRow}>
+                <dt className={styles.metaLabel}>Active markets</dt>
+                <dd className={styles.metaValue}>{focusMarkets.length || '–'}</dd>
+              </div>
+            </dl>
+
             <div className={styles.focusActions}>
               <Link to={`/subjects/${focus.slug}`} className={styles.actionLink}>
-                View Full Dossier
+                View full dossier
               </Link>
               {focusMarkets[0] ? (
                 <Link to={`/markets/${focusMarkets[0].id}`} className={styles.actionLinkAlt}>
-                  Open Position ↗
+                  Open position ↗
                 </Link>
               ) : null}
             </div>

@@ -61,7 +61,13 @@
   display: flex;
   flex-direction: column;
 }
-.colRight { padding-right: 0; display: flex; flex-direction: column; justify-content: space-between; gap: 16px; }
+.colRight {
+  padding-right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 20px;
+}
 
 .portraitLink {
   display: block;
@@ -184,11 +190,25 @@
 
 .numberCaption {
   font-family: var(--font-sans);
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
-  font-size: 10px;
+  font-size: 12px;
   color: var(--dim);
   margin-bottom: 20px;
+}
+
+.fieldLabel {
+  font-family: var(--font-sans);
+  font-weight: 400;
+  font-size: 11px;
+  color: var(--dim);
+  letter-spacing: 0;
+}
+
+.subjectKicker {
+  font-family: var(--font-sans);
+  font-weight: 400;
+  font-size: 12px;
+  color: var(--dim);
+  margin-bottom: 12px;
 }
 
 .footnote {
@@ -215,9 +235,7 @@
   justify-content: space-between;
   margin-top: 6px;
   font-family: var(--font-sans);
-  text-transform: uppercase;
-  font-size: 9px;
-  letter-spacing: 0.18em;
+  font-size: 11px;
   color: var(--dim);
 }
 
@@ -256,9 +274,7 @@
 
 .actionLink, .actionLinkAlt {
   font-family: var(--font-sans);
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
+  font-size: 13px;
   color: var(--ink);
   padding-bottom: 2px;
   border-bottom: 1px solid var(--ink);
@@ -268,6 +284,71 @@
 .actionLinkAlt { color: var(--green); border-bottom-color: var(--green); }
 
 .actionLink:hover, .actionLinkAlt:hover { opacity: 0.6; }
+
+/* ---- Metadata column (right) ---- */
+.metaFocal {
+  display: block;
+  color: var(--ink);
+  border-bottom: none;
+  padding: 4px 0 16px;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--border);
+  padding-top: 14px;
+}
+
+.metaFocal:hover { opacity: 0.75; }
+
+.metaFocalName {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(1.35rem, 1.8vw, 1.5rem);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+
+.metaFocalMeta {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  color: var(--dim);
+}
+
+.metaList {
+  margin: 0;
+  padding: 0;
+}
+
+.metaRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.metaRow:last-child { border-bottom: 1px solid var(--rule); }
+
+.metaLabel {
+  font-family: var(--font-sans);
+  font-weight: 400;
+  font-size: 12px;
+  color: var(--dim);
+}
+
+.metaValue {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  color: var(--ink);
+  margin: 0;
+  text-align: right;
+  word-break: break-word;
+}
 
 /* ---- Hero strip (section header for the Index) ---- */
 .heroStrip {
