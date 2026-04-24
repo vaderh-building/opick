@@ -13,13 +13,24 @@ import PulsingDot from '../../components/v6/PulsingDot.jsx';
 import TradeGateModal from '../../components/v6/TradeGateModal.jsx';
 import styles from './MarketV6Editorial.module.css';
 
+const METRIC_PLAIN = {
+  'Engagement Density': 'Engagement per post',
+  'Velocity': 'Momentum',
+  'Mention Count': 'Posts',
+  'Engagement-Weighted': 'Weighted score',
+};
+
+function plainMetric(label) {
+  return METRIC_PLAIN[label] || label;
+}
+
 function formatTime(iso) {
   try {
     const d = new Date(iso);
     const pad = (n) => String(n).padStart(2, '0');
     return `${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}`;
   } catch {
-    return '—';
+    return '-';
   }
 }
 
@@ -128,7 +139,7 @@ export default function MarketV6Editorial() {
                 Buy No
               </button>
             </div>
-            <p className={styles.tradeNote}>Positions settle from the oracle’s {market.metric.toLowerCase()} reading on {formatDate(market.settlesOn)}.</p>
+            <p className={styles.tradeNote}>Positions settle from the oracle’s {plainMetric(market.metric).toLowerCase()} reading on {formatDate(market.settlesOn)}.</p>
           </div>
 
           <div className={styles.ledger}>
@@ -136,7 +147,7 @@ export default function MarketV6Editorial() {
             <table className={styles.ledgerTable}>
               <thead>
                 <tr>
-                  <th>Tx</th>
+                  <th>Trade</th>
                   <th>Side</th>
                   <th className={styles.numHead}>Amount</th>
                   <th className={styles.numHead}>Price</th>
@@ -147,7 +158,9 @@ export default function MarketV6Editorial() {
                 {market.recentTrades.map((t, idx) => (
                   <tr key={`${t.hash}-${idx}`}>
                     <td>{t.hash}</td>
-                    <td className={t.side === 'YES' ? styles.sideYes : styles.sideNo}>{t.side}</td>
+                    <td className={t.side === 'YES' ? styles.sideYes : styles.sideNo}>
+                      {t.side === 'YES' ? 'Yes' : 'No'}
+                    </td>
                     <td className={styles.numCell}><IndexNumber value={t.amount} prefix="$" decimals={2} variant="inline" /></td>
                     <td className={styles.numCell}><IndexNumber value={t.price} decimals={2} variant="inline" /></td>
                     <td className={styles.numCell}>{formatTime(t.ts)}</td>
@@ -166,7 +179,7 @@ export default function MarketV6Editorial() {
 
       <section className={styles.historySection}>
         <header className={styles.sectionHeader}>
-          <SmallCapsLabel size="lg">Price History — Yes Side</SmallCapsLabel>
+          <SmallCapsLabel size="lg">Price History · Yes Side</SmallCapsLabel>
           <span className={styles.sectionMeta}>Last 48 hours · hourly</span>
         </header>
         <div className={styles.historyChart}>
@@ -201,7 +214,9 @@ export default function MarketV6Editorial() {
               {market.recentTrades.map((t, idx) => (
                 <tr key={`row-${idx}`}>
                   <td>{t.hash}…{String.fromCharCode(97 + (idx % 26))}{String.fromCharCode(97 + ((idx + 7) % 26))}</td>
-                  <td className={t.side === 'YES' ? styles.sideYes : styles.sideNo}>{t.side}</td>
+                  <td className={t.side === 'YES' ? styles.sideYes : styles.sideNo}>
+                    {t.side === 'YES' ? 'Yes' : 'No'}
+                  </td>
                   <td className={styles.numCell}><IndexNumber value={t.amount} prefix="$" decimals={2} variant="inline" /></td>
                   <td className={styles.numCell}><IndexNumber value={t.price} decimals={2} variant="inline" /></td>
                   <td className={styles.numCell}>{new Date(t.ts).toISOString().replace('T', ' ').replace('Z', ' UTC')}</td>
@@ -265,16 +280,16 @@ function SubjectSummary({ subject, metricLabel, align }) {
       <p className={styles.subjectBio}>{subject.bio}</p>
 
       <TombstoneTable
-        title={`Current — ${metricLabel}`}
+        title={`Current · ${plainMetric(metricLabel)}`}
         rows={[
-          { label: 'Engagement-Weighted', value: <IndexNumber value={value} variant="inline" /> },
-          { label: 'Mention Count', value: <IndexNumber value={subject.metrics.mentionCount} variant="inline" /> },
-          { label: 'Density', value: <IndexNumber value={subject.metrics.engagementDensity} decimals={2} variant="inline" /> },
-          { label: 'Velocity', value: <IndexNumber value={subject.metrics.velocity} decimals={2} suffix="×" variant="inline" /> },
+          { label: 'Weighted score', value: <IndexNumber value={value} variant="inline" /> },
+          { label: 'Posts', value: <IndexNumber value={subject.metrics.mentionCount} variant="inline" /> },
+          { label: 'Engagement per post', value: <IndexNumber value={subject.metrics.engagementDensity} decimals={2} variant="inline" /> },
+          { label: 'Momentum', value: <IndexNumber value={subject.metrics.velocity} decimals={2} suffix="×" variant="inline" /> },
         ]}
       />
 
-      <Link to={`/subjects/${subject.slug}`} className={styles.subjectLink}>View Dossier →</Link>
+      <Link to={`/subjects/${subject.slug}`} className={styles.subjectLink}>View dossier →</Link>
     </aside>
   );
 }

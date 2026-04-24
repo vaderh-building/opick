@@ -1,5 +1,5 @@
 import { Link, useParams } from 'react-router-dom';
-import { useSubject } from '../../hooks/useSubjects.js';
+import { useSubject, useSubjects } from '../../hooks/useSubjects.js';
 import { useMarketsForSubject } from '../../hooks/useAttentionMarkets.js';
 import SmallCapsLabel from '../../components/v6/SmallCapsLabel.jsx';
 import SubjectName from '../../components/v6/SubjectName.jsx';
@@ -9,10 +9,22 @@ import Sparkline from '../../components/v6/Sparkline.jsx';
 import HairlineRule from '../../components/v6/HairlineRule.jsx';
 import PulsingDot from '../../components/v6/PulsingDot.jsx';
 import LiveTimestamp from '../../components/v6/LiveTimestamp.jsx';
+import { computeAttentionRating, getAttentionTier } from '../../lib/attentionRating.js';
 import styles from './SubjectPage.module.css';
 
+const METRIC_PLAIN = {
+  'Engagement Density': 'Engagement per post',
+  'Velocity': 'Momentum',
+  'Mention Count': 'Posts',
+  'Engagement-Weighted': 'Weighted score',
+};
+
+function plainMetric(label) {
+  return METRIC_PLAIN[label] || label;
+}
+
 function formatDate(iso) {
-  if (!iso) return '—';
+  if (!iso) return '-';
   return new Date(iso).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit' });
 }
 
@@ -24,6 +36,7 @@ function formatPercent(n) {
 export default function SubjectPage() {
   const { slug } = useParams();
   const { subject, correlated, loading } = useSubject(slug);
+  const { subjects: allSubjects } = useSubjects();
   const subjectMarkets = useMarketsForSubject(slug);
 
   if (loading) {
@@ -46,6 +59,8 @@ export default function SubjectPage() {
   }
 
   const { metrics } = subject;
+  const rating = computeAttentionRating(metrics.engagementWeighted, allSubjects.length ? allSubjects : [subject]);
+  const tier = getAttentionTier(rating);
 
   return (
     <div className={styles.page}>
@@ -93,8 +108,8 @@ export default function SubjectPage() {
           <TombstoneTable
             rows={[
               { label: 'Handle', value: subject.handle },
-              { label: 'Tracked Since', value: formatDate(subject.trackedSince) },
-              { label: 'Observable On', value: 'X (formerly Twitter)' },
+              { label: 'Tracked since', value: formatDate(subject.trackedSince) },
+              { label: 'Tracked from', value: 'X (formerly Twitter)' },
             ]}
           />
 
@@ -105,18 +120,22 @@ export default function SubjectPage() {
               rel="noreferrer"
               className={styles.leftLink}
             >
-              View on X ↗
+              View on X →
             </a>
           </div>
         </aside>
 
         {/* Middle — index + charts */}
         <div className={styles.middleCol}>
-          <SmallCapsLabel size="md" className={styles.colLabel}>Engagement-Weighted Index</SmallCapsLabel>
+          <SmallCapsLabel size="md" className={styles.colLabel}>Attention Rating</SmallCapsLabel>
           <div className={styles.heroNumber}>
-            <IndexNumber value={metrics.engagementWeighted} variant="hero" />
+            <IndexNumber value={rating} variant="hero" />
           </div>
-          <p className={styles.heroCaption}>7-day composite · updated hourly</p>
+          <p className={styles.heroTier}>
+            <span className={styles.heroTierLabel}>{tier}</span>
+            <span className={styles.heroTierDot}> · </span>
+            <span className={styles.heroTierMeta}>7-day rating, updated hourly</span>
+          </p>
 
           <div className={styles.mainChart}>
             <Sparkline
@@ -133,10 +152,10 @@ export default function SubjectPage() {
           </div>
 
           <div className={styles.miniGrid}>
-            <MiniMetric label="Mention Count" value={metrics.mentionCount} data={subject.series30d} />
-            <MiniMetric label="Engagement Density" value={metrics.engagementDensity} decimals={2} data={subject.series30d.slice().reverse()} />
-            <MiniMetric label="Velocity" value={metrics.velocity} decimals={2} suffix="×" data={subject.series30d.slice(-14)} />
-            <MiniMetric label="7-Day Change" value={subject.sevenDayDelta * 100} decimals={1} suffix="%" data={subject.series30d.slice(0, 14)} />
+            <MiniMetric label="Posts" value={metrics.mentionCount} data={subject.series30d} />
+            <MiniMetric label="Engagement per post" value={metrics.engagementDensity} decimals={2} data={subject.series30d.slice().reverse()} />
+            <MiniMetric label="Momentum" value={metrics.velocity} decimals={2} suffix="×" data={subject.series30d.slice(-14)} />
+            <MiniMetric label="7-day change" value={subject.sevenDayDelta * 100} decimals={1} suffix="%" data={subject.series30d.slice(0, 14)} />
           </div>
         </div>
 
@@ -145,21 +164,21 @@ export default function SubjectPage() {
           <TombstoneTable
             title="Metrics"
             rows={[
-              { label: 'Engagement-Weighted', value: <IndexNumber value={metrics.engagementWeighted} variant="inline" /> },
-              { label: 'Mention Count', value: <IndexNumber value={metrics.mentionCount} variant="inline" /> },
-              { label: 'Engagement Density', value: <IndexNumber value={metrics.engagementDensity} decimals={2} variant="inline" /> },
-              { label: 'Velocity', value: <IndexNumber value={metrics.velocity} decimals={2} variant="inline" suffix="×" /> },
-              { label: '7-Day Change', value: formatPercent(subject.sevenDayDelta) },
+              { label: 'Weighted score', value: <IndexNumber value={metrics.engagementWeighted} variant="inline" /> },
+              { label: 'Posts', value: <IndexNumber value={metrics.mentionCount} variant="inline" /> },
+              { label: 'Engagement per post', value: <IndexNumber value={metrics.engagementDensity} decimals={2} variant="inline" /> },
+              { label: 'Momentum', value: <IndexNumber value={metrics.velocity} decimals={2} variant="inline" suffix="×" /> },
+              { label: '7-day change', value: formatPercent(subject.sevenDayDelta) },
             ]}
           />
 
           <TombstoneTable
             title="Historical"
             rows={[
-              { label: 'Peak', value: <IndexNumber value={subject.peak.value} variant="inline" /> },
-              { label: 'Peak Date', value: formatDate(subject.peak.date) },
-              { label: 'Trough', value: <IndexNumber value={subject.trough.value} variant="inline" /> },
-              { label: 'Trough Date', value: formatDate(subject.trough.date) },
+              { label: '30-day high', value: <IndexNumber value={subject.peak.value} variant="inline" /> },
+              { label: 'Date of high', value: formatDate(subject.peak.date) },
+              { label: '30-day low', value: <IndexNumber value={subject.trough.value} variant="inline" /> },
+              { label: 'Date of low', value: formatDate(subject.trough.date) },
             ]}
           />
 
@@ -168,19 +187,19 @@ export default function SubjectPage() {
             rows={
               subjectMarkets.length
                 ? subjectMarkets.map((m) => ({
-                    label: m.metric,
+                    label: plainMetric(m.metric),
                     value: (
                       <Link to={`/markets/${m.id}`} className={styles.marketRefLink}>
                         {m.title.split(',')[0]}
                       </Link>
                     ),
                   }))
-                : [{ label: '—', value: 'No open markets' }]
+                : [{ label: '–', value: 'No open markets' }]
             }
           />
 
           <TombstoneTable
-            title="Correlated Subjects"
+            title="Related Subjects"
             rows={
               correlated.length
                 ? correlated.map((c) => ({
@@ -191,7 +210,7 @@ export default function SubjectPage() {
                       </Link>
                     ),
                   }))
-                : [{ label: '—', value: 'No strong correlations' }]
+                : [{ label: '–', value: 'No strong links' }]
             }
           />
         </aside>
@@ -211,7 +230,7 @@ export default function SubjectPage() {
               const accent = m.leadingSide === 'yes' ? 'var(--green)' : 'var(--red)';
               return (
                 <Link to={`/markets/${m.id}`} key={m.id} className={styles.marketCard}>
-                  <SmallCapsLabel size="xs" className={styles.mcLabel}>{m.metric}</SmallCapsLabel>
+                  <SmallCapsLabel size="xs" className={styles.mcLabel}>{plainMetric(m.metric)}</SmallCapsLabel>
                   <SubjectName variant="small" as="h3" className={styles.mcTitle}>{m.title}</SubjectName>
                   <IndexNumber
                     value={leading * 100}
@@ -222,7 +241,7 @@ export default function SubjectPage() {
                     style={{ color: accent }}
                   />
                   <p className={styles.mcSide}>{m.leadingSide === 'yes' ? 'Yes leading' : 'No leading'}</p>
-                  <span className={styles.mcLink}>Trade ↗</span>
+                  <span className={styles.mcLink}>Trade →</span>
                 </Link>
               );
             })}
@@ -238,7 +257,7 @@ export default function SubjectPage() {
         <HairlineRule margin="none" />
         <div className={styles.footerRow}>
           <span className={styles.footerLive}>
-            <PulsingDot /> <SmallCapsLabel size="xs">OPick Oracle — Live</SmallCapsLabel>
+            <PulsingDot /> <SmallCapsLabel size="xs">OPick Oracle · Live</SmallCapsLabel>
           </span>
           <LiveTimestamp />
           <span className={styles.footerLinks}>

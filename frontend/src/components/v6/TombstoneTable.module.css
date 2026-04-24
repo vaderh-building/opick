@@ -28,10 +28,8 @@
 
 .label {
   font-family: var(--font-sans);
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  font-size: 10px;
-  font-weight: 500;
+  font-size: 12px;
+  font-weight: 400;
   color: var(--dim);
   flex: 0 0 auto;
 }

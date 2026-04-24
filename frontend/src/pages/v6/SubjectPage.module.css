@@ -10,9 +10,7 @@
   gap: 10px;
   align-items: center;
   font-family: var(--font-sans);
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
+  font-size: 13px;
   color: var(--dim);
   margin-bottom: 24px;
 }
@@ -106,9 +104,7 @@
 
 .leftLink {
   font-family: var(--font-sans);
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.16em;
+  font-size: 13px;
   color: var(--ink);
   border-bottom: 1px solid var(--ink);
   padding-bottom: 2px;
@@ -132,11 +128,37 @@
 
 .heroCaption {
   font-family: var(--font-sans);
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
-  font-size: 10px;
+  font-size: 12px;
   color: var(--dim);
   margin-bottom: 32px;
+}
+
+.heroTier {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 4px 0 28px;
+}
+
+.heroTierLabel {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 22px;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+.heroTierDot { color: var(--dim); }
+
+.heroTierMeta {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 14px;
+  color: var(--ink-soft);
 }
 
 .mainChart {
@@ -152,9 +174,7 @@
   display: flex;
   justify-content: space-between;
   font-family: var(--font-sans);
-  text-transform: uppercase;
-  font-size: 9px;
-  letter-spacing: 0.2em;
+  font-size: 11px;
   color: var(--dim);
   padding-top: 6px;
 }
@@ -234,18 +254,14 @@
 
 .mcSide {
   font-family: var(--font-sans);
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
+  font-size: 12px;
   color: var(--dim);
 }
 
 .mcLink {
   margin-top: 8px;
   font-family: var(--font-sans);
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
+  font-size: 13px;
   color: var(--ink);
   border-bottom: 1px solid var(--ink);
   padding-bottom: 2px;
@@ -272,9 +288,7 @@
 
 .backLink {
   font-family: var(--font-sans);
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
+  font-size: 13px;
   color: var(--ink);
   border-bottom: 1px solid var(--ink);
   padding-bottom: 2px;
@@ -302,9 +316,7 @@
   align-items: center;
   justify-content: flex-end;
   font-family: var(--font-sans);
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.16em;
+  font-size: 13px;
 }
 
 .footerDiv { color: var(--dim); }
