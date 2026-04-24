@@ -7,7 +7,7 @@
 
 /* ---- Publication nameplate ---- */
 .nameplate {
-  padding: 32px 0 48px;
+  padding: 20px 0 32px;
   text-align: center;
 }
 
@@ -38,6 +38,7 @@
 .focusCard {
   display: grid;
   grid-template-columns: 28% 44% 28%;
+  align-items: start;
   gap: 0;
   border-top: 1px solid var(--rule);
   border-bottom: 1px solid var(--rule);
@@ -70,10 +71,13 @@
 
 .portraitFrame {
   width: 100%;
+  max-height: min(65vh, 640px);
   aspect-ratio: 4 / 5;
   overflow: hidden;
   background: #F0EFE9;
 }
+
+.portraitPerson.portraitFrame { aspect-ratio: auto; height: min(65vh, 640px); }
 
 .portraitPerson { background: var(--ink); }
 
