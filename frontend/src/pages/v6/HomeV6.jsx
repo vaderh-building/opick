@@ -102,12 +102,7 @@ export default function HomeV6() {
     <div className={styles.page}>
       {/* Publication nameplate */}
       <section className={styles.nameplate} aria-label="OPick">
-        <div className={styles.nameplateRow}>
-          <span className={styles.nameplateRule} aria-hidden="true" />
-          <span className={styles.nameplateWord}>OPick</span>
-          <span className={styles.nameplateRule} aria-hidden="true" />
-        </div>
-        <p className={styles.nameplateEst}>The Attention Index · Est. 2026</p>
+        <span className={styles.nameplateWord}>OPick</span>
       </section>
 
       {/* Today's Focus hero */}

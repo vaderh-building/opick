@@ -12,20 +12,8 @@
   margin-bottom: 24px;
 }
 
-.nameplateRow {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-  width: 100%;
-}
-
-.nameplateRule {
-  flex: 1 1 auto;
-  height: 1px;
-  background: var(--rule);
-}
-
 .nameplateWord {
+  display: inline-block;
   font-family: var(--font-serif);
   font-style: italic;
   font-weight: 500;
@@ -33,17 +21,6 @@
   line-height: 1;
   letter-spacing: -0.02em;
   color: var(--ink);
-  flex: 0 0 auto;
-  padding: 0 8px;
-}
-
-.nameplateEst {
-  font-family: var(--font-sans);
-  text-transform: uppercase;
-  letter-spacing: 0.24em;
-  font-size: 11px;
-  color: var(--dim);
-  margin-top: 14px;
 }
 
 /* ---- Today's Focus hero ---- */
@@ -717,9 +694,7 @@
   .page { padding: 16px 20px 60px; }
 
   .nameplate { padding: 20px 0 16px; margin-bottom: 16px; }
-  .nameplateRow { gap: 14px; }
-  .nameplateWord { font-size: clamp(2.25rem, 10vw, 3rem); padding: 0 4px; }
-  .nameplateEst { font-size: 10px; letter-spacing: 0.22em; margin-top: 10px; }
+  .nameplateWord { font-size: clamp(2.25rem, 10vw, 3rem); }
 
   .heroStrip {
     grid-template-columns: 1fr;

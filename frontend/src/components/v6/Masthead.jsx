@@ -18,11 +18,10 @@ export default function Masthead() {
     <header className={styles.masthead}>
       <div className={styles.row}>
         <Link to="/" className={styles.logo} aria-label="OPick home">
-          <span className={styles.logoText}>OPick</span>
+          <span className={styles.indexLabel}>Attention Index</span>
         </Link>
 
         <div className={styles.centerBlock}>
-          <span className={styles.indexLabel}>Attention Index</span>
           <nav className={styles.nav} aria-label="Primary">
             <NavLink end to="/" className={({ isActive }) => `${styles.navLink} ${isActive ? styles.navLinkActive : ''}`}>Index</NavLink>
             <NavLink to="/about" className={({ isActive }) => `${styles.navLink} ${isActive ? styles.navLinkActive : ''}`}>Method</NavLink>
