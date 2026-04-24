@@ -65,19 +65,20 @@
 
 .portraitLink {
   display: block;
-  margin: -32px -28px 20px;
+  width: 78%;
+  margin: 32px auto 20px;
   border-bottom: none;
 }
 
 .portraitFrame {
   width: 100%;
-  max-height: min(65vh, 640px);
+  max-height: min(55vh, 520px);
   aspect-ratio: 4 / 5;
   overflow: hidden;
   background: #F0EFE9;
 }
 
-.portraitPerson.portraitFrame { aspect-ratio: auto; height: min(65vh, 640px); }
+.portraitPerson.portraitFrame { aspect-ratio: auto; height: min(55vh, 520px); }
 
 .portraitPerson { background: var(--ink); }
 
@@ -811,7 +812,7 @@
   .focusCol:last-child { border-bottom: none; }
   .colLeft { padding: 0 0 24px; }
   .colMid { padding: 24px 0; }
-  .portraitLink { margin: -24px 0 20px; }
+  .portraitLink { width: 100%; margin: 0 0 20px; }
   .portraitFrame { aspect-ratio: 3 / 2; }
 }
 
