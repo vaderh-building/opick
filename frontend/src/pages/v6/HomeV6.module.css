@@ -66,19 +66,16 @@
 .portraitLink {
   display: block;
   width: 78%;
-  margin: 32px auto 20px;
+  margin: 10px auto 20px;
   border-bottom: none;
 }
 
 .portraitFrame {
   width: 100%;
-  max-height: min(55vh, 520px);
-  aspect-ratio: 4 / 5;
+  aspect-ratio: 3 / 2;
   overflow: hidden;
   background: #F0EFE9;
 }
-
-.portraitPerson.portraitFrame { aspect-ratio: auto; height: min(55vh, 520px); }
 
 .portraitPerson { background: var(--ink); }
 
