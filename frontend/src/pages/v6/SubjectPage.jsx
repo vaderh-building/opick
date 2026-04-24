@@ -283,7 +283,7 @@ function initials(name) {
 function MiniMetric({ label, value, data, decimals, suffix }) {
   return (
     <div className={styles.mini}>
-      <SmallCapsLabel size="xs" className={styles.miniLabel}>{label}</SmallCapsLabel>
+      <span className={styles.miniLabel}>{label}</span>
       <IndexNumber value={value} variant="stat" decimals={decimals} suffix={suffix} className={styles.miniValue} />
       <div className={styles.miniChart}>
         <Sparkline data={data || []} width={200} height={32} stroke="var(--ink)" />
