@@ -107,14 +107,13 @@
 }
 
 .colDek {
-  font-family: var(--font-serif);
-  font-style: italic;
+  font-family: var(--font-sans);
   font-weight: 400;
-  font-size: 14px;
-  line-height: 1.45;
-  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--dim);
   margin-bottom: 18px;
-  max-width: 34ch;
+  max-width: 38ch;
 }
 
 .focusNameLink { color: var(--ink); display: inline-block; }
@@ -165,9 +164,15 @@
   overflow: hidden;
 }
 
-.numberBlock > * {
-  max-width: 100%;
-  font-size: clamp(3rem, 6vw, 6rem) !important;
+.ratingBig {
+  display: block;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  font-size: clamp(3rem, 6vw, 6rem);
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+  color: var(--ink);
 }
 
 .tierLine {
@@ -180,13 +185,12 @@
 }
 
 .tierLabel {
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-weight: 400;
-  font-size: 18px;
-  line-height: 1;
-  color: var(--ink);
-  letter-spacing: -0.01em;
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 1.3;
+  color: var(--dim);
+  letter-spacing: 0;
 }
 
 .tierDivider { color: var(--dim); }

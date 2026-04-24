@@ -6,6 +6,11 @@
 const BASELINE = 50;
 const SPAN = 40;
 const CURVE = 1.5;
+const MAX = 94.99;
+
+function round2(n) {
+  return Math.round(n * 100) / 100;
+}
 
 export function computeAttentionRating(engagementWeighted, allSubjects) {
   if (!Array.isArray(allSubjects) || allSubjects.length === 0) return BASELINE;
@@ -16,19 +21,24 @@ export function computeAttentionRating(engagementWeighted, allSubjects) {
   );
   const minLog = Math.min(...allLogValues);
   const maxLog = Math.max(...allLogValues);
-  if (maxLog === minLog) return Math.min(BASELINE + SPAN, 94);
+  if (maxLog === minLog) return round2(Math.min(BASELINE + SPAN, MAX));
 
   const normalized = (logValue - minLog) / (maxLog - minLog);
   const shaped = Math.pow(normalized, CURVE);
-  const rating = Math.round(BASELINE + shaped * SPAN);
-  return Math.max(0, Math.min(rating, 94));
+  const rating = BASELINE + shaped * SPAN;
+  return round2(Math.max(0, Math.min(rating, MAX)));
 }
 
 export function getAttentionTier(rating) {
-  if (rating >= 95) return 'Phenomenon';
-  if (rating >= 85) return 'Dominating';
-  if (rating >= 70) return 'Trending';
-  if (rating >= 55) return 'Active';
-  if (rating >= 40) return 'Present';
+  const floor = Math.floor(rating);
+  if (floor >= 95) return 'Phenomenon';
+  if (floor >= 85) return 'Dominating';
+  if (floor >= 70) return 'Trending';
+  if (floor >= 55) return 'Active';
+  if (floor >= 40) return 'Present';
   return 'Quiet';
+}
+
+export function formatRating(rating) {
+  return Number(rating).toFixed(2);
 }

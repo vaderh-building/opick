@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useAttentionMarket } from '../../hooks/useAttentionMarkets.js';
-import { useSubject } from '../../hooks/useSubjects.js';
+import { useSubject, useSubjects } from '../../hooks/useSubjects.js';
 import SmallCapsLabel from '../../components/v6/SmallCapsLabel.jsx';
 import SubjectName from '../../components/v6/SubjectName.jsx';
 import IndexNumber from '../../components/v6/IndexNumber.jsx';
@@ -11,6 +11,7 @@ import HairlineRule from '../../components/v6/HairlineRule.jsx';
 import LiveTimestamp from '../../components/v6/LiveTimestamp.jsx';
 import PulsingDot from '../../components/v6/PulsingDot.jsx';
 import TradeGateModal from '../../components/v6/TradeGateModal.jsx';
+import { computeAttentionRating, getAttentionTier, formatRating } from '../../lib/attentionRating.js';
 import styles from './MarketV6Editorial.module.css';
 
 const METRIC_PLAIN = {
@@ -35,13 +36,12 @@ function formatTime(iso) {
 }
 
 function formatDate(iso) {
-  if (!iso) return '—';
-  return new Date(iso).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit' });
+  if (!iso) return '-';
+  return new Date(iso).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 }
 
-function truncAddr() {
-  // recent trades are mocked with 4-hex hashes for brevity; render as-is
-  return (x) => x;
+function formatUsd(n) {
+  return `$${Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 export default function MarketV6Editorial() {
@@ -49,8 +49,8 @@ export default function MarketV6Editorial() {
   const { market, loading } = useAttentionMarket(id);
   const { subject: subjectA } = useSubject(market?.subjectA);
   const { subject: subjectB } = useSubject(market?.subjectB);
+  const { subjects: allSubjects } = useSubjects();
 
-  const [side, setSide] = useState(null); // 'YES' | 'NO'
   const [amount, setAmount] = useState('');
   const [gateOpen, setGateOpen] = useState(false);
 
@@ -65,14 +65,27 @@ export default function MarketV6Editorial() {
     );
   }
 
-  const openGate = (s) => {
-    setSide(s);
-    setGateOpen(true);
-  };
+  const openGate = () => setGateOpen(true);
 
   const priceYesPct = Math.round(market.priceYes * 100);
   const priceNoPct = Math.round(market.priceNo * 100);
   const yesLeading = market.leadingSide === 'yes';
+  const metricPlain = plainMetric(market.metric).toLowerCase();
+  const settlementDateText = formatDate(market.settlesOn);
+  const aName = subjectA?.name || 'Subject A';
+  const bName = subjectB?.name || 'Subject B';
+
+  const parsedAmount = Number(amount);
+  const validAmount = Number.isFinite(parsedAmount) && parsedAmount > 0;
+  const yesPayout = validAmount ? parsedAmount / market.priceYes : 0;
+  const noPayout = validAmount ? parsedAmount / market.priceNo : 0;
+
+  const yesCents = Math.round(market.priceYes * 100);
+  const noCents = Math.round(market.priceNo * 100);
+
+  const exampleAmount = 100;
+  const exampleYes = exampleAmount / market.priceYes;
+  const exampleNo = exampleAmount / market.priceNo;
 
   return (
     <div className={styles.page}>
@@ -85,14 +98,19 @@ export default function MarketV6Editorial() {
       <section className={styles.masthead}>
         <SmallCapsLabel size="md" className={styles.kicker}>Open Question</SmallCapsLabel>
         <SubjectName variant="large" as="h1" className={styles.title}>{market.title}</SubjectName>
-        <p className={styles.question}>{market.question}</p>
+        <p className={styles.question}>
+          Will {aName} have higher {metricPlain} than {bName} when this market settles on {settlementDateText}?
+        </p>
+        <p className={styles.methodologyInline}>
+          <Link to="/about">How the Attention Rating is calculated →</Link>
+        </p>
       </section>
 
       <HairlineRule margin="lg" />
 
       <section className={styles.three}>
         {/* Left subject */}
-        <SubjectSummary subject={subjectA} metricLabel={market.metric} align="left" />
+        <SubjectSummary subject={subjectA} metricLabel={market.metric} align="left" allSubjects={allSubjects} />
 
         {/* Middle — trade + ledger */}
         <div className={styles.tradeCol}>
@@ -101,11 +119,13 @@ export default function MarketV6Editorial() {
             <div className={`${styles.priceBlock} ${yesLeading ? styles.leadingYes : ''}`}>
               <SmallCapsLabel size="xs" className={styles.priceCaption}>Yes</SmallCapsLabel>
               <IndexNumber value={priceYesPct} suffix="%" decimals={0} variant="display" className={styles.priceNumber} />
+              <p className={styles.priceSubject}>{aName} leads</p>
             </div>
             <div className={styles.priceDivider} aria-hidden="true" />
             <div className={`${styles.priceBlock} ${!yesLeading ? styles.leadingNo : ''}`}>
               <SmallCapsLabel size="xs" className={styles.priceCaption}>No</SmallCapsLabel>
               <IndexNumber value={priceNoPct} suffix="%" decimals={0} variant="display" className={styles.priceNumberNo} />
+              <p className={styles.priceSubject}>{bName} leads</p>
             </div>
           </div>
 
@@ -123,23 +143,42 @@ export default function MarketV6Editorial() {
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
             />
+            {validAmount ? (
+              <p className={styles.payoutHelper}>
+                <span>{formatUsd(parsedAmount)} at {yesCents}¢ Yes → {formatUsd(yesPayout)} if {aName} leads</span>
+                <span>{formatUsd(parsedAmount)} at {noCents}¢ No → {formatUsd(noPayout)} if {bName} leads</span>
+              </p>
+            ) : null}
             <div className={styles.tradeButtons}>
               <button
                 type="button"
                 className={styles.buyYes}
-                onClick={() => openGate('YES')}
+                onClick={openGate}
               >
                 Buy Yes
               </button>
               <button
                 type="button"
                 className={styles.buyNo}
-                onClick={() => openGate('NO')}
+                onClick={openGate}
               >
                 Buy No
               </button>
             </div>
-            <p className={styles.tradeNote}>Positions settle from the oracle’s {plainMetric(market.metric).toLowerCase()} reading on {formatDate(market.settlesOn)}.</p>
+            <div className={styles.howItWorks}>
+              <SmallCapsLabel size="xs" className={styles.howItWorksLabel}>How this market works</SmallCapsLabel>
+              <ol className={styles.howItWorksList}>
+                <li>
+                  Settles {settlementDateText} at 20:00 UTC. The OPick Oracle reads each subject’s {metricPlain} from the X API over the prior 7 days.
+                </li>
+                <li>
+                  If {aName}’s number is higher, Yes shares pay $1 each. If {bName}’s is higher, No shares pay $1 each. A tie refunds all positions.
+                </li>
+                <li>
+                  At {yesCents}¢ Yes, a $100 bet wins {formatUsd(exampleYes)} if {aName} leads. At {noCents}¢ No, a $100 bet wins {formatUsd(exampleNo)} if {bName} leads.
+                </li>
+              </ol>
+            </div>
           </div>
 
           <div className={styles.ledger}>
@@ -172,7 +211,7 @@ export default function MarketV6Editorial() {
         </div>
 
         {/* Right subject */}
-        <SubjectSummary subject={subjectB} metricLabel={market.metric} align="right" />
+        <SubjectSummary subject={subjectB} metricLabel={market.metric} align="right" allSubjects={allSubjects} />
       </section>
 
       <HairlineRule margin="lg" />
@@ -267,10 +306,12 @@ export default function MarketV6Editorial() {
   );
 }
 
-function SubjectSummary({ subject, metricLabel, align }) {
+function SubjectSummary({ subject, metricLabel, align, allSubjects }) {
   if (!subject) return <aside className={styles.subjectCol} />;
-  const value = subject.metrics?.engagementWeighted;
   const alignStyle = align === 'right' ? styles.subjectRight : '';
+  const pool = Array.isArray(allSubjects) && allSubjects.length ? allSubjects : [subject];
+  const rating = computeAttentionRating(subject.metrics?.engagementWeighted, pool);
+  const tier = getAttentionTier(rating);
 
   return (
     <aside className={`${styles.subjectCol} ${alignStyle}`}>
@@ -279,10 +320,15 @@ function SubjectSummary({ subject, metricLabel, align }) {
       <p className={styles.subjectHandle}>{subject.handle}</p>
       <p className={styles.subjectBio}>{subject.bio}</p>
 
+      <div className={styles.ratingBlock}>
+        <SmallCapsLabel size="xs" className={styles.ratingEyebrow}>Attention Rating</SmallCapsLabel>
+        <p className={styles.ratingValue}>{formatRating(rating)}</p>
+        <p className={styles.ratingTier}>{tier}</p>
+      </div>
+
       <TombstoneTable
-        title={`Current · ${plainMetric(metricLabel)}`}
+        title={`This market · ${plainMetric(metricLabel)}`}
         rows={[
-          { label: 'Weighted score', value: <IndexNumber value={value} variant="inline" /> },
           { label: 'Posts', value: <IndexNumber value={subject.metrics.mentionCount} variant="inline" /> },
           { label: 'Engagement per post', value: <IndexNumber value={subject.metrics.engagementDensity} decimals={2} variant="inline" /> },
           { label: 'Momentum', value: <IndexNumber value={subject.metrics.velocity} decimals={2} suffix="×" variant="inline" /> },

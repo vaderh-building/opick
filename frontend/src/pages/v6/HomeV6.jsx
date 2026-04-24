@@ -9,7 +9,7 @@ import Sparkline from '../../components/v6/Sparkline.jsx';
 import HairlineRule from '../../components/v6/HairlineRule.jsx';
 import PulsingDot from '../../components/v6/PulsingDot.jsx';
 import LiveTimestamp from '../../components/v6/LiveTimestamp.jsx';
-import { computeAttentionRating, getAttentionTier } from '../../lib/attentionRating.js';
+import { computeAttentionRating, getAttentionTier, formatRating } from '../../lib/attentionRating.js';
 import styles from './HomeV6.module.css';
 
 const UPDATE_INTERVAL_MS = 12 * 60 * 60 * 1000;
@@ -136,10 +136,7 @@ export default function HomeV6() {
               How much of the world’s attention {focus.name.split(' ')[0]} commanded this week.
             </p>
             <div className={styles.numberBlock}>
-              <IndexNumber
-                variant="display"
-                value={focus.rating}
-              />
+              <span className={styles.ratingBig}>{formatRating(focus.rating)}</span>
             </div>
             <p className={styles.tierLine}>
               <span className={styles.tierLabel}>{getAttentionTier(focus.rating)}</span>
@@ -311,7 +308,7 @@ export default function HomeV6() {
                             <SubjectName variant="small">{s.name}</SubjectName>
                           </Link>
                         </td>
-                        <td className={`${styles.numCell} ${styles.ratingCell}`}>{s.rating}</td>
+                        <td className={`${styles.numCell} ${styles.ratingCell}`}>{formatRating(s.rating)}</td>
                         <td className={styles.tierCell}>{getAttentionTier(s.rating)}</td>
                         <td className={styles.numCell}>{formatShare(share)}</td>
                         <td className={`${styles.numCell} ${deltaClass}`}>
@@ -357,7 +354,7 @@ export default function HomeV6() {
                     <dl className={styles.cardGrid}>
                       <div className={styles.cardStat}>
                         <dt className={styles.cardStatLabel}>Rating</dt>
-                        <dd className={styles.cardStatValue}>{s.rating}</dd>
+                        <dd className={styles.cardStatValue}>{formatRating(s.rating)}</dd>
                       </div>
                       <div className={styles.cardStat}>
                         <dt className={styles.cardStatLabel}>Tier</dt>

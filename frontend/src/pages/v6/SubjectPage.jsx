@@ -9,7 +9,7 @@ import Sparkline from '../../components/v6/Sparkline.jsx';
 import HairlineRule from '../../components/v6/HairlineRule.jsx';
 import PulsingDot from '../../components/v6/PulsingDot.jsx';
 import LiveTimestamp from '../../components/v6/LiveTimestamp.jsx';
-import { computeAttentionRating, getAttentionTier } from '../../lib/attentionRating.js';
+import { computeAttentionRating, getAttentionTier, formatRating } from '../../lib/attentionRating.js';
 import styles from './SubjectPage.module.css';
 
 const METRIC_PLAIN = {
@@ -129,7 +129,7 @@ export default function SubjectPage() {
         <div className={styles.middleCol}>
           <SmallCapsLabel size="md" className={styles.colLabel}>Attention Rating</SmallCapsLabel>
           <div className={styles.heroNumber}>
-            <IndexNumber value={rating} variant="hero" />
+            <span className={styles.ratingBig}>{formatRating(rating)}</span>
           </div>
           <p className={styles.heroTier}>
             <span className={styles.heroTierLabel}>{tier}</span>
