@@ -100,39 +100,20 @@ export default function HomeV6() {
 
   return (
     <div className={styles.page}>
+      {/* Publication nameplate */}
+      <section className={styles.nameplate} aria-label="OPick">
+        <div className={styles.nameplateRow}>
+          <span className={styles.nameplateRule} aria-hidden="true" />
+          <span className={styles.nameplateWord}>OPick</span>
+          <span className={styles.nameplateRule} aria-hidden="true" />
+        </div>
+        <p className={styles.nameplateEst}>The Attention Index · Est. 2026</p>
+      </section>
+
       {/* Today's Focus hero */}
       {focus ? (
         <article className={styles.focusCard}>
           <div className={`${styles.focusCol} ${styles.colLeft}`}>
-            <Link to={`/subjects/${focus.slug}`} className={styles.portraitLink}>
-              <div className={`${styles.portraitFrame} ${focus.isPerson ? styles.portraitPerson : styles.portraitLogo}`}>
-                {focus.portraitUrl ? (
-                  <img
-                    src={focus.portraitUrl}
-                    alt={focus.name}
-                    loading="eager"
-                    className={styles.portraitImg}
-                  />
-                ) : (
-                  <div className={styles.portraitEmpty} aria-hidden="true" />
-                )}
-              </div>
-            </Link>
-            <SmallCapsLabel className={styles.colLabel}>Subject</SmallCapsLabel>
-            <Link to={`/subjects/${focus.slug}`} className={styles.focusNameLink}>
-              <SubjectName variant="large" as="h2" className={styles.focusName}>
-                {focus.name}
-              </SubjectName>
-            </Link>
-            <p className={styles.focusHandle}>{focus.handle}</p>
-            <p className={styles.focusBio}>{focus.bio}</p>
-            <p className={styles.trackedSince}>
-              <SmallCapsLabel size="xs" className={styles.inlineCaps}>Tracked since</SmallCapsLabel>
-              <span className={styles.trackedValue}>{formatDate(focus.trackedSince)}</span>
-            </p>
-          </div>
-
-          <div className={`${styles.focusCol} ${styles.colMid}`}>
             <SmallCapsLabel className={styles.colLabel}>Index</SmallCapsLabel>
             <div className={styles.numberBlock}>
               <IndexNumber
@@ -164,6 +145,35 @@ export default function HomeV6() {
               <span className={focus.sevenDayDelta >= 0 ? styles.deltaUp : styles.deltaDown}>
                 {formatSignedPercent(focus.sevenDayDelta)}
               </span>
+            </p>
+          </div>
+
+          <div className={`${styles.focusCol} ${styles.colMid}`}>
+            <Link to={`/subjects/${focus.slug}`} className={styles.portraitLink}>
+              <div className={`${styles.portraitFrame} ${focus.isPerson ? styles.portraitPerson : styles.portraitLogo}`}>
+                {focus.portraitUrl ? (
+                  <img
+                    src={focus.portraitUrl}
+                    alt={focus.name}
+                    loading="eager"
+                    className={styles.portraitImg}
+                  />
+                ) : (
+                  <div className={styles.portraitEmpty} aria-hidden="true" />
+                )}
+              </div>
+            </Link>
+            <SmallCapsLabel className={styles.colLabel}>Subject</SmallCapsLabel>
+            <Link to={`/subjects/${focus.slug}`} className={styles.focusNameLink}>
+              <SubjectName variant="large" as="h2" className={styles.focusName}>
+                {focus.name}
+              </SubjectName>
+            </Link>
+            <p className={styles.focusHandle}>{focus.handle}</p>
+            <p className={styles.focusBio}>{focus.bio}</p>
+            <p className={styles.trackedSince}>
+              <SmallCapsLabel size="xs" className={styles.inlineCaps}>Tracked since</SmallCapsLabel>
+              <span className={styles.trackedValue}>{formatDate(focus.trackedSince)}</span>
             </p>
           </div>
 

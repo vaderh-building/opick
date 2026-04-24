@@ -5,6 +5,47 @@
   color: var(--ink);
 }
 
+/* ---- Publication nameplate ---- */
+.nameplate {
+  padding: 32px 0 24px;
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.nameplateRow {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  width: 100%;
+}
+
+.nameplateRule {
+  flex: 1 1 auto;
+  height: 1px;
+  background: var(--rule);
+}
+
+.nameplateWord {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 500;
+  font-size: clamp(3rem, 5vw, 4.5rem);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  flex: 0 0 auto;
+  padding: 0 8px;
+}
+
+.nameplateEst {
+  font-family: var(--font-sans);
+  text-transform: uppercase;
+  letter-spacing: 0.24em;
+  font-size: 11px;
+  color: var(--dim);
+  margin-top: 14px;
+}
+
 /* ---- Today's Focus hero ---- */
 .focusCard {
   display: grid;
@@ -24,8 +65,8 @@
 }
 
 .focusCol:last-child { border-right: none; padding-right: 0; }
-.colLeft { padding: 32px 28px 32px 0; display: flex; flex-direction: column; }
-.colMid { padding-top: 32px; text-align: left; }
+.colLeft { padding: 32px 28px 32px 0; }
+.colMid { padding-top: 32px; text-align: left; display: flex; flex-direction: column; }
 .colRight { padding-right: 0; display: flex; flex-direction: column; justify-content: space-between; gap: 16px; }
 
 .portraitLink {
@@ -674,6 +715,11 @@
 
 @media (max-width: 768px) {
   .page { padding: 16px 20px 60px; }
+
+  .nameplate { padding: 20px 0 16px; margin-bottom: 16px; }
+  .nameplateRow { gap: 14px; }
+  .nameplateWord { font-size: clamp(2.25rem, 10vw, 3rem); padding: 0 4px; }
+  .nameplateEst { font-size: 10px; letter-spacing: 0.22em; margin-top: 10px; }
 
   .heroStrip {
     grid-template-columns: 1fr;
