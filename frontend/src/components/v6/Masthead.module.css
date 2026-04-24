@@ -41,11 +41,11 @@
 }
 
 .indexLabel {
-  font-family: var(--font-sans);
-  text-transform: uppercase;
-  letter-spacing: 0.28em;
-  font-size: 11px;
+  font-family: var(--font-serif);
+  font-style: italic;
   font-weight: 500;
+  font-size: 16px;
+  letter-spacing: -0.005em;
   color: var(--ink);
   white-space: nowrap;
 }
@@ -57,9 +57,8 @@
 
 .navLink {
   font-family: var(--font-sans);
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
+  font-size: 13px;
+  letter-spacing: 0.01em;
   color: var(--dim);
   padding: 2px 0;
   border-bottom: 1px solid transparent;
@@ -146,7 +145,7 @@
     justify-content: space-between;
     width: 100%;
   }
-  .indexLabel { font-size: 9px; letter-spacing: 0.22em; }
+  .indexLabel { font-size: 14px; }
   .nav { gap: 16px; }
   .issue { display: none; }
   .wallet {
