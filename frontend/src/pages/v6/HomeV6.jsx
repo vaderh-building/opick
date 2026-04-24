@@ -34,6 +34,13 @@ function formatDate(iso) {
   return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit' });
 }
 
+function formatUpdateLine(now, minutesAgo) {
+  const updated = new Date(now.getTime() - minutesAgo * 60 * 1000);
+  const pad = (n) => String(n).padStart(2, '0');
+  const hhmm = `${pad(updated.getUTCHours())}:${pad(updated.getUTCMinutes())} UTC`;
+  return `${hhmm}, ${minutesAgo}m ago`;
+}
+
 function nextUpdateDelta(now) {
   const t = now.getTime();
   const slotsSinceEpoch = Math.floor(t / UPDATE_INTERVAL_MS);
@@ -60,6 +67,11 @@ export default function HomeV6() {
   const { subjects, loading } = useSubjects();
   const { markets } = useAttentionMarkets();
   const { hours, minutes } = useCountdown();
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 30 * 1000);
+    return () => clearInterval(id);
+  }, []);
 
   const rated = useMemo(
     () => subjects.map((s) => ({
@@ -119,7 +131,10 @@ export default function HomeV6() {
       {focus ? (
         <article className={styles.focusCard}>
           <div className={`${styles.focusCol} ${styles.colLeft}`}>
-            <SmallCapsLabel className={styles.colLabel}>Index</SmallCapsLabel>
+            <SmallCapsLabel className={styles.colLabel}>Attention Rating</SmallCapsLabel>
+            <p className={styles.colDek}>
+              How much of the world’s attention {focus.name.split(' ')[0]} commanded this week.
+            </p>
             <div className={styles.numberBlock}>
               <IndexNumber
                 variant="display"
@@ -132,7 +147,7 @@ export default function HomeV6() {
               <span className={styles.tierRank}>#{focusRank} of {sorted.length}</span>
             </p>
             <p className={styles.numberCaption}>
-              Attention rating · 7-day
+              7-day rating, updated hourly
             </p>
             <div className={styles.sparkWrap}>
               <Sparkline
@@ -148,12 +163,15 @@ export default function HomeV6() {
             </div>
             <p className={styles.deltaLine}>
               <span className={styles.fieldLabel}>7-day change</span>
-              <span className={focus.sevenDayDelta >= 0 ? styles.deltaUp : styles.deltaDown}>
-                {formatSignedPercent(focus.sevenDayDelta)}
+              <span className={styles.deltaGroup}>
+                <span className={focus.sevenDayDelta >= 0 ? styles.deltaUp : styles.deltaDown}>
+                  {formatSignedPercent(focus.sevenDayDelta)}
+                </span>
+                <span className={styles.deltaAside}>· vs previous week</span>
               </span>
             </p>
             <p className={styles.footnote}>
-              Based on {formatCommas(focus.metrics.mentionCount)} mentions · engagement-weighted
+              Based on {formatCommas(focus.metrics.mentionCount)} posts, weighted by likes, reposts, and replies.
             </p>
           </div>
 
@@ -187,37 +205,36 @@ export default function HomeV6() {
           </div>
 
           <div className={`${styles.focusCol} ${styles.colRight}`}>
-            <SmallCapsLabel className={styles.colLabel}>Metadata</SmallCapsLabel>
+            <SmallCapsLabel className={styles.colLabel}>Open Market</SmallCapsLabel>
 
             {focusMarkets[0] ? (
               <Link to={`/markets/${focusMarkets[0].id}`} className={styles.metaFocal}>
                 <p className={styles.metaFocalName}>
                   {(focusMarkets[0].title.split(',')[0] || focusMarkets[0].title).trim()}
                 </p>
+                <p className={styles.metaFocalQuestion}>
+                  Who gets more engagement per post this week?
+                </p>
                 <p className={styles.metaFocalMeta}>
-                  {focusMarkets[0].metric} · Live
+                  Live · settles Friday 20:00 UTC
                 </p>
               </Link>
             ) : null}
 
             <dl className={styles.metaList}>
               <div className={styles.metaRow}>
-                <dt className={styles.metaLabel}>Metric</dt>
-                <dd className={styles.metaValue}>Engagement-weighted</dd>
+                <dt className={styles.metaLabel}>Scoring</dt>
+                <dd className={styles.metaValue}>Weighted by likes, reposts, replies</dd>
               </div>
               <div className={styles.metaRow}>
-                <dt className={styles.metaLabel}>Sample size</dt>
+                <dt className={styles.metaLabel}>Based on</dt>
                 <dd className={styles.metaValue}>
-                  <IndexNumber value={focus.metrics.mentionCount} variant="inline" />
+                  {formatCommas(focus.metrics.mentionCount)} posts from {formatCommas(Math.round(focus.metrics.mentionCount / 14.83))} authors
                 </dd>
               </div>
               <div className={styles.metaRow}>
-                <dt className={styles.metaLabel}>Last update</dt>
-                <dd className={styles.metaValue}><LiveTimestamp compact /></dd>
-              </div>
-              <div className={styles.metaRow}>
-                <dt className={styles.metaLabel}>Active markets</dt>
-                <dd className={styles.metaValue}>{focusMarkets.length || '–'}</dd>
+                <dt className={styles.metaLabel}>Updated</dt>
+                <dd className={styles.metaValue}>{formatUpdateLine(now, 8)}</dd>
               </div>
             </dl>
 
@@ -227,7 +244,7 @@ export default function HomeV6() {
               </Link>
               {focusMarkets[0] ? (
                 <Link to={`/markets/${focusMarkets[0].id}`} className={styles.actionLinkAlt}>
-                  Open position ↗
+                  Open position →
                 </Link>
               ) : null}
             </div>

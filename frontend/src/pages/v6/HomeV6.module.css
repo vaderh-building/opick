@@ -102,8 +102,19 @@
 
 .colLabel {
   display: block;
-  margin-bottom: 14px;
+  margin-bottom: 8px;
   color: var(--ink);
+}
+
+.colDek {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+  margin-bottom: 18px;
+  max-width: 34ch;
 }
 
 .focusNameLink { color: var(--ink); display: inline-block; }
@@ -246,6 +257,22 @@
   padding-top: 12px;
   margin-top: 14px;
   border-top: 1px solid var(--border);
+  gap: 12px;
+}
+
+.deltaGroup {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.deltaAside {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: var(--dim);
+  font-style: italic;
 }
 
 .deltaUp {
@@ -306,7 +333,18 @@
   line-height: 1.2;
   letter-spacing: -0.01em;
   color: var(--ink);
-  margin-bottom: 6px;
+  margin-bottom: 8px;
+}
+
+.metaFocalQuestion {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+  margin-bottom: 8px;
+  max-width: 34ch;
 }
 
 .metaFocalMeta {
@@ -314,7 +352,7 @@
   font-variant-numeric: tabular-nums;
   font-size: 12px;
   letter-spacing: 0.02em;
-  color: var(--dim);
+  color: var(--muted);
 }
 
 .metaList {
