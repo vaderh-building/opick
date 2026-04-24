@@ -66,8 +66,26 @@ export default function SubjectPage() {
       <section className={styles.grid}>
         {/* Left — profile */}
         <aside className={styles.leftCol}>
-          <div className={styles.portraitFrame} aria-hidden="true">
-            <span className={styles.portraitInitials}>{initials(subject.name)}</span>
+          <div
+            className={`${styles.portraitFrame} ${
+              subject.portraitUrl
+                ? subject.isPerson
+                  ? styles.portraitPerson
+                  : styles.portraitLogo
+                : ''
+            }`}
+            aria-hidden={subject.portraitUrl ? undefined : 'true'}
+          >
+            {subject.portraitUrl ? (
+              <img
+                src={subject.portraitUrl}
+                alt={subject.name}
+                loading="eager"
+                className={styles.portraitImg}
+              />
+            ) : (
+              <span className={styles.portraitInitials}>{initials(subject.name)}</span>
+            )}
           </div>
           <SmallCapsLabel size="md" className={styles.colLabel}>Profile</SmallCapsLabel>
           <p className={styles.bio}>{subject.bio}</p>

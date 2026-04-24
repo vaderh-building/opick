@@ -63,7 +63,20 @@
   align-items: center;
   justify-content: center;
   color: var(--dim);
+  overflow: hidden;
 }
+
+.portraitPerson { background: var(--ink); border-color: var(--ink); }
+.portraitLogo { background: #F0EFE9; }
+
+.portraitImg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.portraitPerson .portraitImg { object-fit: cover; }
+.portraitLogo .portraitImg { object-fit: contain; padding: 18%; }
 
 .portraitInitials {
   font-family: var(--font-serif);

@@ -8,7 +8,7 @@ const day = 86400 * 1000;
 
 const PORTRAITS = {
   'elon-musk': {
-    url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/34/Elon_Musk_Royal_Society_%28crop2%29.jpg/800px-Elon_Musk_Royal_Society_%28crop2%29.jpg',
+    url: 'https://gcp-na-images.contentstack.com/v3/assets/bltea6093859af6183b/blt0048bd4541377029/698a209622fb85ce16e2cee8/Elon-Musk-TIME-POY-Interview-36.jpg?branch=production&width=3840&quality=75&auto=webp&crop=3%3A2',
     isPerson: true,
   },
   'sam-altman': {
