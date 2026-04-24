@@ -133,7 +133,7 @@ export default function HomeV6() {
           <div className={`${styles.focusCol} ${styles.colLeft}`}>
             <SmallCapsLabel className={styles.colLabel}>Attention Rating</SmallCapsLabel>
             <p className={styles.colDek}>
-              How much of the world’s attention {focus.name.split(' ')[0]} commanded this week.
+              How much of the world’s attention {focus.name.split(' ')[0]} commands every day.
             </p>
             <div className={styles.numberBlock}>
               <span className={styles.ratingBig}>{formatRating(focus.rating)}</span>
