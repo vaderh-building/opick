@@ -6,6 +6,49 @@
 const now = Date.UTC(2026, 3, 23);
 const day = 86400 * 1000;
 
+const PORTRAITS = {
+  'elon-musk': {
+    url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/34/Elon_Musk_Royal_Society_%28crop2%29.jpg/800px-Elon_Musk_Royal_Society_%28crop2%29.jpg',
+    isPerson: true,
+  },
+  'sam-altman': {
+    url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Sam_Altman_TechCrunch_SF_2019_Day_2_Oct_3_%28cropped%29.jpg/800px-Sam_Altman_TechCrunch_SF_2019_Day_2_Oct_3_%28cropped%29.jpg',
+    isPerson: true,
+  },
+  'donald-trump': {
+    url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/Donald_Trump_official_portrait.jpg/800px-Donald_Trump_official_portrait.jpg',
+    isPerson: true,
+  },
+  'taylor-swift': {
+    url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/191125_Taylor_Swift_at_the_2019_American_Music_Awards_%28cropped%29.png/800px-191125_Taylor_Swift_at_the_2019_American_Music_Awards_%28cropped%29.png',
+    isPerson: true,
+  },
+  'sam-bankman-fried': {
+    url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6a/Sam_Bankman-Fried_%28cropped%29.png/800px-Sam_Bankman-Fried_%28cropped%29.png',
+    isPerson: true,
+  },
+  'openai': {
+    url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/OpenAI_Logo.svg/800px-OpenAI_Logo.svg.png',
+    isPerson: false,
+  },
+  'xai': {
+    url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/XAI-Logo.svg/800px-XAI-Logo.svg.png',
+    isPerson: false,
+  },
+  'tesla': {
+    url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/Tesla_T_symbol.svg/800px-Tesla_T_symbol.svg.png',
+    isPerson: false,
+  },
+  'polymarket': {
+    url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/75/Company_Logo_Polymarket.png/800px-Company_Logo_Polymarket.png',
+    isPerson: false,
+  },
+  'bitcoin': {
+    url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Bitcoin.svg/800px-Bitcoin.svg.png',
+    isPerson: false,
+  },
+};
+
 function generateSeries(base, volatility, length, seed) {
   const arr = [];
   let value = base;
@@ -275,6 +318,14 @@ export const MARKETS = [
     history: generateSeries(55, 3, 48, 205).map((v) => Math.min(90, Math.max(10, v))),
   },
 ];
+
+for (const s of SUBJECTS) {
+  const p = PORTRAITS[s.slug];
+  if (p) {
+    s.portraitUrl = p.url;
+    s.isPerson = p.isPerson;
+  }
+}
 
 export function findSubject(slug) {
   return SUBJECTS.find((s) => s.slug === slug) || null;

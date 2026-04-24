@@ -5,30 +5,231 @@
   color: var(--ink);
 }
 
-/* ---- Hero strip ---- */
+/* ---- Today's Focus hero ---- */
+.focusCard {
+  display: grid;
+  grid-template-columns: 35% 35% 30%;
+  gap: 0;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+  width: 100%;
+  margin-bottom: 36px;
+}
+
+.focusCol {
+  padding: 32px 28px;
+  border-right: 1px solid var(--border);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.focusCol:last-child { border-right: none; padding-right: 0; }
+.colLeft { padding: 32px 28px 32px 0; display: flex; flex-direction: column; }
+.colMid { padding-top: 32px; text-align: left; }
+.colRight { padding-right: 0; display: flex; flex-direction: column; justify-content: space-between; gap: 16px; }
+
+.portraitLink {
+  display: block;
+  margin-bottom: 20px;
+  border-bottom: none;
+}
+
+.portraitFrame {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  background: #F0EFE9;
+  border-radius: 2px;
+}
+
+.portraitPerson { background: var(--ink); }
+
+.portraitImg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.portraitPerson .portraitImg { object-fit: cover; }
+.portraitLogo .portraitImg { object-fit: contain; padding: 18%; }
+
+.portraitEmpty {
+  width: 100%;
+  height: 100%;
+  background: #E8E7E2;
+}
+
+.colLabel {
+  display: block;
+  margin-bottom: 14px;
+  color: var(--ink);
+}
+
+.focusNameLink { color: var(--ink); display: inline-block; }
+.focusNameLink:hover { opacity: 0.7; }
+
+.focusName {
+  margin-bottom: 6px;
+}
+
+.focusHandle {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--dim);
+  margin-bottom: 14px;
+  letter-spacing: 0.02em;
+}
+
+.focusBio {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+  margin-bottom: 18px;
+  max-width: 34ch;
+}
+
+.trackedSince {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  margin-top: auto;
+}
+
+.inlineCaps { color: var(--dim); }
+
+.trackedValue {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink);
+}
+
+.numberBlock {
+  margin: 4px 0 10px;
+  line-height: 0.95;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.numberBlock > * {
+  max-width: 100%;
+  font-size: clamp(3rem, 6vw, 6rem) !important;
+}
+
+.numberCaption {
+  font-family: var(--font-sans);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 10px;
+  color: var(--dim);
+  margin-bottom: 20px;
+}
+
+.mentionLine {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.mentionValue {
+  font-size: 14px;
+}
+
+.sparkWrap {
+  margin-top: 20px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.sparkWrap svg { width: 100%; height: 56px; }
+
+.sparkAxis {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  font-family: var(--font-sans);
+  text-transform: uppercase;
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  color: var(--dim);
+}
+
+.deltaLine {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding-top: 12px;
+  margin-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.deltaUp {
+  color: var(--green);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 14px;
+  font-weight: 500;
+}
+.deltaDown {
+  color: var(--red);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.focusActions {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.actionLink, .actionLinkAlt {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--ink);
+  padding-bottom: 2px;
+  border-bottom: 1px solid var(--ink);
+  transition: opacity 120ms ease;
+}
+
+.actionLinkAlt { color: var(--green); border-bottom-color: var(--green); }
+
+.actionLink:hover, .actionLinkAlt:hover { opacity: 0.6; }
+
+/* ---- Hero strip (section header for the Index) ---- */
 .heroStrip {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   align-items: center;
-  min-height: 88px;
+  min-height: 60px;
   border-top: 1px solid var(--rule);
   border-bottom: 1px solid var(--rule);
-  margin-bottom: 20px;
+  margin-bottom: 0;
 }
 
 .heroCol {
-  padding: 16px 24px;
+  padding: 10px 24px;
   border-right: 1px solid var(--border);
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 6px;
+  align-items: center;
+  gap: 12px;
   min-width: 0;
-  min-height: 88px;
+  min-height: 60px;
+  flex-wrap: wrap;
 }
 
 .heroCol:first-child { padding-left: 0; }
-.heroCol:last-child { border-right: none; padding-right: 0; align-items: flex-end; text-align: right; }
+.heroCol:last-child { border-right: none; padding-right: 0; justify-content: flex-end; }
 
 .heroLabel { color: var(--ink); }
 
@@ -36,14 +237,14 @@
   font-family: var(--font-serif);
   font-style: italic;
   font-weight: 400;
-  font-size: 22px;
-  line-height: 1.15;
+  font-size: 18px;
+  line-height: 1.2;
   letter-spacing: -0.01em;
   color: var(--ink);
 }
 
 .heroClock {
-  font-size: 13px !important;
+  font-size: 12px !important;
 }
 
 .heroMeta {
@@ -53,7 +254,7 @@
 .heroCountdown {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-size: 22px;
+  font-size: 16px;
   color: var(--ink);
   letter-spacing: -0.01em;
 }
@@ -61,6 +262,7 @@
 /* ---- Index table ---- */
 .indexSection {
   margin-bottom: 36px;
+  padding-top: 16px;
 }
 
 .tableWrap {
@@ -458,6 +660,18 @@
   .marketCard:nth-child(3n) { border-right: none; }
 }
 
+@media (max-width: 900px) {
+  .focusCard { grid-template-columns: 1fr; }
+  .focusCol {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    padding: 24px 0;
+  }
+  .focusCol:last-child { border-bottom: none; }
+  .colLeft { padding: 0 0 24px; }
+  .portraitFrame { aspect-ratio: 3 / 2; }
+}
+
 @media (max-width: 768px) {
   .page { padding: 16px 20px 60px; }
 
@@ -468,10 +682,9 @@
   .heroCol {
     border-right: none;
     border-bottom: 1px solid var(--border);
-    padding: 14px 0;
+    padding: 12px 0;
     min-height: 0;
-    align-items: flex-start !important;
-    text-align: left !important;
+    justify-content: flex-start !important;
   }
   .heroCol:last-child { border-bottom: none; }
 
@@ -487,4 +700,5 @@
   .tableWrap { display: none; }
   .indexCards { display: block; }
   .roadmapNote { font-size: 14px; }
+  .portraitFrame { aspect-ratio: 4 / 5; }
 }

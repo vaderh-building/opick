@@ -4,6 +4,9 @@ import { useSubjects } from '../../hooks/useSubjects.js';
 import { useAttentionMarkets } from '../../hooks/useAttentionMarkets.js';
 import SmallCapsLabel from '../../components/v6/SmallCapsLabel.jsx';
 import SubjectName from '../../components/v6/SubjectName.jsx';
+import IndexNumber from '../../components/v6/IndexNumber.jsx';
+import TombstoneTable from '../../components/v6/TombstoneTable.jsx';
+import Sparkline from '../../components/v6/Sparkline.jsx';
 import HairlineRule from '../../components/v6/HairlineRule.jsx';
 import PulsingDot from '../../components/v6/PulsingDot.jsx';
 import LiveTimestamp from '../../components/v6/LiveTimestamp.jsx';
@@ -65,6 +68,8 @@ export default function HomeV6() {
     [subjects],
   );
 
+  const focus = sorted[0] || null;
+
   const totalMentions = useMemo(
     () => subjects.reduce((sum, s) => sum + (s.metrics?.mentionCount ?? 0), 0),
     [subjects],
@@ -88,9 +93,108 @@ export default function HomeV6() {
     return map;
   }, [markets]);
 
+  const focusMarkets = useMemo(() => {
+    if (!focus) return [];
+    return markets.filter((m) => m.subjectA === focus.slug || m.subjectB === focus.slug);
+  }, [focus, markets]);
+
   return (
     <div className={styles.page}>
-      {/* Hero strip */}
+      {/* Today's Focus hero */}
+      {focus ? (
+        <article className={styles.focusCard}>
+          <div className={`${styles.focusCol} ${styles.colLeft}`}>
+            <Link to={`/subjects/${focus.slug}`} className={styles.portraitLink}>
+              <div className={`${styles.portraitFrame} ${focus.isPerson ? styles.portraitPerson : styles.portraitLogo}`}>
+                {focus.portraitUrl ? (
+                  <img
+                    src={focus.portraitUrl}
+                    alt={focus.name}
+                    loading="eager"
+                    className={styles.portraitImg}
+                  />
+                ) : (
+                  <div className={styles.portraitEmpty} aria-hidden="true" />
+                )}
+              </div>
+            </Link>
+            <SmallCapsLabel className={styles.colLabel}>Subject</SmallCapsLabel>
+            <Link to={`/subjects/${focus.slug}`} className={styles.focusNameLink}>
+              <SubjectName variant="large" as="h2" className={styles.focusName}>
+                {focus.name}
+              </SubjectName>
+            </Link>
+            <p className={styles.focusHandle}>{focus.handle}</p>
+            <p className={styles.focusBio}>{focus.bio}</p>
+            <p className={styles.trackedSince}>
+              <SmallCapsLabel size="xs" className={styles.inlineCaps}>Tracked since</SmallCapsLabel>
+              <span className={styles.trackedValue}>{formatDate(focus.trackedSince)}</span>
+            </p>
+          </div>
+
+          <div className={`${styles.focusCol} ${styles.colMid}`}>
+            <SmallCapsLabel className={styles.colLabel}>Index</SmallCapsLabel>
+            <div className={styles.numberBlock}>
+              <IndexNumber
+                variant="display"
+                value={focus.metrics.engagementWeighted}
+              />
+            </div>
+            <p className={styles.numberCaption}>
+              Engagement-Weighted Composite · 7-Day
+            </p>
+            <p className={styles.mentionLine}>
+              <SmallCapsLabel size="xs" className={styles.inlineCaps}>7-Day Mentions</SmallCapsLabel>
+              <IndexNumber value={focus.metrics.mentionCount} variant="inline" className={styles.mentionValue} />
+            </p>
+            <div className={styles.sparkWrap}>
+              <Sparkline
+                data={focus.series30d.slice(-14)}
+                width={360}
+                height={56}
+                stroke="var(--ink)"
+              />
+              <p className={styles.sparkAxis}>
+                <span>14d ago</span>
+                <span>Today</span>
+              </p>
+            </div>
+            <p className={styles.deltaLine}>
+              <SmallCapsLabel size="xs" className={styles.inlineCaps}>7-Day Change</SmallCapsLabel>
+              <span className={focus.sevenDayDelta >= 0 ? styles.deltaUp : styles.deltaDown}>
+                {formatSignedPercent(focus.sevenDayDelta)}
+              </span>
+            </p>
+          </div>
+
+          <div className={`${styles.focusCol} ${styles.colRight}`}>
+            <TombstoneTable
+              title="Metadata"
+              rows={[
+                { label: 'Metric', value: 'Engagement-Weighted' },
+                { label: 'Sample Size', value: <IndexNumber value={focus.metrics.mentionCount} variant="inline" /> },
+                { label: 'Last Update', value: <LiveTimestamp compact /> },
+                { label: 'Active Markets', value: focusMarkets.length || '–' },
+                { label: 'Most Active Market', value: focusMarkets[0]?.title || '–' },
+              ]}
+            />
+            <div className={styles.focusActions}>
+              <Link to={`/subjects/${focus.slug}`} className={styles.actionLink}>
+                View Full Dossier
+              </Link>
+              {focusMarkets[0] ? (
+                <Link to={`/markets/${focusMarkets[0].id}`} className={styles.actionLinkAlt}>
+                  Open Position ↗
+                </Link>
+              ) : null}
+            </div>
+          </div>
+        </article>
+      ) : (
+        <p className={styles.loading}>{loading ? 'Loading the index…' : 'No subjects yet.'}</p>
+      )}
+
+      {/* Hero strip (section header for the Index) */}
       <section className={styles.heroStrip} aria-label="Index overview">
         <div className={styles.heroCol}>
           <SmallCapsLabel size="sm" className={styles.heroLabel}>The Index</SmallCapsLabel>
@@ -110,11 +214,9 @@ export default function HomeV6() {
         </div>
       </section>
 
-      {/* Index table - hero */}
+      {/* Index table */}
       <section className={styles.indexSection} aria-label="The OPick Attention Index">
-        {loading && !sorted.length ? (
-          <p className={styles.loading}>Loading the index…</p>
-        ) : (
+        {loading && !sorted.length ? null : (
           <>
             <div className={styles.tableWrap} role="region" aria-label="Attention Index subjects">
               <table className={styles.indexTable}>
