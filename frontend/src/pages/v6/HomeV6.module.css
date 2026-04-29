@@ -40,8 +40,6 @@
   grid-template-columns: 28% 44% 28%;
   align-items: start;
   gap: 0;
-  border-top: 1px solid var(--rule);
-  border-bottom: 1px solid var(--rule);
   width: 100%;
   margin-bottom: 36px;
 }
@@ -382,8 +380,6 @@
   grid-template-columns: 1fr 1fr 1fr;
   align-items: center;
   min-height: 60px;
-  border-top: 1px solid var(--rule);
-  border-bottom: 1px solid var(--rule);
   margin-bottom: 0;
 }
 
