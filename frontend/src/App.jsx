@@ -18,6 +18,7 @@ import HomeV6 from './pages/v6/HomeV6.jsx';
 import SubjectPage from './pages/v6/SubjectPage.jsx';
 import MarketV6Editorial from './pages/v6/MarketV6Editorial.jsx';
 import AboutPage from './pages/v6/AboutPage.jsx';
+import EssayAttentionPage from './pages/v6/EssayAttentionPage.jsx';
 import LegacyPage from './pages/v6/LegacyPage.jsx';
 
 // Legacy V5 routes (preserved, not linked from new nav)
@@ -145,6 +146,7 @@ function App() {
           <Route path="/subjects/:slug" element={<SubjectPage />} />
           <Route path="/markets/:id" element={<MarketV6Editorial />} />
           <Route path="/about" element={<AboutPage />} />
+          <Route path="/essay/attention" element={<EssayAttentionPage />} />
           <Route path="/legacy" element={<LegacyPage />} />
 
           {/* V5 deep-link preservation */}
