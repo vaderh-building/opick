@@ -154,22 +154,6 @@ export default function EssayAttentionPage() {
             If Multicoin is looking at this category, the team to back is the one starting with the license and the LP. Not the one starting with the oracle.
           </p>
         </section>
-
-        <HairlineRule margin="md" />
-
-        <section className={styles.section}>
-          <SmallCapsLabel size="lg" className={styles.sectionLabel}>Who Wrote This</SmallCapsLabel>
-          <h2 className={styles.h2}>A note from the author.</h2>
-          <p>
-            Vader Hairitai builds the OPick Attention Index.
-          </p>
-          <p>
-            He wrote this for Multicoin Capital in May 2026.
-          </p>
-          <p>
-            Reach him at vader.hairitai@kellogg.northwestern.edu
-          </p>
-        </section>
       </article>
 
       <footer className={styles.footer}>
